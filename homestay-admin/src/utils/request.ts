@@ -34,7 +34,7 @@ const logLevels = {
 // 当前日志级别
 const currentLogLevel = import.meta.env.VITE_LOG_LEVEL
   ? logLevels[import.meta.env.VITE_LOG_LEVEL as keyof typeof logLevels]
-  : logLevels.error;
+  : import.meta.env.DEV ? logLevels.debug : logLevels.error;
 
 // 请求拦截器
 request.interceptors.request.use(

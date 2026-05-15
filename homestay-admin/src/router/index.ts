@@ -9,11 +9,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/",
     name: "Home",
-    component: () =>
-      import("@/views/layout/index.vue").catch((error) => {
-        console.error("加载布局组件失败:", error);
-        return import("@/views/error/404.vue"); // 确保创建这个错误页面
-      }),
+    component: () => import("@/views/layout/index.vue"),
     children: [
       {
         path: "/dashboard",
@@ -22,11 +18,7 @@ const routes: RouteRecordRaw[] = [
           title: "系统首页",
           requiresAuth: true,
         },
-        component: () =>
-          import("@/views/dashboard/index.vue").catch((error) => {
-            console.error("加载dashboard组件失败:", error);
-            return import("@/views/error/404.vue");
-          }),
+        component: () => import("@/views/dashboard/index.vue"),
       },
       {
         path: "/homestays",
@@ -125,11 +117,7 @@ const routes: RouteRecordRaw[] = [
           title: "编辑房源",
           requiresAuth: true,
         },
-        component: () =>
-          import("@/views/homestay/edit.vue").catch((error) => {
-            console.error("加载 edit.vue 组件失败:", error);
-            return import("@/views/error/404.vue");
-          }),
+        component: () => import("@/views/homestay/edit.vue"),
       },
       {
         path: "/homestays/add",
@@ -341,11 +329,7 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: "登录",
     },
-    component: () =>
-      import("@/views/login/index.vue").catch((error) => {
-        console.error("加载登录组件失败:", error);
-        return import("@/views/error/404.vue");
-      }),
+    component: () => import("@/views/login/index.vue"),
   },
   {
     path: "/:pathMatch(.*)*",
@@ -353,23 +337,17 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: "页面不存在",
     },
-    component: () =>
-      import("@/views/error/404.vue").catch(() => {
-        // 创建一个简单的组件作为后备
-        return {
-          template: `<div style="text-align:center;padding:50px;">
-                    <h1>404</h1>
-                    <p>页面不存在</p>
-                    <a href="/">返回首页</a>
-                   </div>`,
-        };
-      }),
+    component: () => import("@/views/error/404.vue"),
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+router.onError((error) => {
+  console.error("路由组件加载失败:", error);
 });
 
 router.beforeEach((to, _from, next) => {
