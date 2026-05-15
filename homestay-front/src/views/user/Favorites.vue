@@ -61,7 +61,6 @@ const fetchFavorites = async () => {
         if (response.data && response.data.success && Array.isArray(response.data.data)) {
             favorites.value = response.data.data
             favoritesStore.favoriteIds = response.data.data.map((h: any) => h.id)
-            favoritesStore.saveFavorites()
         } else {
             favorites.value = []
         }

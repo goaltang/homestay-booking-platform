@@ -9,6 +9,7 @@ import {
   clearUserFavorites as clearUserFavoritesApi,
   getUserFavoriteCount,
 } from "@/api/favorites";
+import { extractErrorMessage } from "@/types/error";
 
 export const useFavoritesStore = defineStore("favorites", () => {
   const router = useRouter();
@@ -34,34 +35,17 @@ export const useFavoritesStore = defineStore("favorites", () => {
         clearLocalFavorites();
       }
     } catch (error) {
-      console.error("加载收藏数据失败:", error);
-      // 如果用户已登录但加载失败，降级到localStorage
-      if (userStore.isAuthenticated) {
-        loadFromLocalStorage();
-      } else {
-        // 未登录用户出错时也清空收藏
+      console.error("加载收藏数据失败:", extractErrorMessage(error));
+      // 未登录用户出错时清空收藏
+      if (!userStore.isAuthenticated) {
         clearLocalFavorites();
       }
-    }
-  };
-
-  const loadFromLocalStorage = () => {
-    try {
-      const saved = localStorage.getItem("favorites");
-      if (saved) {
-        favoriteIds.value = JSON.parse(saved);
-      }
-    } catch (error) {
-      console.error("从localStorage加载收藏数据失败:", error);
-      favoriteIds.value = [];
     }
   };
 
   const clearLocalFavorites = () => {
     favoriteIds.value = [];
     synced.value = false;
-    localStorage.removeItem("favorites");
-    console.log("已清空本地收藏数据");
   };
 
   const loadFromServer = async () => {
@@ -71,23 +55,12 @@ export const useFavoritesStore = defineStore("favorites", () => {
       if (response.data && response.data.success) {
         favoriteIds.value = response.data.data || [];
         synced.value = true;
-        // 同步到localStorage作为备份
-        saveFavorites();
-        console.log("从服务器加载收藏数据成功:", favoriteIds.value);
       }
     } catch (error) {
-      console.error("从服务器加载收藏数据失败:", error);
+      console.error("从服务器加载收藏数据失败:", extractErrorMessage(error));
       throw error;
     } finally {
       loading.value = false;
-    }
-  };
-
-  const saveFavorites = () => {
-    try {
-      localStorage.setItem("favorites", JSON.stringify(favoriteIds.value));
-    } catch (error) {
-      console.error("保存收藏数据失败:", error);
     }
   };
 
@@ -134,7 +107,6 @@ export const useFavoritesStore = defineStore("favorites", () => {
           const result = response.data.data;
           if (result.action === "added") {
             favoriteIds.value.push(id);
-            saveFavorites();
             ElMessage.success("已添加到收藏");
             return true;
           }
@@ -143,13 +115,12 @@ export const useFavoritesStore = defineStore("favorites", () => {
         // 离线模式
         if (!isFavorite(id)) {
           favoriteIds.value.push(id);
-          saveFavorites();
           ElMessage.success("已添加到收藏");
           return true;
         }
       }
     } catch (error) {
-      console.error("添加收藏失败:", error);
+      console.error("添加收藏失败:", extractErrorMessage(error));
       ElMessage.error("添加收藏失败，请稍后重试");
     }
     return false;
@@ -172,7 +143,6 @@ export const useFavoritesStore = defineStore("favorites", () => {
             const index = favoriteIds.value.indexOf(id);
             if (index > -1) {
               favoriteIds.value.splice(index, 1);
-              saveFavorites();
               ElMessage.success("已从收藏中移除");
               return true;
             }
@@ -183,13 +153,12 @@ export const useFavoritesStore = defineStore("favorites", () => {
         const index = favoriteIds.value.indexOf(id);
         if (index > -1) {
           favoriteIds.value.splice(index, 1);
-          saveFavorites();
           ElMessage.success("已从收藏中移除");
           return true;
         }
       }
     } catch (error) {
-      console.error("取消收藏失败:", error);
+      console.error("取消收藏失败:", extractErrorMessage(error));
       ElMessage.error("取消收藏失败，请稍后重试");
     }
     return false;
@@ -218,7 +187,6 @@ export const useFavoritesStore = defineStore("favorites", () => {
             }
             ElMessage.success("已从收藏中移除");
           }
-          saveFavorites();
         }
       } else {
         // 离线模式
@@ -257,18 +225,16 @@ export const useFavoritesStore = defineStore("favorites", () => {
         const response = await clearUserFavoritesApi();
         if (response.data && response.data.success) {
           favoriteIds.value = [];
-          saveFavorites();
           ElMessage.success("已清空收藏");
         }
       } else {
         // 离线模式
         favoriteIds.value = [];
-        saveFavorites();
         ElMessage.success("已清空收藏");
       }
     } catch (error) {
       if (error !== "cancel") {
-        console.error("清空收藏失败:", error);
+        console.error("清空收藏失败:", extractErrorMessage(error));
         ElMessage.error("清空收藏失败，请稍后重试");
       }
     }
@@ -285,7 +251,7 @@ export const useFavoritesStore = defineStore("favorites", () => {
       await loadFromServer();
       console.log("收藏数据同步成功");
     } catch (error) {
-      console.error("收藏数据同步失败:", error);
+      console.error("收藏数据同步失败:", extractErrorMessage(error));
     }
   };
 
@@ -307,7 +273,7 @@ export const useFavoritesStore = defineStore("favorites", () => {
         }
       }
     } catch (error) {
-      console.error("获取收藏数量失败:", error);
+      console.error("获取收藏数量失败:", extractErrorMessage(error));
     }
   };
 
@@ -320,9 +286,7 @@ export const useFavoritesStore = defineStore("favorites", () => {
     loading,
     synced,
     loadFavorites,
-    loadFromLocalStorage,
     loadFromServer,
-    saveFavorites,
     clearLocalFavorites,
     isFavorite,
     addToFavorites,
@@ -333,4 +297,9 @@ export const useFavoritesStore = defineStore("favorites", () => {
     refreshFavoriteCount,
     checkAuthAndPrompt,
   };
+}, {
+  persist: {
+    key: 'favorites',
+    paths: ['favoriteIds'],
+  },
 });

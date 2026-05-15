@@ -5,6 +5,7 @@ import { RegisterRequest } from "@/types/auth";
 import { ElMessage } from "element-plus";
 import { initWebSocket, disconnectWebSocket } from "@/services/websocketService";
 import { useNotificationStore } from "@/stores/notification";
+import { extractErrorMessage, ApiRequestError } from "@/types/error";
 
 export interface UserInfo {
   id: number;
@@ -236,28 +237,33 @@ export const useUserStore = defineStore("user", () => {
         return true;
       }
       return false;
-    } catch (error: any) {
+    } catch (error) {
       console.error("登录失败:", error);
 
+      const apiError = error as ApiRequestError;
+
       // 优先使用API拦截器中提取的错误信息
-      if (error.displayMessage) {
-        throw new Error(error.displayMessage);
+      if (apiError.displayMessage) {
+        throw new Error(apiError.displayMessage);
       }
 
       // 检查是否是 Axios 错误并且有响应
-      if (error.response) {
-        console.error("错误响应:", error.response.data);
+      if (apiError.response) {
+        console.error("错误响应:", apiError.response.data);
 
         // 提取后端返回的具体错误信息
         let errorMessage = "登录失败，请重试";
+        const data = apiError.response.data;
 
-        if (error.response.data) {
-          if (typeof error.response.data === "string") {
-            errorMessage = error.response.data;
-          } else if (error.response.data.message) {
-            errorMessage = error.response.data.message;
-          } else if (error.response.data.error) {
-            errorMessage = error.response.data.error;
+        if (data) {
+          if (typeof data === "string") {
+            errorMessage = data;
+          } else if (typeof data === "object") {
+            if ("message" in data && typeof data.message === "string") {
+              errorMessage = data.message;
+            } else if ("error" in data && typeof data.error === "string") {
+              errorMessage = data.error;
+            }
           }
         }
 
@@ -265,11 +271,8 @@ export const useUserStore = defineStore("user", () => {
       }
 
       // 对于网络错误等其他情况
-      if (error.message) {
-        throw new Error(error.message);
-      }
-
-      throw new Error("登录过程中发生错误，请检查网络或稍后重试");
+      const msg = extractErrorMessage(error);
+      throw new Error(msg);
     }
   };
 
@@ -360,11 +363,12 @@ export const useUserStore = defineStore("user", () => {
       }
 
       return false;
-    } catch (error: any) {
+    } catch (error) {
       console.error("注册失败:", error);
+      const apiError = error as ApiRequestError;
 
       // 只有在开发环境才使用模拟数据
-      if (import.meta.env.DEV && !error.response) {
+      if (import.meta.env.DEV && !apiError.response) {
         warn("API调用失败，使用模拟注册数据（仅用于开发测试）");
         setToken("mock-token-" + Date.now());
 
@@ -383,11 +387,12 @@ export const useUserStore = defineStore("user", () => {
       }
 
       // 确保错误中包含后端返回的消息
-      if (error.response && error.response.data) {
-        if (typeof error.response.data === "string") {
-          error.message = error.response.data;
-        } else if (error.response.data.message) {
-          error.message = error.response.data.message;
+      if (apiError.response?.data) {
+        const data = apiError.response.data;
+        if (typeof data === "string") {
+          apiError.message = data;
+        } else if (typeof data === "object" && "message" in data) {
+          apiError.message = (data as { message: string }).message;
         }
       }
 
@@ -425,8 +430,13 @@ export const useUserStore = defineStore("user", () => {
       const response = await api.put<UserInfo>("/api/users/profile", data);
       userInfo.value = response.data;
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "更新个人信息失败");
+    } catch (error) {
+      const apiError = error as ApiRequestError;
+      throw new Error(
+        (typeof apiError.response?.data === "object" && apiError.response.data?.message)
+          ? apiError.response.data.message
+          : "更新个人信息失败"
+      );
     }
   };
 
@@ -435,8 +445,8 @@ export const useUserStore = defineStore("user", () => {
       await api.post("/api/users/change-password", data);
       ElMessage.success("密码修改成功");
       return true;
-    } catch (error: any) {
-      console.error("修改密码失败:", error);
+    } catch (error) {
+      console.error("修改密码失败:", extractErrorMessage(error));
       ElMessage.error("修改密码失败，请检查原密码是否正确");
       return false;
     }
@@ -565,20 +575,19 @@ export const useUserStore = defineStore("user", () => {
         warn("未能从响应中解析出用户数据");
         return null;
       }
-    } catch (error: any) {
-      console.error("获取用户信息失败:", error);
+    } catch (error) {
+      console.error("获取用户信息失败:", extractErrorMessage(error));
+      const apiError = error as ApiRequestError;
 
-      if (error.response) {
+      if (apiError.response) {
         console.error("API响应错误:", {
-          status: error.response.status,
-          url: error.config?.url,
-          method: error.config?.method,
-          data: error.response.data,
+          status: apiError.response.status,
+          data: apiError.response.data,
         });
       }
 
       // 401 时直接抛出异常，让调用方处理（避免内部 logout 导致状态混乱）
-      if (error.response?.status === 401) {
+      if (apiError.response?.status === 401) {
         throw new Error("登录状态已过期，请重新登录");
       }
 
@@ -606,10 +615,10 @@ export const useUserStore = defineStore("user", () => {
           return userData;
         }
       } catch (backupError) {
-        console.error("备用API也失败:", backupError);
+        console.error("备用API也失败:", extractErrorMessage(backupError));
       }
 
-      throw new Error(error.displayMessage || "获取用户信息失败");
+      throw new Error(apiError.displayMessage || "获取用户信息失败");
     }
   };
 
@@ -693,8 +702,8 @@ export const useUserStore = defineStore("user", () => {
 
       await fetchUnreadCount();
       return avatarPath;
-    } catch (error: any) {
-      console.error("上传头像失败:", error);
+    } catch (error) {
+      console.error("上传头像失败:", extractErrorMessage(error));
       throw error;
     }
   };

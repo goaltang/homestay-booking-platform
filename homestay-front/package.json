@@ -19,6 +19,7 @@
     "element-china-area-data": "^6.1.0",
     "element-plus": "^2.4.3",
     "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^3.2.3",
     "qrcode.vue": "^3.8.0",
     "sockjs-client": "^1.6.1",
     "stompjs": "^2.3.3",

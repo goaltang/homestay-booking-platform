@@ -111,10 +111,14 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   // 解析错误类型
-  const parseError = (error: any): SearchError => {
+  const parseError = (error: unknown): SearchError => {
+    const err = error as Record<string, unknown>
+
     // 网络错误（请求未发出或连接失败）
-    if (!error.response) {
-      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+    if (!err.response) {
+      const msg = typeof err.message === 'string' ? err.message : ''
+      const code = typeof err.code === 'string' ? err.code : ''
+      if (code === 'ECONNABORTED' || msg.includes('timeout')) {
         return {
           type: 'timeout',
           message: '搜索请求超时，请稍后重试'
@@ -126,8 +130,10 @@ export const useSearchStore = defineStore('search', () => {
       }
     }
 
+    const response = err.response as Record<string, unknown>
+
     // 服务器错误（返回了错误状态码）
-    const status = error.response?.status
+    const status = typeof response.status === 'number' ? response.status : 0
     if (status >= 500) {
       return {
         type: 'server',
@@ -146,7 +152,8 @@ export const useSearchStore = defineStore('search', () => {
 
     // 客户端错误
     if (status >= 400) {
-      const errorMsg = error.response?.data?.message || '搜索失败'
+      const data = response.data as Record<string, unknown> | undefined
+      const errorMsg = typeof data?.message === 'string' ? data.message : '搜索失败'
       return {
         type: 'unknown',
         message: errorMsg,
@@ -157,7 +164,7 @@ export const useSearchStore = defineStore('search', () => {
     // 未知错误
     return {
       type: 'unknown',
-      message: error.message || '搜索失败，请稍后重试'
+      message: typeof err.message === 'string' ? err.message : '搜索失败，请稍后重试'
     }
   }
 

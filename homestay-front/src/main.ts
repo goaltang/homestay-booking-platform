@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
+import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import ElementPlus from "element-plus";
 import "element-plus/dist/index.css";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
@@ -10,9 +11,11 @@ import "./assets/main.css";
 import "./assets/input-styles.css";
 import "./styles/design-system.css";
 import { useUserStore } from "./stores/user";
+import { extractErrorMessage } from "./types/error";
 
 const app = createApp(App);
 const pinia = createPinia();
+pinia.use(piniaPluginPersistedstate);
 
 app.use(pinia);
 app.use(router);
@@ -46,10 +49,11 @@ const initializeApp = async () => {
         // 保存更新后的用户信息
         localStorage.setItem("homestay_user", JSON.stringify(userStore.userInfo));
       }
-    } catch (error: any) {
-      console.error("获取用户信息失败，可能需要重新登录:", error);
+    } catch (error) {
+      console.error("获取用户信息失败，可能需要重新登录:", extractErrorMessage(error));
+      const apiError = error as { response?: { status: number } };
       // 如果获取用户信息失败，清除token
-      if (error.response && error.response.status === 401) {
+      if (apiError.response?.status === 401) {
         userStore.logout();
         router.push("/login");
       }
