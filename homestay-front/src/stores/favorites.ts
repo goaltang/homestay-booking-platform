@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "./auth";
+import { useUserStore } from "./user";
 import {
   toggleFavorite as toggleFavoriteApi,
   getUserFavoriteIds,
@@ -23,11 +23,11 @@ export const useFavoritesStore = defineStore("favorites", () => {
 
   // 方法
   const loadFavorites = async () => {
-    const authStore = useAuthStore();
+    const userStore = useUserStore();
 
     try {
       // 如果用户已登录，优先从服务器加载
-      if (authStore.isAuthenticated) {
+      if (userStore.isAuthenticated) {
         await loadFromServer();
       } else {
         // 未登录时清空收藏数据，不应该显示任何收藏信息
@@ -36,7 +36,7 @@ export const useFavoritesStore = defineStore("favorites", () => {
     } catch (error) {
       console.error("加载收藏数据失败:", error);
       // 如果用户已登录但加载失败，降级到localStorage
-      if (authStore.isAuthenticated) {
+      if (userStore.isAuthenticated) {
         loadFromLocalStorage();
       } else {
         // 未登录用户出错时也清空收藏
@@ -97,9 +97,9 @@ export const useFavoritesStore = defineStore("favorites", () => {
 
   // 检查登录状态
   const checkAuthAndPrompt = async (): Promise<boolean> => {
-    const authStore = useAuthStore();
+    const userStore = useUserStore();
 
-    if (!authStore.isAuthenticated) {
+    if (!userStore.isAuthenticated) {
       try {
         await ElMessageBox.confirm("请先登录后再进行收藏操作", "需要登录", {
           confirmButtonText: "去登录",
@@ -124,10 +124,10 @@ export const useFavoritesStore = defineStore("favorites", () => {
       return false;
     }
 
-    const authStore = useAuthStore();
+    const userStore = useUserStore();
 
     try {
-      if (authStore.isAuthenticated) {
+      if (userStore.isAuthenticated) {
         // 使用服务器API
         const response = await toggleFavoriteApi(id);
         if (response.data && response.data.success) {
@@ -160,10 +160,10 @@ export const useFavoritesStore = defineStore("favorites", () => {
       return false;
     }
 
-    const authStore = useAuthStore();
+    const userStore = useUserStore();
 
     try {
-      if (authStore.isAuthenticated) {
+      if (userStore.isAuthenticated) {
         // 使用服务器API
         const response = await toggleFavoriteApi(id);
         if (response.data && response.data.success) {
@@ -200,10 +200,10 @@ export const useFavoritesStore = defineStore("favorites", () => {
       return;
     }
 
-    const authStore = useAuthStore();
+    const userStore = useUserStore();
 
     try {
-      if (authStore.isAuthenticated) {
+      if (userStore.isAuthenticated) {
         // 使用服务器API
         const response = await toggleFavoriteApi(id);
         if (response.data && response.data.success) {
@@ -250,9 +250,9 @@ export const useFavoritesStore = defineStore("favorites", () => {
         }
       );
 
-      const authStore = useAuthStore();
+      const userStore = useUserStore();
 
-      if (authStore.isAuthenticated) {
+      if (userStore.isAuthenticated) {
         // 使用服务器API
         const response = await clearUserFavoritesApi();
         if (response.data && response.data.success) {
@@ -276,8 +276,8 @@ export const useFavoritesStore = defineStore("favorites", () => {
 
   // 同步收藏数据（用户登录后调用）
   const syncFavorites = async () => {
-    const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) {
+    const userStore = useUserStore();
+    if (!userStore.isAuthenticated) {
       return;
     }
 
@@ -291,8 +291,8 @@ export const useFavoritesStore = defineStore("favorites", () => {
 
   // 获取收藏数量（从服务器）
   const refreshFavoriteCount = async () => {
-    const authStore = useAuthStore();
-    if (!authStore.isAuthenticated) {
+    const userStore = useUserStore();
+    if (!userStore.isAuthenticated) {
       return;
     }
 

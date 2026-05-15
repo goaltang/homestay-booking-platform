@@ -1,4 +1,4 @@
-import { reactive, watch, computed } from 'vue'
+import { reactive, watch, computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 export interface SearchParams {
@@ -98,11 +98,11 @@ export function useSearchParams(options: UseSearchParamsOptions = {}) {
   }
 
   // Watch for changes and sync to URL
-  let isInternalUpdate = false
+  const isInternalUpdate = ref(false)
   watch(
     () => ({ ...searchParams }),
     () => {
-      if (isInternalUpdate) return
+      if (isInternalUpdate.value) return
       syncToUrl()
     },
     { deep: true }
@@ -110,7 +110,7 @@ export function useSearchParams(options: UseSearchParamsOptions = {}) {
 
   // Load params from URL on mount
   const loadFromUrl = () => {
-    isInternalUpdate = true
+    isInternalUpdate.value = true
 
     searchParams.keyword = (route.query.keyword as string) || ''
     searchParams.selectedRegion = route.query.region
@@ -135,7 +135,7 @@ export function useSearchParams(options: UseSearchParamsOptions = {}) {
       ? Number(route.query.minRating)
       : null
 
-    isInternalUpdate = false
+    isInternalUpdate.value = false
   }
 
   // Update single param and sync
@@ -143,23 +143,23 @@ export function useSearchParams(options: UseSearchParamsOptions = {}) {
     key: K,
     value: SearchParams[K]
   ) => {
-    isInternalUpdate = true
+    isInternalUpdate.value = true
     searchParams[key] = value
-    isInternalUpdate = false
+    isInternalUpdate.value = false
     syncToUrl()
   }
 
   // Update multiple params at once
   const updateParams = (updates: Partial<SearchParams>) => {
-    isInternalUpdate = true
+    isInternalUpdate.value = true
     Object.assign(searchParams, updates)
-    isInternalUpdate = false
+    isInternalUpdate.value = false
     syncToUrl()
   }
 
   // Reset all params to defaults
   const resetParams = () => {
-    isInternalUpdate = true
+    isInternalUpdate.value = true
     searchParams.keyword = ''
     searchParams.selectedRegion = []
     searchParams.checkIn = null
@@ -170,7 +170,7 @@ export function useSearchParams(options: UseSearchParamsOptions = {}) {
     searchParams.maxPrice = null
     searchParams.amenities = []
     searchParams.minRating = null
-    isInternalUpdate = false
+    isInternalUpdate.value = false
     syncToUrl()
   }
 
@@ -196,7 +196,7 @@ export function useSearchParams(options: UseSearchParamsOptions = {}) {
     (newQuery) => {
       if (Object.keys(newQuery).length === 0) return
 
-      isInternalUpdate = true
+      isInternalUpdate.value = true
 
       if (newQuery.keyword !== undefined) {
         searchParams.keyword = newQuery.keyword as string
@@ -222,7 +222,7 @@ export function useSearchParams(options: UseSearchParamsOptions = {}) {
         searchParams.guestCount = 1
       }
 
-      isInternalUpdate = false
+      isInternalUpdate.value = false
     },
     { deep: true }
   )

@@ -66,14 +66,11 @@ import { Bell, Calendar, ChatDotRound, Star, InfoFilled, Goods, House } from '@e
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useUserStore } from '@/stores/user';
-import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
 const route = useRoute();
 const notificationStore = useNotificationStore();
 const userStore = useUserStore();
-const authStore = useAuthStore();
-
 const isAnimating = shallowRef(false);
 
 // 从 store 获取状态
@@ -81,7 +78,7 @@ const unreadCount = computed(() => notificationStore.unreadCount);
 const notifications = computed(() => notificationStore.notifications); // 直接使用 store 的列表
 const loading = computed(() => notificationStore.loading);
 const hasUnread = computed(() => notificationStore.hasUnread);
-const isAuthenticated = computed(() => userStore.isAuthenticated || authStore.isAuthenticated);
+const isAuthenticated = computed(() => userStore.isAuthenticated);
 
 // 加载通知列表 (当 Popover 显示时触发)
 const loadNotifications = async () => {

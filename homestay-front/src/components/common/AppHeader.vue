@@ -33,7 +33,7 @@
                     <el-icon><Location /></el-icon>
                     地图找房
                 </div>
-                <div class="host-link" v-if="!isLoggedIn || (!userStore.isLandlord && !authStore.isLandlord)" @click="goToBecomeHost">
+                <div class="host-link" v-if="!isLoggedIn || !userStore.isLandlord" @click="goToBecomeHost">
                     成为房东
                 </div>
                 <NotificationBell v-if="isLoggedIn" />
@@ -78,7 +78,6 @@ import { useRouter, useRoute } from 'vue-router';
 import { ElMessage, ElDropdown, ElDropdownMenu, ElDropdownItem, ElAvatar, ElIcon } from 'element-plus';
 import { Menu, Search, Location } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
-import { useAuthStore } from '@/stores/auth';
 import { useSearchStore } from '@/stores/search';
 import { getAvatarUrl, handleImageError } from '@/utils/image';
 import NotificationBell from '@/components/NotificationBell.vue';
@@ -87,10 +86,9 @@ import SearchBar from '@/components/SearchBar.vue';
 const router = useRouter();
 const route = useRoute();
 const userStore = useUserStore();
-const authStore = useAuthStore();
 const searchStore = useSearchStore();
 
-const isLoggedIn = computed(() => userStore.token !== null || authStore.isAuthenticated);
+const isLoggedIn = computed(() => userStore.isAuthenticated);
 const isHome = computed(() => route.path === '/');
 const isScrolled = ref(false);
 const isSearchExpanded = ref(false);
@@ -153,9 +151,7 @@ const goToBecomeHost = () => {
     }
     
     // Check if user is already a host
-    const isLandlord = authStore.isLandlord || 
-                      userStore.userInfo?.role === 'ROLE_LANDLORD' || 
-                      userStore.userInfo?.role === 'ROLE_HOST';
+    const isLandlord = userStore.isLandlord;
                       
     if (isLandlord) {
         router.push('/host');
@@ -193,7 +189,7 @@ const handleCommand = (command: string) => {
                 router.push('/login?message=请先登录后再访问房东中心');
                 return;
             }
-            if (authStore.isLandlord || userStore.isLandlord) {
+            if (userStore.isLandlord) {
                 router.push('/host').catch(err => {
                     console.error('跳转到房东中心失败:', err);
                     ElMessage.error('跳转到房东中心失败');

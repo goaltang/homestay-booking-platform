@@ -1,7 +1,7 @@
 import { ref, reactive, computed, type Ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { useAuthStore } from "@/stores/auth";
+import { useUserStore } from "@/stores/user";
 import {
   formatDateString,
   calculateNights,
@@ -16,7 +16,7 @@ export function useBooking(
 ) {
   const router = useRouter();
   const route = useRoute();
-  const authStore = useAuthStore();
+  const userStore = useUserStore();
 
   // sessionStorage key for preserving booking dates across login redirect
   const PENDING_BOOKING_KEY = 'pending-booking-dates';
@@ -154,7 +154,7 @@ export function useBooking(
 
   const bookHomestay = async () => {
     // 检查登录状态
-    if (!authStore.isAuthenticated) {
+    if (!userStore.isAuthenticated) {
       // 保存当前选择的日期，登录返回后可恢复
       savePendingBookingDates();
       ElMessageBox.confirm("您需要登录才能预订，是否现在登录？", "提示", {

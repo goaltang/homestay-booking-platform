@@ -64,6 +64,13 @@ function migrateOldKeys() {
 
 migrateOldKeys();
 
+const log = (...args: unknown[]) => {
+  if (import.meta.env.DEV) console.log(...args);
+};
+const warn = (...args: unknown[]) => {
+  if (import.meta.env.DEV) console.warn(...args);
+};
+
 export const useUserStore = defineStore("user", () => {
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY));
   const userInfo = ref<UserInfo | null>(
@@ -72,6 +79,11 @@ export const useUserStore = defineStore("user", () => {
 
   const isAuthenticated = computed(() => !!token.value);
   const normalizedRole = computed(() => userInfo.value?.role?.toUpperCase() || "");
+
+  /** @deprecated 请直接使用 userInfo */
+  const user = computed(() => userInfo.value);
+  /** @deprecated 请直接使用 normalizedRole */
+  const userRole = computed(() => normalizedRole.value);
   const isAdmin = computed(() =>
     normalizedRole.value === "ROLE_ADMIN" || normalizedRole.value === "ADMIN"
   );
@@ -86,7 +98,7 @@ export const useUserStore = defineStore("user", () => {
       role === "LANDLORD" ||
       role === "HOST";
 
-    console.log("isLandlord计算:", {
+    log("isLandlord计算:", {
       role: userInfo.value?.role,
       normalized: role,
       result: isLandlordResult,
@@ -107,7 +119,7 @@ export const useUserStore = defineStore("user", () => {
   };
 
   const setUser = (user: UserInfo) => {
-    console.log("设置用户信息:", user);
+    log("设置用户信息:", user);
     userInfo.value = user;
     // 保存用户信息到 localStorage
     localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -115,8 +127,8 @@ export const useUserStore = defineStore("user", () => {
       initWebSocket(user.id);
     }
     // 输出调试信息
-    console.log("用户角色:", user.role);
-    console.log("isLandlord计算值:", user.role === "ROLE_HOST");
+    log("用户角色:", user.role);
+    log("isLandlord计算值:", user.role === "ROLE_HOST");
   };
 
   const login = async (username: string, password: string) => {
@@ -127,7 +139,7 @@ export const useUserStore = defineStore("user", () => {
         password,
       });
 
-      console.log("登录响应:", response.data);
+      log("登录响应:", response.data);
 
       if (response.data && response.data.token) {
         // 设置token
@@ -139,12 +151,12 @@ export const useUserStore = defineStore("user", () => {
         // 优先从嵌套的user对象获取角色（后端login接口主要设置此字段）
         if (response.data.user && response.data.user.role) {
           role = response.data.user.role;
-          console.log("从user对象获取的角色:", role);
+          log("从user对象获取的角色:", role);
         }
         // 其次从顶层role获取
         else if (response.data.role) {
           role = response.data.role;
-          console.log("从响应顶层获取的角色:", role);
+          log("从响应顶层获取的角色:", role);
         }
 
         // 如果role仍然为空，从authorities中提取角色
@@ -153,7 +165,7 @@ export const useUserStore = defineStore("user", () => {
           response.data.authorities &&
           response.data.authorities.length > 0
         ) {
-          console.log(
+          log(
             "从authorities中提取角色信息:",
             response.data.authorities
           );
@@ -162,7 +174,7 @@ export const useUserStore = defineStore("user", () => {
           );
           if (authority) {
             role = authority.authority;
-            console.log("已从authorities提取角色:", role);
+            log("已从authorities提取角色:", role);
           }
         }
 
@@ -181,7 +193,7 @@ export const useUserStore = defineStore("user", () => {
             userObj?.verificationStatus || response.data.verificationStatus || "",
         };
 
-        console.log("最终确定的用户角色:", userData.role);
+        log("最终确定的用户角色:", userData.role);
 
         // 处理头像URL，确保如果是完整URL带域名的，转换为相对路径
         if (
@@ -198,26 +210,26 @@ export const useUserStore = defineStore("user", () => {
             ) {
               const filename = url.pathname.split("/").pop();
               userData.avatar = `/api/files/avatar/${filename}`;
-              console.log("头像URL已转换为API路径:", userData.avatar);
+              log("头像URL已转换为API路径:", userData.avatar);
             }
             // 如果是其他/uploads/路径
             else if (url.pathname.includes("/uploads/")) {
               // 将完整URL转换为API路径
               userData.avatar = `/api${url.pathname}`;
-              console.log("头像URL已转换为相对路径:", userData.avatar);
+              log("头像URL已转换为相对路径:", userData.avatar);
             }
           } catch (e) {
             console.error("头像URL解析错误:", e);
           }
         }
 
-        console.log("准备保存的用户数据:", userData);
+        log("准备保存的用户数据:", userData);
         setUser(userData);
 
         // 确保localStorage保存了用户信息
         localStorage.setItem(USER_KEY, JSON.stringify(userData));
-        console.log("用户信息已保存到localStorage", userData);
-        console.log("检查isLandlord:", isLandlord.value);
+        log("用户信息已保存到localStorage", userData);
+        log("检查isLandlord:", isLandlord.value);
 
         await fetchUnreadCount();
 
@@ -270,11 +282,11 @@ export const useUserStore = defineStore("user", () => {
         registerData.role = `ROLE_${registerData.role.toUpperCase()}`;
       }
 
-      console.log("尝试注册新用户，发送数据:", JSON.stringify(registerData));
+      log("尝试注册新用户，发送数据:", JSON.stringify(registerData));
       // 添加后端API调用
       const response = await api.post("/api/auth/register", registerData);
 
-      console.log("注册响应:", response.data);
+      log("注册响应:", response.data);
 
       if (response.data && response.data.token) {
         // 设置token
@@ -289,7 +301,7 @@ export const useUserStore = defineStore("user", () => {
           response.data.authorities &&
           response.data.authorities.length > 0
         ) {
-          console.log(
+          log(
             "从authorities中提取角色信息:",
             response.data.authorities
           );
@@ -298,7 +310,7 @@ export const useUserStore = defineStore("user", () => {
           );
           if (authority) {
             role = authority.authority;
-            console.log("已提取角色:", role);
+            log("已提取角色:", role);
           }
         }
 
@@ -318,7 +330,7 @@ export const useUserStore = defineStore("user", () => {
 
         // 确保localStorage保存了用户信息
         localStorage.setItem(USER_KEY, JSON.stringify(userData));
-        console.log("用户信息已保存到localStorage", userData);
+        log("用户信息已保存到localStorage", userData);
 
         // 不再强制刷新页面，让调用方处理导航
         // window.location.reload();
@@ -330,7 +342,7 @@ export const useUserStore = defineStore("user", () => {
 
       // 如果后端API调用失败，回退到模拟注册
       if (import.meta.env.DEV) {
-        console.warn("使用模拟注册数据（仅用于开发测试）");
+        warn("使用模拟注册数据（仅用于开发测试）");
         setToken("mock-token-" + Date.now());
 
         const mockUserData = {
@@ -343,7 +355,7 @@ export const useUserStore = defineStore("user", () => {
         };
 
         setUser(mockUserData);
-        console.log("模拟注册成功:", mockUserData);
+        log("模拟注册成功:", mockUserData);
         return true;
       }
 
@@ -353,7 +365,7 @@ export const useUserStore = defineStore("user", () => {
 
       // 只有在开发环境才使用模拟数据
       if (import.meta.env.DEV && !error.response) {
-        console.warn("API调用失败，使用模拟注册数据（仅用于开发测试）");
+        warn("API调用失败，使用模拟注册数据（仅用于开发测试）");
         setToken("mock-token-" + Date.now());
 
         const mockUserData = {
@@ -366,7 +378,7 @@ export const useUserStore = defineStore("user", () => {
         };
 
         setUser(mockUserData);
-        console.log("模拟注册成功:", mockUserData);
+        log("模拟注册成功:", mockUserData);
         return true;
       }
 
@@ -432,17 +444,17 @@ export const useUserStore = defineStore("user", () => {
 
   const fetchUserInfo = async () => {
     try {
-      console.log("开始获取用户信息");
+      log("开始获取用户信息");
 
       // 如果没有token，不执行请求
       if (!token.value) {
-        console.warn("没有token，无法获取用户信息");
+        warn("没有token，无法获取用户信息");
         return null;
       }
 
       // 尝试从API获取用户信息
       const response = await api.get("/api/auth/current");
-      console.log("获取用户信息响应:", response.data);
+      log("获取用户信息响应:", response.data);
 
       // 处理可能的不同响应格式
       let userData: UserInfo | null = null;
@@ -450,7 +462,7 @@ export const useUserStore = defineStore("user", () => {
       if (response.data) {
         // 处理响应中直接包含用户数据的情况
         if (response.data.username || response.data.id) {
-          console.log("用户信息直接在响应中");
+          log("用户信息直接在响应中");
           userData = {
             id: response.data.id || 0,
             username: response.data.username || "",
@@ -472,7 +484,7 @@ export const useUserStore = defineStore("user", () => {
         // 处理响应中嵌套在data或user中的情况
         else if (response.data.data || response.data.user) {
           const userDataObj = response.data.data || response.data.user;
-          console.log("用户信息嵌套在data或user字段中:", userDataObj);
+          log("用户信息嵌套在data或user字段中:", userDataObj);
 
           if (userDataObj) {
             userData = {
@@ -497,7 +509,7 @@ export const useUserStore = defineStore("user", () => {
       }
 
       if (userData) {
-        console.log("解析到的用户数据:", userData);
+        log("解析到的用户数据:", userData);
 
         // 处理头像URL，统一格式
         if (userData.avatar) {
@@ -515,13 +527,13 @@ export const useUserStore = defineStore("user", () => {
               ) {
                 const filename = url.pathname.split("/").pop();
                 userData.avatar = `/api/files/avatar/${filename}`;
-                console.log("头像URL已转换为API路径:", userData.avatar);
+                log("头像URL已转换为API路径:", userData.avatar);
               }
               // 如果是其他/uploads/路径
               else if (url.pathname.includes("/uploads/")) {
                 // 将完整URL转换为API路径
                 userData.avatar = `/api${url.pathname}`;
-                console.log("头像URL已转换为相对路径:", userData.avatar);
+                log("头像URL已转换为相对路径:", userData.avatar);
               }
             } catch (e) {
               console.error("头像URL解析错误:", e);
@@ -534,7 +546,7 @@ export const useUserStore = defineStore("user", () => {
           ) {
             const filename = userData.avatar.split("/").pop();
             userData.avatar = `/api/files/avatar/${filename}`;
-            console.log("旧格式头像URL已转换:", userData.avatar);
+            log("旧格式头像URL已转换:", userData.avatar);
           }
           // 如果只是文件名，构建完整路径
           else if (
@@ -542,7 +554,7 @@ export const useUserStore = defineStore("user", () => {
             !userData.avatar.includes("/")
           ) {
             userData.avatar = `/api/files/avatar/${userData.avatar}`;
-            console.log("文件名已转换为完整URL:", userData.avatar);
+            log("文件名已转换为完整URL:", userData.avatar);
           }
         }
 
@@ -550,7 +562,7 @@ export const useUserStore = defineStore("user", () => {
         await fetchUnreadCount();
         return userData;
       } else {
-        console.warn("未能从响应中解析出用户数据");
+        warn("未能从响应中解析出用户数据");
         return null;
       }
     } catch (error: any) {
@@ -572,7 +584,7 @@ export const useUserStore = defineStore("user", () => {
 
       // 尝试备用接口（仅非401错误时）
       try {
-        console.log("尝试备用API获取用户信息");
+        log("尝试备用API获取用户信息");
         const backupResponse = await api.get("/api/auth/current");
         if (
           backupResponse.data &&
@@ -624,7 +636,7 @@ export const useUserStore = defineStore("user", () => {
 
       // 记录文件信息
       const fileSizeKB = (file.size / 1024).toFixed(2);
-      console.log("准备上传头像:", {
+      log("准备上传头像:", {
         文件名: file.name,
         类型: file.type,
         大小: `${fileSizeKB}KB`,
@@ -661,7 +673,7 @@ export const useUserStore = defineStore("user", () => {
           avatarPath = response.data.path;
         }
 
-        console.log("从响应中解析头像路径:", avatarPath);
+        log("从响应中解析头像路径:", avatarPath);
       }
 
       if (!avatarPath) {
@@ -669,14 +681,14 @@ export const useUserStore = defineStore("user", () => {
         throw new Error("上传头像失败：无法解析服务器返回的头像路径");
       }
 
-      console.log("头像上传成功，文件名:", avatarPath);
+      log("头像上传成功，文件名:", avatarPath);
 
       // 头像上传时，FileController会自动更新数据库中的用户头像
       // 这里只需要更新本地用户信息
       if (userInfo.value) {
         userInfo.value.avatar = avatarPath;
         localStorage.setItem(USER_KEY, JSON.stringify(userInfo.value));
-        console.log("用户头像已更新:", avatarPath);
+        log("用户头像已更新:", avatarPath);
       }
 
       await fetchUnreadCount();
@@ -689,12 +701,12 @@ export const useUserStore = defineStore("user", () => {
 
   const resetPassword = async (token: string, newPassword: string) => {
     try {
-      console.log("开始重置密码");
+      log("开始重置密码");
       const response = await api.post("/api/auth/reset-password", {
         token,
         newPassword,
       });
-      console.log("密码重置成功:", response.data);
+      log("密码重置成功:", response.data);
       return response.data;
     } catch (error) {
       console.error("密码重置失败:", error);
@@ -704,7 +716,7 @@ export const useUserStore = defineStore("user", () => {
 
   const forgotPassword = async (email: string) => {
     try {
-      console.log("模拟发送重置密码邮件到:", email);
+      log("模拟发送重置密码邮件到:", email);
       return true;
     } catch (error) {
       console.error("发送重置密码邮件失败:", error);
@@ -723,14 +735,14 @@ export const useUserStore = defineStore("user", () => {
 
     // 如果authorities存在，从中提取角色
     if (userInfo.value.authorities && userInfo.value.authorities.length > 0) {
-      console.log("尝试从authorities同步用户角色:", userInfo.value.authorities);
+      log("尝试从authorities同步用户角色:", userInfo.value.authorities);
       const authority = userInfo.value.authorities.find((auth) =>
         auth.authority.startsWith("ROLE_")
       );
       if (authority) {
         userInfo.value.role = authority.authority;
         localStorage.setItem(USER_KEY, JSON.stringify(userInfo.value));
-        console.log("用户角色已同步:", userInfo.value.role);
+        log("用户角色已同步:", userInfo.value.role);
         return true;
       }
     }
@@ -762,6 +774,9 @@ export const useUserStore = defineStore("user", () => {
   return {
     token,
     userInfo,
+    user,
+    userRole,
+    normalizedRole,
     isAuthenticated,
     isAdmin,
     isLandlord,

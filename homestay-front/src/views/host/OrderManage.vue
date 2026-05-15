@@ -831,7 +831,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { Search, Refresh, Clock, CircleCheck, Warning, Setting, ArrowDown } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
 import {
     getHostOrders,
     cancelOrder,
@@ -903,13 +903,13 @@ interface HomestayOption {
     title: string;
 }
 
-const authStore = useAuthStore()
+const userStore = useUserStore()
 
 const currentUserIdentity = computed(() => {
-    if (!authStore.user) return null
+    if (!userStore.user) return null
     return {
-        userId: authStore.user.id,
-        role: authStore.user.role || ''
+        userId: userStore.user.id,
+        role: userStore.user.role || ''
     }
 })
 

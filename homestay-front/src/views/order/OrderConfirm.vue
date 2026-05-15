@@ -266,7 +266,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createOrder } from '../../api/order'
 import { getHomestayUnavailableDates } from '@/api/homestay'
-import { useAuthStore } from '../../stores/auth'
 import { useUserStore } from '../../stores/user'
 import { getUserInfo } from '../../api/user'
 import { getHomestayById } from '@/api/homestay'
@@ -318,7 +317,6 @@ interface HostInfo {
 
 const route = useRoute()
 const router = useRouter()
-const authStore = useAuthStore()
 const userStore = useUserStore()
 
 const loading = ref(true)
@@ -418,7 +416,7 @@ const saveUserInfo = async () => {
     }
 
     // 如果用户已登录，同步到后端
-    if (authStore.isAuthenticated) {
+    if (userStore.isAuthenticated) {
         try {
             await userStore.updateProfile({
                 username: userStore.userInfo?.username || '',
@@ -710,7 +708,7 @@ const goBackToSelectDates = () => {
 // 自动填充用户信息
 const populateUserInfo = async () => {
     try {
-        if (authStore.isAuthenticated && userStore.isAuthenticated) {
+        if (userStore.isAuthenticated && userStore.isAuthenticated) {
             // 先从userStore尝试获取缓存的用户信息
             if (userStore.userInfo) {
                 guestInfo.name = userStore.userInfo.realName || userStore.userInfo.username || ''
@@ -719,7 +717,7 @@ const populateUserInfo = async () => {
             }
 
             // 如果没有缓存的用户信息，则从API获取
-            const userId = authStore.user?.id
+            const userId = userStore.user?.id
             if (userId) {
                 const response = await getUserInfo(userId)
                 if (response && response.data) {

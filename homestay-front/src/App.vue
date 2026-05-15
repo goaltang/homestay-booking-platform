@@ -96,21 +96,21 @@ body {
   line-height: 1.5;
 }
 
-/* 全局数字输入框样式优化 */
+/* 数字输入框样式 — 使用低优先级选择器，允许组件级覆盖 */
 .el-input-number {
-  width: 100px !important;
+  width: 100px;
 }
 
 .el-input-number .el-input__inner {
-  text-align: center !important;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
+  text-align: center;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
-/* 隐藏筛选面板中的数字输入框控制按钮 */
+/* 筛选面板中的数字输入框控制按钮 — 由组件自身控制 */
 .filter-card .el-input-number__decrease,
 .filter-card .el-input-number__increase {
-  display: none !important;
+  display: none;
 }
 
 .app-container {

@@ -151,7 +151,6 @@ import {
     ChatDotRound
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { useAuthStore } from '@/stores/auth'
 import { ElMessageBox, ElMessage, ElContainer, ElAside, ElMenu, ElMenuItem, ElIcon, ElHeader, ElBreadcrumb, ElBreadcrumbItem, ElDropdown, ElDropdownMenu, ElDropdownItem, ElAvatar, ElMain } from 'element-plus'
 import NotificationBell from '@/components/NotificationBell.vue'
 import MessageBell from '@/components/MessageBell.vue'
@@ -160,7 +159,6 @@ import { useChatStore } from '@/stores/chat'
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-const authStore = useAuthStore()
 const chatStore = useChatStore()
 
 // 从userInfo中获取用户名
@@ -248,22 +246,20 @@ onMounted(() => {
     console.log('房东中心组件已挂载')
     console.log('当前用户信息:', {
         userStore: userStore.userInfo,
-        authStore: authStore.user
+        authStore: userStore.user
     })
     console.log('当前用户角色:', {
         userStoreRole: userStore.userInfo?.role,
-        authStoreRole: authStore.userRole,
-        authStoreIsLandlord: authStore.isLandlord
+        authStoreRole: userStore.userRole,
+        authStoreIsLandlord: userStore.isLandlord
     })
 
     // 获取聊天未读数
     chatStore.fetchUnreadCount()
 
     // 如果用户不是房东，重定向到首页
-    const isUserAuthenticated = userStore.token !== null || authStore.isAuthenticated
-    const isLandlord = authStore.isLandlord ||
-        userStore.userInfo?.role === 'ROLE_LANDLORD' ||
-        userStore.userInfo?.role === 'ROLE_HOST'
+    const isUserAuthenticated = userStore.isAuthenticated
+    const isLandlord = userStore.isLandlord
 
     if (!isUserAuthenticated) {
         console.error('用户未登录，重定向至登录页')
@@ -271,8 +267,7 @@ onMounted(() => {
         router.push('/login')
     } else if (!isLandlord) {
         console.error('用户角色不是房东:', {
-            userStoreRole: userStore.userInfo?.role,
-            authStoreRole: authStore.userRole
+            userStoreRole: userStore.userRole
         })
         ElMessage.error('您没有访问房东中心的权限')
         router.push('/')

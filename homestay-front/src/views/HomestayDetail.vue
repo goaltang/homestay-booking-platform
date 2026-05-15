@@ -151,7 +151,7 @@ import { ElMessage } from 'element-plus'
 import { Star, Location, Share } from '@element-plus/icons-vue'
 import { getHomestayById } from '@/api/homestay'
 import { getHomestayHostInfo } from '@/api/host'
-import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useChatStore } from '@/stores/chat'
 import { formatLocation, parsePrice, processImages } from '@/utils/homestayUtils'
@@ -179,7 +179,7 @@ const PhotoGalleryModal = defineAsyncComponent(() => import('@/components/homest
 // 基础状态
 const route = useRoute()
 const router = useRouter()
-const authStore = useAuthStore()
+const userStore = useUserStore()
 const favoritesStore = useFavoritesStore()
 const chatStore = useChatStore()
 
@@ -263,7 +263,7 @@ const toggleFavorite = async () => {
     }
 }
 const contactHost = async () => {
-    if (!authStore.isAuthenticated) {
+    if (!userStore.isAuthenticated) {
         ElMessage.warning("请先登录后再联系房东");
         router.push("/login");
         return;
