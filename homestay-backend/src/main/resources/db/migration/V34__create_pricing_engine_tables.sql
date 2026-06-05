@@ -45,11 +45,13 @@ CREATE TABLE IF NOT EXISTS pricing_rule (
     INDEX idx_date_range (start_date, end_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='价格规则表';
 
--- 3. 插入 2026 年中国节假日数据（替代硬编码）
+-- 3. 插入 2026 年中国节假日数据（含调休补班，与 HolidayPresetService 保持一致）
 INSERT INTO holiday_calendar (date, name, type, region_code, is_holiday, is_makeup_workday) VALUES
--- 元旦
+-- 元旦（1月1-3日放假，2025-12-29 补班跨年）
 ('2026-01-01', '元旦', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
--- 春节
+('2026-01-02', '元旦', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+('2026-01-03', '元旦', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+-- 春节（2月17-24日放假，2月15日补班）
 ('2026-02-17', '春节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-02-18', '春节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-02-19', '春节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
@@ -57,26 +59,35 @@ INSERT INTO holiday_calendar (date, name, type, region_code, is_holiday, is_make
 ('2026-02-21', '春节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-02-22', '春节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-02-23', '春节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
--- 清明节
+('2026-02-24', '春节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+('2026-02-15', '春节调休补班', 'MAKEUP_WORKDAY', 'CN', FALSE, TRUE),
+-- 清明节（4月4-6日放假）
 ('2026-04-04', '清明节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-04-05', '清明节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-04-06', '清明节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
--- 劳动节
+-- 劳动节（5月1-5日放假）
 ('2026-05-01', '劳动节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-05-02', '劳动节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-05-03', '劳动节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
--- 端午节
-('2026-05-31', '端午节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
-('2026-06-01', '端午节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
-('2026-06-02', '端午节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
--- 国庆节+中秋节
+('2026-05-04', '劳动节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+('2026-05-05', '劳动节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+-- 端午节（6月19-21日放假）
+('2026-06-19', '端午节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+('2026-06-20', '端午节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+('2026-06-21', '端午节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+-- 中秋节（9月25-27日放假）
+('2026-09-25', '中秋节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+('2026-09-26', '中秋节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+('2026-09-27', '中秋节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+-- 国庆节（10月1-8日放假）
 ('2026-10-01', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-10-02', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-10-03', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-10-04', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-10-05', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
 ('2026-10-06', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
-('2026-10-07', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE);
+('2026-10-07', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE),
+('2026-10-08', '国庆节', 'PUBLIC_HOLIDAY', 'CN', TRUE, FALSE);
 
 -- 4. 插入默认价格规则（全局）
 -- 周末浮动
@@ -87,10 +98,10 @@ VALUES ('全局周末浮动', 'GLOBAL', '{}', 'WEEKEND', 'MULTIPLY', 1.20, 10, T
 INSERT INTO pricing_rule (name, scope_type, scope_value_json, rule_type, adjustment_type, adjustment_value, priority, stackable, enabled)
 VALUES ('全局节假日浮动', 'GLOBAL', '{}', 'HOLIDAY', 'MULTIPLY', 1.50, 20, TRUE, TRUE);
 
--- 早鸟优惠
+-- 早鸟优惠（DISCOUNT_RATE 值表示折扣率，0.10 = 打9折）
 INSERT INTO pricing_rule (name, scope_type, scope_value_json, rule_type, adjustment_type, adjustment_value, priority, stackable, min_advance_days, enabled)
-VALUES ('早鸟30天9折', 'GLOBAL', '{}', 'EARLY_BIRD', 'DISCOUNT_RATE', 0.90, 30, TRUE, 30, TRUE);
+VALUES ('早鸟30天9折', 'GLOBAL', '{}', 'EARLY_BIRD', 'DISCOUNT_RATE', 0.10, 30, TRUE, 30, TRUE);
 
--- 连住优惠
+-- 连住优惠（DISCOUNT_RATE 值表示折扣率，0.15 = 打85折）
 INSERT INTO pricing_rule (name, scope_type, scope_value_json, rule_type, adjustment_type, adjustment_value, priority, stackable, min_nights, enabled)
-VALUES ('连住7晚85折', 'GLOBAL', '{}', 'LONG_STAY', 'DISCOUNT_RATE', 0.85, 40, TRUE, 7, TRUE);
+VALUES ('连住7晚85折', 'GLOBAL', '{}', 'LONG_STAY', 'DISCOUNT_RATE', 0.15, 40, TRUE, 7, TRUE);

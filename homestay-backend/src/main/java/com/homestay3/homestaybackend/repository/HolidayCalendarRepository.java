@@ -18,4 +18,7 @@ public interface HolidayCalendarRepository extends JpaRepository<HolidayCalendar
     List<HolidayCalendar> findByDateBetweenAndRegionCode(LocalDate start, LocalDate end, String regionCode);
 
     boolean existsByDateAndRegionCode(LocalDate date, String regionCode);
+
+    @org.springframework.data.jpa.repository.Query("SELECT MAX(h.date) FROM HolidayCalendar h WHERE h.regionCode = :regionCode AND h.isHoliday = true")
+    Optional<LocalDate> findMaxHolidayDateByRegionCode(@org.springframework.data.repository.query.Param("regionCode") String regionCode);
 }

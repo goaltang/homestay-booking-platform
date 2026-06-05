@@ -157,7 +157,7 @@ public class PricingServiceImpl implements PricingService {
         }
 
         // 3. 获取定价配置
-        BigDecimal cleaningFeeRate = getPricingConfig("pricing.cleaning_fee", "0.1");
+        BigDecimal cleaningFeeAmount = getPricingConfig("pricing.cleaning_fee_amount", "50");
         BigDecimal serviceFeeRate = getPricingConfig("pricing.service_fee", "0.15");
         BigDecimal weekendRate = getPricingConfig("pricing.weekend_rate", "1.2");
         BigDecimal holidayRate = getPricingConfig("pricing.holiday_rate", "1.5");
@@ -233,9 +233,8 @@ public class PricingServiceImpl implements PricingService {
             }
         }
 
-        // 9. 计算清洁费和服务费
-        BigDecimal basePricePerNight = homestay.getPrice();
-        BigDecimal cleaningFee = basePricePerNight.multiply(cleaningFeeRate).setScale(2, RoundingMode.HALF_UP);
+        // 9. 计算清洁费和服务费（清洁费为固定金额，与入住晚数无关）
+        BigDecimal cleaningFee = cleaningFeeAmount;
         BigDecimal discountedRoomAmount = afterActivityDiscount.subtract(couponDiscount).max(BigDecimal.ZERO);
         BigDecimal serviceFee = discountedRoomAmount.multiply(serviceFeeRate).setScale(2, RoundingMode.HALF_UP);
 
@@ -266,7 +265,7 @@ public class PricingServiceImpl implements PricingService {
                 .effectiveCouponIds(couponResult.getEffectiveCouponIds())
                 .appliedPricingRules(stayDiscount.appliedRules())
                 .priceDetails(PriceCalculationResponse.PriceDetails.builder()
-                        .cleaningFeeAmount(cleaningFeeRate)
+                        .cleaningFeeAmount(cleaningFeeAmount)
                         .serviceFeeRate(serviceFeeRate)
                         .weekendRate(weekendRate)
                         .holidayRate(holidayRate)

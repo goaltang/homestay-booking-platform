@@ -101,7 +101,7 @@
         </el-form-item>
         <el-form-item label="调价数值" prop="adjustmentValue">
           <el-input-number v-model="form.adjustmentValue" :precision="4" :step="0.01" style="width:100%"></el-input-number>
-          <div class="form-tip">MULTIPLY 用 1.20；DISCOUNT_RATE 用 0.90</div>
+          <div class="form-tip">MULTIPLY 表示乘数（1.20=上浮20%）；DISCOUNT_RATE 表示折扣率（0.10=打9折，0.15=打85折）</div>
         </el-form-item>
         <el-form-item label="优先级">
           <el-input-number v-model="form.priority" :min="0" style="width:100%"></el-input-number>

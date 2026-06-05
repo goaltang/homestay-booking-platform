@@ -316,7 +316,7 @@ public class PricingEngineServiceImpl implements PricingEngineService {
 
         return switch (adjustmentType) {
             case "MULTIPLY" -> base.multiply(value).setScale(2, RoundingMode.HALF_UP);
-            case "DISCOUNT_RATE" -> base.multiply(value).setScale(2, RoundingMode.HALF_UP);
+            case "DISCOUNT_RATE" -> base.multiply(BigDecimal.ONE.subtract(value)).setScale(2, RoundingMode.HALF_UP);
             case "AMOUNT_OFF" -> base.subtract(value).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
             case "FIXED_PRICE" -> value.setScale(2, RoundingMode.HALF_UP);
             default -> base;

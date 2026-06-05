@@ -158,8 +158,8 @@
                 <h2>价格详情</h2>
                 <div class="price-breakdown">
                     <div class="price-row">
-                        <span>{{ orderData.price }}元 x {{ orderData.nights }}晚</span>
-                        <span>{{ orderData.baseAmount }}元</span>
+                        <span>房源原价</span>
+                        <span>{{ orderData.roomOriginalAmount || orderData.baseAmount }}元</span>
                     </div>
                     <div class="price-row discount" v-if="orderData.activityDiscountAmount">
                         <span>活动优惠</span>
@@ -180,6 +180,27 @@
                     <div class="price-row total">
                         <span>总价</span>
                         <span>{{ orderData.totalAmount }}元</span>
+                    </div>
+
+                    <!-- 每日价格展开 -->
+                    <div v-if="orderData.dailyPrices && orderData.dailyPrices.length > 0" class="daily-prices-section">
+                        <div class="daily-prices-toggle" @click="showDailyPrices = !showDailyPrices">
+                            <span>{{ showDailyPrices ? '收起每日价格' : '展开每日价格' }}</span>
+                            <el-icon><ArrowDown v-if="!showDailyPrices" /><ArrowUp v-else /></el-icon>
+                        </div>
+                        <div v-if="showDailyPrices" class="daily-prices-list">
+                            <div class="daily-price-item" v-for="(dp, idx) in orderData.dailyPrices" :key="idx">
+                                <div class="dp-date">{{ dp.date }}</div>
+                                <div class="dp-tags">
+                                    <el-tag v-if="dp.isHoliday" size="small" type="danger">{{ dp.holidayName }}</el-tag>
+                                    <el-tag v-else-if="dp.isWeekend" size="small" type="warning">周末</el-tag>
+                                </div>
+                                <div class="dp-price">
+                                    <span v-if="dp.basePrice !== dp.finalPrice" class="dp-base">¥{{ dp.basePrice }}</span>
+                                    <span>¥{{ dp.finalPrice }}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -264,12 +285,14 @@
 import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import { createOrder } from '../../api/order'
 import { getHomestayUnavailableDates } from '@/api/homestay'
 import { useUserStore } from '../../stores/user'
 import { getUserInfo } from '../../api/user'
 import { getHomestayById } from '@/api/homestay'
 import { codeToText } from 'element-china-area-data'
+import type { DailyPriceItem } from '@/utils/homestayUtils'
 
 // 定义订单数据类型
 interface OrderData {
@@ -299,6 +322,7 @@ interface OrderData {
     couponDiscountAmount?: number
     appliedPromotions?: any[]
     availableCoupons?: any[]
+    dailyPrices?: DailyPriceItem[]
 }
 
 // 定义旅客信息类型
@@ -325,6 +349,7 @@ const orderData = ref<OrderData | null>(null)
 const selectedCouponIds = ref<number[]>([])
 const availableCoupons = ref<any[]>([])
 const isRecalculating = ref(false)
+const showDailyPrices = ref(false)
 
 const selectedCouponIdProxy = computed({
     get: () => selectedCouponIds.value[0] || null,
@@ -476,6 +501,7 @@ const recalculatePrice = async () => {
         orderData.value.activityDiscountAmount = result.activityDiscountAmount
         orderData.value.couponDiscountAmount = result.couponDiscountAmount
         orderData.value.quoteToken = result.quoteToken
+        orderData.value.dailyPrices = result.dailyPrices
         availableCoupons.value = result.availableCoupons || []
     } catch (e) {
         console.error('重新报价失败:', e)
@@ -834,7 +860,8 @@ const initOrderData = () => {
                 activityDiscountAmount: bookingDetails.activityDiscountAmount,
                 couponDiscountAmount: bookingDetails.couponDiscountAmount,
                 appliedPromotions: bookingDetails.appliedPromotions,
-                availableCoupons: bookingDetails.availableCoupons
+                availableCoupons: bookingDetails.availableCoupons,
+                dailyPrices: bookingDetails.dailyPrices
             } as OrderData;
         } catch (error) {
             console.error('解析session storage数据失败:', error);
@@ -1357,6 +1384,73 @@ h2 {
 .coupon-selector {
     margin-top: 12px;
     padding: 0 8px;
+}
+
+/* 每日价格展开 */
+.daily-prices-section {
+    margin-top: 12px;
+    border-top: 1px dashed #e0e0e0;
+    padding-top: 8px;
+}
+
+.daily-prices-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #409eff;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.daily-prices-toggle:hover {
+    color: #66b1ff;
+}
+
+.daily-prices-list {
+    margin-top: 8px;
+    background: #f7f8fa;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.daily-price-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #eee;
+}
+
+.daily-price-item:last-child {
+    border-bottom: none;
+}
+
+.dp-date {
+    color: #606266;
+    min-width: 90px;
+}
+
+.dp-tags {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+.dp-price {
+    color: #303133;
+    text-align: right;
+    min-width: 80px;
+}
+
+.dp-base {
+    text-decoration: line-through;
+    color: #909399;
+    margin-right: 6px;
+    font-size: 12px;
 }
 
 /* 响应式调整 */

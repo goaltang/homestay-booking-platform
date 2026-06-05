@@ -43,6 +43,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<ApiResponse<?>> handleSecurityException(SecurityException ex) {
+        ApiResponse<?> response = ApiResponse.error(403, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
     @ExceptionHandler(LoginException.class)
     public ResponseEntity<ApiResponse<?>> handleLoginException(LoginException ex) {
         ApiResponse<?> response = ApiResponse.error(401, ex.getMessage());
