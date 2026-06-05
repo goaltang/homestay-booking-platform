@@ -8,7 +8,7 @@
 
 民宿预订平台是一个连接房客、房东和平台管理员的综合业务系统，覆盖房源发布、平台审核、在线搜索、下单支付、入住退房、评价反馈、收益统计和后台监管等完整流程。
 
-> 25 个业务模块 · 10W+ 行代码 · 138 次 commit · 持续迭代 14 个月 · 50+ 篇项目文档
+> 25 个业务模块 · 10W+ 行代码 · 138 次 commit · 持续迭代 16 个月 · 50+ 篇项目文档
 
 ## 项目背景
 
@@ -20,14 +20,11 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 
 > 工具链迭代：Cursor Pro → Claude Code CLI → Kimi Code CLI
 
-## 关于这个项目
-
-项目根目录下的 `.cursor/`、`.claude/`、`.qwen/`、`.codex-logs/` 等文件夹是不同阶段的 AI 开发工具配置和记录，不属于源码的一部分，建议通过 `.gitignore` 排除。
-
 ## 目录
 
 - [项目亮点](#项目亮点)
 - [技术栈](#技术栈)
+- [系统架构](#系统架构)
 - [系统角色](#系统角色)
 - [功能概览](#功能概览)
 - [核心业务流程](#核心业务流程)
@@ -36,7 +33,7 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 - [配置说明](#配置说明)
 - [测试与构建](#测试与构建)
 - [文档索引](#文档索引)
-- [Git 提交建议](#git-提交建议)
+- [安全说明](#安全说明)
 - [许可证](#许可证)
 
 ## 项目亮点
@@ -65,6 +62,63 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 | 数据与缓存 | MySQL 8.0、Redis、Redisson、Flyway、Elasticsearch |
 | 通信与集成 | JWT、WebSocket（STOMP）、支付宝 SDK、SMTP 邮件 |
 | 工程工具 | Maven、npm、MapStruct、Lombok、Docker Compose |
+
+## 系统架构
+
+```mermaid
+graph TB
+    subgraph 客户端
+        F1[用户端<br/>Vue 3 + TypeScript]
+        F2[房东端<br/>Vue 3 + TypeScript]
+        F3[管理端<br/>Vue 3 + TypeScript]
+    end
+
+    subgraph 后端服务 [Spring Boot 3 + Java 17]
+        S1[统一认证<br/>Spring Security + JWT]
+        S2[核心业务<br/>房源 / 订单 / 评价 / 支付]
+        S3[定价引擎<br/>动态报价 / 节假日 / 连住]
+        S4[ES 搜索 +<br/>个性化推荐]
+        S5[营销促销<br/>优惠券 / 邀请 / ROI]
+        S6[通知中心<br/>WebSocket 实时推送]
+    end
+
+    subgraph 数据与缓存
+        D1[(MySQL 8<br/>Flyway V46)]
+        D2[(Redis<br/>分布式锁 + 缓存)]
+        D3[(Elasticsearch<br/>IK + Geo 查询)]
+    end
+
+    subgraph 外部服务
+        E1[支付宝]
+        E2[高德地图]
+        E3[SMTP 邮件]
+    end
+
+    F1 --> S1
+    F2 --> S1
+    F3 --> S1
+    F1 --> S2
+    F2 --> S2
+    F3 --> S2
+    F1 --> S3
+    F2 --> S3
+    F1 --> S4
+    F1 --> S5
+    F2 --> S5
+    F1 --> S6
+    F2 --> S6
+
+    S2 --> D1
+    S3 --> D1
+    S4 --> D3
+    S4 --> D2
+    S5 --> D1
+    S6 --> D2
+    S2 --> D2
+    S2 --> E1
+    S2 --> E2
+    S1 --> E3
+```
 
 ## 系统角色
 
@@ -312,8 +366,6 @@ homestay-backend/src/main/resources/application.properties
 | `payment.alipay.*` | 支付宝沙箱应用、公钥、私钥、网关和回调地址 |
 | `file.upload-dir` | 上传文件保存目录 |
 
-> 注意：不要把真实数据库密码、JWT 密钥、邮箱密码、支付宝私钥或生产环境回调地址提交到公开仓库。建议使用本地配置、环境变量或 `application-local.properties` 管理敏感信息，并只提交示例配置。
-
 ## 测试与构建
 
 ### 后端
@@ -349,35 +401,10 @@ npm run build
 | [用户端说明](homestay-front/README.md) | 用户端和房东端前端说明 |
 | [管理端说明](homestay-admin/README.md) | 管理端前端说明 |
 
-## Git 提交建议
+## 安全说明
 
-建议提交：
-
-- `homestay-front/`：前端源码、路由、组件、API 封装、`package.json` 和 `package-lock.json`
-- `homestay-admin/`：管理端源码、路由、组件、API 封装、`package.json` 和 `package-lock.json`
-- `homestay-backend/src/main/java/`：后端业务源码
-- `homestay-backend/src/main/resources/db/migration/`：Flyway 数据库迁移脚本
-- `homestay-backend/src/test/`：测试代码
-- `docs/`：项目说明文档
-- `README.md`、`.gitignore` 等项目级配置文件
-
-不建议提交：
-
-- `node_modules/`、`dist/`、`target/`、`build/` 等依赖和构建产物
-- `.env`、`.env.*`、真实的 `application.properties`、密钥文件、证书和私钥
-- `uploads/`、临时图片、用户上传文件和本地测试数据
-- `.vscode/`、`.idea/`、`.cursor/`、`.claude/`、`.qwen/` 等个人编辑器或 AI 工具配置
-- `graphify-out/`、`obsidian-vault/` 等本地分析输出或个人知识库内容
-- `.graphifyignore`、`CLAUDE.md`、`QWEN.md` 等本地辅助工具配置
-- `*.log`、`test_output*.txt`、`compile_output*.txt`、`build_output*.txt` 等运行日志
-
-如果必须保留配置格式，建议提交 `application.example.properties` 或 `.env.example`，并在其中使用占位符：
-
-```properties
-spring.datasource.password=CHANGE_ME
-jwt.secret=CHANGE_ME
-payment.alipay.private-key=CHANGE_ME
-```
+本仓库 `application.properties` 中的数据库密码、JWT 密钥、支付宝私钥等敏感信息均为占位符，
+请复制为 `application-local.properties` 并填入本地真实值（已在 `.gitignore` 中排除）。
 
 ## 许可证
 
