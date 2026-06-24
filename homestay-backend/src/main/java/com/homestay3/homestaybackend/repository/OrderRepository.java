@@ -186,6 +186,16 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                         @Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate);
 
+        // 新增：查询特定房源在指定日期范围内，特定状态的订单列表（用于周末流行度分析）
+        @Query("SELECT o FROM Order o WHERE o.homestay.id = :homestayId " +
+                        "AND o.status IN :statuses " +
+                        "AND o.createdAt >= :startDate AND o.createdAt <= :endDate")
+        List<Order> findByHomestayIdAndStatusInAndCreatedAtBetween(
+                        @Param("homestayId") Long homestayId,
+                        @Param("statuses") List<String> statuses,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
         // ====== 新增：订单自动状态流转相关查询方法 ======
 
         // 根据状态和入住日期查找订单

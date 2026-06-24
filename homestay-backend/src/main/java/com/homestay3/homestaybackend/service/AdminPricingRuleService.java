@@ -62,9 +62,12 @@ public class AdminPricingRuleService {
 
     @Transactional
     @CacheEvict(value = "pricingRules", allEntries = true)
-    public PricingRule updateRule(Long id, PricingRule rule) {
+    public PricingRule updateRule(Long id, PricingRule rule, Long userId) {
         PricingRule existing = pricingRuleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PricingRule", "id", id));
+        if (!userId.equals(existing.getCreatedBy())) {
+            throw new SecurityException("无权修改该定价规则");
+        }
         validateRule(rule);
         existing.setName(rule.getName());
         existing.setScopeType(rule.getScopeType());
@@ -86,17 +89,23 @@ public class AdminPricingRuleService {
 
     @Transactional
     @CacheEvict(value = "pricingRules", allEntries = true)
-    public void deleteRule(Long id) {
+    public void deleteRule(Long id, Long userId) {
         PricingRule existing = pricingRuleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PricingRule", "id", id));
+        if (!userId.equals(existing.getCreatedBy())) {
+            throw new SecurityException("无权删除该定价规则");
+        }
         pricingRuleRepository.delete(existing);
     }
 
     @Transactional
     @CacheEvict(value = "pricingRules", allEntries = true)
-    public PricingRule toggleRule(Long id) {
+    public PricingRule toggleRule(Long id, Long userId) {
         PricingRule rule = pricingRuleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PricingRule", "id", id));
+        if (!userId.equals(rule.getCreatedBy())) {
+            throw new SecurityException("无权切换该定价规则状态");
+        }
         rule.setEnabled(!rule.getEnabled());
         return pricingRuleRepository.save(rule);
     }

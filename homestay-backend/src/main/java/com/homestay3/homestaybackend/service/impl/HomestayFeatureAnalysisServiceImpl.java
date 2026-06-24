@@ -1,7 +1,5 @@
 package com.homestay3.homestaybackend.service.impl;
 
-import com.homestay3.homestaybackend.dto.AmenityDTO;
-import com.homestay3.homestaybackend.dto.HomestayDTO;
 import com.homestay3.homestaybackend.dto.PriceCompetitivenessDTO;
 import com.homestay3.homestaybackend.dto.SuggestedFeatureDTO;
 import com.homestay3.homestaybackend.entity.Amenity;
@@ -33,8 +31,6 @@ import java.math.BigDecimal;
 
 import java.util.Map;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Collections;
 import java.util.HashSet;
 import org.springframework.data.domain.Page;
 import java.util.Optional;
@@ -140,77 +136,6 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
 
         return sortedFeatures;
     }
-
-    @Override
-    public List<SuggestedFeatureDTO> analyzeFeatures(HomestayDTO homestayDTO, List<String> referringSearchCriteria) {
-        if (homestayDTO == null) {
-            return new ArrayList<>();
-        }
-        log.debug("Analyzing features for HomestayDTO, title: {}, referringSearchCriteria: {}", homestayDTO.getTitle(), referringSearchCriteria);
-        
-        List<SuggestedFeatureDTO> features = new ArrayList<>();
-
-        // 1. Analyze Property Type and Space from DTO
-        if (homestayDTO.getType() != null && homestayDTO.getMaxGuests() != null) {
-            String typeDescription;
-            String icon = "House"; // Default icon
-            String featureIdSuffix = homestayDTO.getType().toUpperCase();
-            switch (homestayDTO.getType().toUpperCase()) {
-                case "TRADITIONAL":
-                    typeDescription = homestayDTO.getMaxGuests() >= 4 ? "宽敞传统民居" : "温馨传统民居";
-                    break;
-                case "APARTMENT":
-                    typeDescription = "现代公寓";
-                    icon = "OfficeBuilding";
-                    if (homestayDTO.getMaxGuests() >= 3) typeDescription = "家庭公寓";
-                    break;
-                case "VILLA":
-                    typeDescription = "豪华别墅";
-                    icon = "HomeFilled";
-                    if (homestayDTO.getMaxGuests() >= 6) typeDescription = "大型派对别墅";
-                    break;
-                case "UNIQUE_STAY":
-                    typeDescription = "特色住宿体验";
-                    icon = "MagicStick";
-                    break;
-                default:
-                    typeDescription = "舒适住宿";
-            }
-            features.add(SuggestedFeatureDTO.builder()
-                    .featureId("PROPERTY_TYPE_" + featureIdSuffix)
-                    .iconName(icon)
-                    .title(typeDescription)
-                    .description(String.format("可容纳 %d 位房客，%s风格。", homestayDTO.getMaxGuests(), homestayDTO.getType()))
-                    .priority(11) // 房源类型优先级最高
-                    .build());
-        }
-        
-        // 2. Analyze Key Amenities from DTO (DTO版本暂不支持组合特色)
-        if (!CollectionUtils.isEmpty(homestayDTO.getAmenities())) {
-                 homestayDTO.getAmenities().stream()
-                    .filter(a -> "SPECIAL".equalsIgnoreCase(a.getCategoryCode()) || "KITCHEN".equalsIgnoreCase(a.getCategoryCode()))
-                .limit(3) // 限制设施特色数量，避免过多
-                    .forEach(amenity -> features.add(SuggestedFeatureDTO.builder()
-                            .featureId("AMENITY_" + amenity.getValue().toUpperCase().replace(" ", "_"))
-                            .iconName(amenity.getIcon() != null ? amenity.getIcon() : "Star")
-                            .title(amenity.getLabel())
-                            .description(amenity.getDescription() != null ? amenity.getDescription() : "一项重要设施")
-                            .priority(9) // Base priority
-                            .build()));
-        }
-        
-        // For DTO version, review analysis and other dynamic analyses are harder without full entity/context.
-        // Assuming these are not deeply implemented for DTO for now.
-
-        // Boost features matching referring search criteria
-        boostFeaturesMatchingSearchCriteria(features, referringSearchCriteria);
-
-        // Sort by priority (no limit - return all analyzed features)
-        return features.stream()
-                       .sorted(Comparator.comparingInt(SuggestedFeatureDTO::getPriority).reversed())
-                       .collect(Collectors.toList());
-    }
-
 
     private void analyzePropertyTypeAndSpace(Homestay homestay, Map<String, SuggestedFeatureDTO> dimensionFeatures) {
         log.debug("分析房源类型维度，房源ID: {}", homestay.getId());
@@ -516,21 +441,28 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
             int requiredMatches = Math.max(1, requiredAmenityLabels.size() / 2);
             int actualMatches = 0;
 
-            // 按标签检查
-            for (String label : requiredAmenityLabels) {
-                if (amenityMap.containsKey(label.toLowerCase())) {
-                    actualMatches++;
-                }
-            }
+            // 每个要求设施只计一次：优先按 value 匹配，未命中时按 label 回退
+            for (int i = 0; i < requiredAmenityLabels.size(); i++) {
+                String label = requiredAmenityLabels.get(i);
+                String value = i < requiredAmenityValues.size() ? requiredAmenityValues.get(i) : null;
+                boolean matched = false;
 
-            // 按值检查
-            for (String value : requiredAmenityValues) {
-                for (Amenity amenity : amenities) {
-                    if (value.equalsIgnoreCase(amenity.getValue()) || 
-                        value.equalsIgnoreCase(amenity.getLabel())) {
-                        actualMatches++;
-                        break;
+                if (value != null && !value.isEmpty()) {
+                    for (Amenity amenity : amenities) {
+                        if (value.equalsIgnoreCase(amenity.getValue()) ||
+                            value.equalsIgnoreCase(amenity.getLabel())) {
+                            matched = true;
+                            break;
+                        }
                     }
+                }
+
+                if (!matched && label != null && !label.isEmpty()) {
+                    matched = amenityMap.containsKey(label.toLowerCase());
+                }
+
+                if (matched) {
+                    actualMatches++;
                 }
             }
 
@@ -539,26 +471,31 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
 
         Set<String> getMatchedAmenities(Map<String, String> amenityMap, Set<Amenity> amenities) {
             Set<String> matched = new HashSet<>();
-            
-            // 收集匹配的设施标签和值
-            for (String label : requiredAmenityLabels) {
-                if (amenityMap.containsKey(label.toLowerCase())) {
+
+            // 每个要求设施只收集一次：优先按 value 匹配，未命中时按 label 回退
+            for (int i = 0; i < requiredAmenityLabels.size(); i++) {
+                String label = requiredAmenityLabels.get(i);
+                String value = i < requiredAmenityValues.size() ? requiredAmenityValues.get(i) : null;
+                boolean collected = false;
+
+                if (value != null && !value.isEmpty()) {
+                    for (Amenity amenity : amenities) {
+                        if (value.equalsIgnoreCase(amenity.getValue()) ||
+                            value.equalsIgnoreCase(amenity.getLabel())) {
+                            matched.add(amenity.getValue());
+                            matched.add(amenity.getLabel());
+                            collected = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!collected && label != null && !label.isEmpty() && amenityMap.containsKey(label.toLowerCase())) {
                     matched.add(label);
                     matched.add(amenityMap.get(label.toLowerCase()));
                 }
             }
-            
-            for (String value : requiredAmenityValues) {
-                for (Amenity amenity : amenities) {
-                    if (value.equalsIgnoreCase(amenity.getValue()) || 
-                        value.equalsIgnoreCase(amenity.getLabel())) {
-                        matched.add(amenity.getValue());
-                        matched.add(amenity.getLabel());
-                        break;
-                    }
-                }
-            }
-            
+
             return matched;
         }
     }
@@ -690,8 +627,8 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
                     .average()
                     .orElse(0.0);
 
-            log.debug("房源ID: {} 评价统计: 总数={}, 平均评分={:.1f}", 
-                    homestay.getId(), reviews.size(), averageRating);
+            log.debug("房源ID: {} 评价统计: 总数={}, 平均评分={}",
+                    homestay.getId(), reviews.size(), String.format("%.1f", averageRating));
 
             // 高评分特色
             if (averageRating >= 4.5) {
@@ -703,7 +640,7 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
                         .priority(8)
                         .build());
                 
-                log.debug("添加高评分特色: 平均评分{:.1f}分", averageRating);
+                log.debug("添加高评分特色: 平均评分{}分", String.format("%.1f", averageRating));
             } else if (averageRating >= POSITIVE_REVIEW_RATING_THRESHOLD) {
                 features.add(SuggestedFeatureDTO.builder()
                         .featureId("POSITIVE_RATING")
@@ -713,7 +650,7 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
                         .priority(6)
                         .build());
                 
-                log.debug("添加正面评价特色: 平均评分{:.1f}分", averageRating);
+                log.debug("添加正面评价特色: 平均评分{}分", String.format("%.1f", averageRating));
             }
 
             // 分析评价关键词（只选择最重要的一个）
@@ -947,16 +884,14 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
                 OrderStatus.CHECKED_IN.name()
             );
 
-            // 这里简化实现，实际项目中可以优化查询
-            List<Order> orders = orderRepository.findByHomestayId(homestay.getId(), Pageable.unpaged()).getContent().stream()
-                .filter(order -> relevantOrderStatus.contains(order.getStatus().toUpperCase()))
-                .filter(order -> order.getCheckInDate() != null && 
-                                 order.getCreatedAt().isAfter(analysisStartDate) && 
-                                 order.getCreatedAt().isBefore(analysisEndDate))
+            // 优化查询：在 SQL 层按状态和时间范围过滤，避免加载全部历史订单
+            List<Order> orders = orderRepository.findByHomestayIdAndStatusInAndCreatedAtBetween(
+                    homestay.getId(), relevantOrderStatus, analysisStartDate, analysisEndDate).stream()
+                .filter(order -> order.getCheckInDate() != null)
                 .collect(Collectors.toList());
 
             if (orders.size() < MIN_TOTAL_BOOKINGS_FOR_WEEKEND_TAG) {
-                log.debug("Homestay ID: {} has only {} relevant bookings in the last {} months. Skipping weekend popularity analysis.", 
+                log.debug("Homestay ID: {} has only {} relevant bookings in the last {} months. Skipping weekend popularity analysis.",
                           homestay.getId(), orders.size(), MONTHS_TO_ANALYZE_FOR_WEEKEND);
                 return;
             }
@@ -967,11 +902,11 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
                     return dayOfWeek == java.time.DayOfWeek.FRIDAY || dayOfWeek == java.time.DayOfWeek.SATURDAY;
                 })
                 .count();
-            
+
             double weekendBookingRatio = (double) weekendBookingCount / orders.size();
 
-            log.info("Homestay ID: {}: Total relevant bookings: {}, Weekend bookings: {}, Ratio: {:.2f}", 
-                homestay.getId(), orders.size(), weekendBookingCount, weekendBookingRatio);
+            log.info("Homestay ID: {}: Total relevant bookings: {}, Weekend bookings: {}, Ratio: {}",
+                homestay.getId(), orders.size(), weekendBookingCount, String.format("%.2f", weekendBookingRatio));
 
             if (weekendBookingRatio >= WEEKEND_BOOKING_RATIO_THRESHOLD) {
                 SuggestedFeatureDTO weekendFeature = SuggestedFeatureDTO.builder()
@@ -994,7 +929,7 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
     private String generateLocationFeature(String cityCode) {
         // 简化的位置特色生成
         if (cityCode == null) return null;
-        
+
         switch (cityCode.toUpperCase()) {
             case "BJ":
             case "BEIJING":
@@ -1008,6 +943,36 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
             case "SZ":
             case "SHENZHEN":
                 return "科技之都，现代便利";
+            case "CD":
+            case "CHENGDU":
+                return "天府之国，休闲美食之都";
+            case "HZ":
+            case "HANGZHOU":
+                return "人间天堂，西湖风光近在咫尺";
+            case "XM":
+            case "XIAMEN":
+                return "海滨花园城市，文艺小资聚集地";
+            case "LJ":
+            case "LIJIANG":
+                return "古城韵味，纳西风情体验地";
+            case "XA":
+            case "XIAN":
+                return "十三朝古都，历史文化厚重";
+            case "QD":
+            case "QINGDAO":
+                return "红瓦绿树碧海蓝天，海滨度假胜地";
+            case "NJ":
+            case "NANJING":
+                return "六朝古都，江南文脉所在";
+            case "SU":
+            case "SUZHOU":
+                return "园林之城，江南水乡风情";
+            case "DL":
+            case "DALIAN":
+                return "北方浪漫海滨，避暑休闲之选";
+            case "SY":
+            case "SANYA":
+                return "热带海滨天堂，阳光沙滩度假首选";
             default:
                 return "优越地理位置，出行方便";
         }
@@ -1106,7 +1071,7 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
             int newPriority = (int) Math.round(originalPriority * finalWeight);
             feature.setPriority(newPriority);
             
-            log.debug("特征: {}, 原优先级: {}, 权重: {:.2f}, 新优先级: {}", 
+            log.debug("特征: {}, 原优先级: {}, 权重: {}, 新优先级: {}",
                 feature.getTitle(), originalPriority, String.format("%.2f", finalWeight), newPriority);
         }
     }
@@ -1283,32 +1248,4 @@ public class HomestayFeatureAnalysisServiceImpl implements HomestayFeatureAnalys
         return bonus;
     }
 
-    /**
-     * 权重系统配置类 - 可以根据业务需求调整
-     */
-    private static class WeightConfig {
-        // 房源类型权重映射
-        static final Map<String, Double> PROPERTY_TYPE_WEIGHTS = Map.of(
-            "VILLA", 1.4,
-            "UNIQUE_STAY", 1.3,
-            "TRADITIONAL", 1.2,
-            "APARTMENT", 1.0
-        );
-        
-        // 价格区间权重映射
-        static final Map<String, Double> PRICE_RANGE_WEIGHTS = Map.of(
-            "BUDGET", 1.3,    // 0-200元
-            "STANDARD", 1.0,  // 200-400元
-            "PREMIUM", 0.8,   // 400-600元
-            "LUXURY", 0.6     // 600元以上
-        );
-        
-        // 城市等级权重映射
-        static final Map<String, Double> CITY_LEVEL_WEIGHTS = Map.of(
-            "TIER1", 1.2,     // 一线城市
-            "TIER2", 1.0,     // 二线城市
-            "TIER3", 0.9,     // 三线城市
-            "TOURIST", 1.1    // 旅游城市
-        );
-    }
 } 
