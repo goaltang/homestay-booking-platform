@@ -1,0 +1,54 @@
+# =============================================================================
+# 性能压测专用环境 - 与开发/生产环境完全隔离
+# =============================================================================
+# 端口规划（避开开发库端口）：
+#   - MySQL  : 3307 （开发库用 3306）
+#   - Redis  : 6380 （开发用 6379）
+#   - 后端   : 8080 （与开发同端口，但只连 perf 库）
+#
+# 销毁命令（跑完压测务必执行）：
+#   docker compose -f docker-compose.perf.yml down -v
+# =============================================================================
+
+services:
+  mysql-perf:
+    image: mysql:8.0
+    container_name: homestay-mysql-perf
+    command:
+      - --max-connections=1000
+      - --innodb-buffer-pool-size=1G
+      - --innodb-log-file-size=256M
+      - --slow-query-log=ON
+      - --long-query-time=1
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: perf_root_pwd
+      MYSQL_DATABASE: homestay_perf
+      MYSQL_USER: perf_user
+      MYSQL_PASSWORD: perf_pwd
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-perf-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppperf_pwd"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+  redis-perf:
+    image: redis:7-alpine
+    container_name: homestay-redis-perf
+    command: ["redis-server", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mysql-perf-data:
