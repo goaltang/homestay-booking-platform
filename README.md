@@ -6,9 +6,11 @@
 ![Vue](https://img.shields.io/badge/Vue-3-42b883.svg)
 ![Vite](https://img.shields.io/badge/Vite-5%2F6-646CFF.svg)
 
+**[English](README_EN.md)** | 中文
+
 民宿预订平台是一个连接房客、房东和平台管理员的综合业务系统，覆盖房源发布、平台审核、在线搜索、下单支付、入住退房、评价反馈、收益统计和后台监管等完整流程。
 
-> 25 个业务模块 · 10W+ 行代码 · 138 次 commit · 持续迭代 16 个月 · 50+ 篇项目文档
+> 25 个业务模块 · 10W+ 行代码 · 223 次 commit · 持续迭代 16 个月 · 50+ 篇项目文档
 
 ## 项目背景
 
@@ -29,7 +31,7 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 - [功能概览](#功能概览)
 - [核心业务流程](#核心业务流程)
 - [项目结构](#项目结构)
-- [本地运行](#本地运行)
+- [快速开始](#快速开始)
 - [配置说明](#配置说明)
 - [测试与构建](#测试与构建)
 - [文档索引](#文档索引)
@@ -83,7 +85,7 @@ graph TB
     end
 
     subgraph 数据与缓存
-        D1[(MySQL 8<br/>Flyway V46)]
+        D1[(MySQL 8<br/>Flyway V49)]
         D2[(Redis<br/>分布式锁 + 缓存)]
         D3[(Elasticsearch<br/>IK + Geo 查询)]
     end
@@ -183,7 +185,7 @@ graph TB
 | 统一响应 | 使用 `ApiResponse<T>` 统一返回 `success`、`code`、`message`、`data` 和 `timestamp` |
 | 认证授权 | 使用 Spring Security + JWT 实现无状态认证，并按角色控制接口访问 |
 | 数据访问 | 使用 Spring Data JPA、Repository 和 Specification 支持复杂查询 |
-| 数据迁移 | 使用 Flyway 管理数据库结构演进 |
+| 数据迁移 | 使用 Flyway 管理数据库结构演进（V1 ~ V49） |
 | 缓存加速 | 使用 Redis 缓存热点数据和推荐数据，Spring Cache 管理推荐缓存 |
 | 分布式锁 | 基于 Redis + Lua 脚本实现分布式锁，支持故障降级 |
 | 实时通信 | 使用 WebSocket（STOMP 协议）支持聊天消息和通知的实时推送 |
@@ -248,9 +250,11 @@ homestay3/
 ├── homestay-admin/          # 管理员端，Vue 3 + Vite
 ├── homestay-backend/        # 后端 API，Spring Boot
 ├── docs/                    # 项目说明文档
+│   └── INSTALL.md           # 安装教程（含 AI Agent 安装指引）
 ├── tools/                   # 本地工具脚本或辅助工具
 ├── docker-compose.yml       # Docker Compose 配置（含 Elasticsearch）
-├── README.md                # 项目总览
+├── README.md                # 项目总览（中文）
+├── README_EN.md             # 项目总览（英文）
 └── .gitignore               # Git 忽略规则
 ```
 
@@ -274,35 +278,66 @@ com.homestay3.homestaybackend
 └── job/                     # 定时任务
 ```
 
-## 本地运行
+## 快速开始
+
+> 完整的安装教程（含 AI Agent 自动安装指引）见 [docs/INSTALL.md](docs/INSTALL.md)。
 
 ### 环境要求
 
-| 环境 | 推荐版本 |
-|---|---|
-| JDK | 17+ |
-| Maven | 3.6+ |
-| MySQL | 8.0+ |
-| Redis | 6.0+ |
-| Elasticsearch | 8.5+（可选，搜索功能依赖）|
-| Node.js | 18+ |
-| npm | 9+ |
+| 环境 | 推荐版本 | 必需 |
+|---|---|---|
+| JDK | 17+ | ✅ |
+| Maven | 3.6+ | ✅ |
+| MySQL | 8.0+ | ✅ |
+| Redis | 6.0+ | ✅ |
+| Elasticsearch | 8.5+ | ❌（可选，搜索功能依赖） |
+| Node.js | 18+ | ✅ |
+| npm | 9+ | ✅ |
+| Docker + Docker Compose | 最新稳定版 | ❌（仅用于启动 ES） |
 
-### 1. 启动 Elasticsearch（可选）
-
-如需使用搜索功能，可通过 Docker Compose 启动 Elasticsearch：
+### 1. 克隆项目
 
 ```bash
-docker-compose up -d elasticsearch
+git clone https://github.com/goaltang/homestay3.git
+cd homestay3
 ```
 
-### 2. 创建数据库
+### 2. 启动基础设施
+
+**MySQL** — 创建数据库：
 
 ```bash
 mysql -u root -p -e "CREATE DATABASE homestay_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
-### 3. 启动后端
+**Redis** — 确保 Redis 在 `localhost:6379` 运行：
+
+```bash
+redis-server --daemonize yes
+```
+
+**Elasticsearch（可选）** — 通过 Docker Compose 启动：
+
+```bash
+docker-compose up -d elasticsearch
+```
+
+> 如果不需要搜索功能，可在 `application.properties` 中设置 `elasticsearch.enabled=false`，后端会自动降级为 JPA 数据库搜索。
+
+### 3. 配置后端
+
+复制配置模板并修改：
+
+```bash
+cd homestay-backend
+cp src/main/resources/application.example.properties src/main/resources/application-local.properties
+```
+
+编辑 `application-local.properties`，填入本地的 MySQL 密码、Redis 密码、JWT 密钥等。
+
+> 也可以直接修改 `application.properties`，但请注意不要将敏感信息提交到仓库。
+
+### 4. 启动后端
 
 ```bash
 cd homestay-backend
@@ -310,27 +345,20 @@ mvn clean compile
 mvn spring-boot:run
 ```
 
-默认后端地址：
+后端默认运行在 `http://localhost:8080`。Flyway 会自动执行全部数据库迁移（V1 ~ V49，共 41 个脚本），无需手动建表。
 
-```text
-http://localhost:8080
-```
-
-### 4. 启动用户端和房东端
+### 5. 启动用户端和房东端
 
 ```bash
 cd homestay-front
+cp .env.example .env.local   # 可选，配置高德地图 Key
 npm install
 npm run dev
 ```
 
-默认访问地址：
+访问 `http://localhost:5173`。Vite 已配置代理，`/api` 请求自动转发到后端 `http://127.0.0.1:8080`。
 
-```text
-http://localhost:5173
-```
-
-### 5. 启动管理员端
+### 6. 启动管理员端
 
 ```bash
 cd homestay-admin
@@ -338,13 +366,18 @@ npm install
 npm run dev
 ```
 
-默认访问地址通常为：
+访问 `http://localhost:5174`。Vite 已配置代理，`/api` 请求自动转发到后端。
 
-```text
-http://localhost:5174
+### 首次使用
+
+项目没有预置管理员账号。首次启动后端时，`DataInitializer` 会自动初始化默认设施数据。
+
+- **房客 / 房东**：在用户端 (`localhost:5173`) 注册账号即可使用。
+- **管理员**：注册后，在数据库中将用户的 `role` 字段改为 `ADMIN`：
+
+```sql
+UPDATE users SET role = 'ADMIN' WHERE email = 'your-email@example.com';
 ```
-
-如果端口被占用，Vite 会自动分配新的端口，请以终端输出为准。
 
 ## 配置说明
 
@@ -361,10 +394,17 @@ homestay-backend/src/main/resources/application.properties
 | `spring.datasource.*` | MySQL 连接地址、用户名和密码 |
 | `spring.data.redis.*` | Redis 地址、端口、密码和数据库编号 |
 | `spring.elasticsearch.*` | Elasticsearch 连接地址（可选） |
+| `elasticsearch.enabled` | 设为 `false` 可跳过 ES，降级为 JPA 搜索 |
 | `jwt.secret` | JWT 签名密钥 |
 | `spring.mail.*` | 邮件服务配置 |
 | `payment.alipay.*` | 支付宝沙箱应用、公钥、私钥、网关和回调地址 |
 | `file.upload-dir` | 上传文件保存目录 |
+
+前端环境变量：
+
+| 文件 | 说明 |
+|---|---|
+| `homestay-front/.env.example` | 用户端环境变量模板（高德地图 Key 等） |
 
 ## 测试与构建
 
@@ -394,6 +434,7 @@ npm run build
 
 | 文档 | 说明 |
 |---|---|
+| [安装教程](docs/INSTALL.md) | 详细安装指南，含 AI Agent 自动安装指引 |
 | [项目结构总览](docs/项目结构总览.md) | 项目目录和模块职责 |
 | [项目技术栈说明](docs/项目技术栈说明.md) | 技术选型和依赖说明 |
 | [开发环境配置指南](docs/开发环境配置指南.md) | 本地开发环境准备 |
