@@ -50,7 +50,7 @@ public class HomestayQueryServiceImpl implements HomestayQueryService {
             if (homestays.isEmpty()) {
                 return new ArrayList<>();
             }
-            return homestayDtoAssembler.toDTOs(homestays, null);
+            return homestayDtoAssembler.toDTOs(homestays, null, false);
         } catch (Exception exception) {
             log.error("Failed to fetch all homestays", exception);
             return new ArrayList<>();
@@ -94,7 +94,7 @@ public class HomestayQueryServiceImpl implements HomestayQueryService {
             finalHomestayList.addAll(featuredHomestays);
         }
 
-        return homestayDtoAssembler.toDTOs(finalHomestayList, null);
+        return homestayDtoAssembler.toDTOs(finalHomestayList, null, false);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class HomestayQueryServiceImpl implements HomestayQueryService {
     public List<HomestayDTO> getHomestaysByPropertyType(String propertyType) {
         List<Homestay> homestays =
                 homestayRepository.findByTypeAndStatusWithDetails(propertyType, HomestayStatus.ACTIVE);
-        return homestayDtoAssembler.toDTOs(homestays, null);
+        return homestayDtoAssembler.toDTOs(homestays, null, false);
     }
 
     @Override
@@ -132,7 +132,7 @@ public class HomestayQueryServiceImpl implements HomestayQueryService {
         Page<Homestay> homestaysPage = homestayRepository.findAll(
                 homestaySpecificationSupport.withDetailFetch(null),
                 pageable);
-        return homestayDtoAssembler.toDTOPage(homestaysPage, null);
+        return homestayDtoAssembler.toDTOPage(homestaysPage, null, false);
     }
 
     @Override
@@ -155,7 +155,7 @@ public class HomestayQueryServiceImpl implements HomestayQueryService {
                 return new ArrayList<>();
             }
 
-            return homestayDtoAssembler.toDTOs(homestays, null);
+            return homestayDtoAssembler.toDTOs(homestays, null, false);
         } catch (ResourceNotFoundException exception) {
             throw exception;
         } catch (Exception exception) {
@@ -278,6 +278,7 @@ public class HomestayQueryServiceImpl implements HomestayQueryService {
     }
 
     @Override
+    @Cacheable(value = "homestayList", key = "'active-summary-page:' + #featured + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<HomestaySummaryDTO> getActiveHomestaySummaryPage(Boolean featured, Pageable pageable) {
         try {
@@ -291,7 +292,7 @@ public class HomestayQueryServiceImpl implements HomestayQueryService {
             };
 
             Page<Homestay> homestayPage = homestayRepository.findAll(
-                    homestaySpecificationSupport.withDetailFetch(spec), pageable);
+                    homestaySpecificationSupport.withOwnerFetch(spec), pageable);
             return homestayDtoAssembler.toSummaryDTOPage(homestayPage, null);
         } catch (Exception exception) {
             log.error("Failed to fetch active homestay summary page", exception);

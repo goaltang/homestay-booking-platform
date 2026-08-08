@@ -63,19 +63,34 @@ public class HomestayController {
     private AmenityService amenityService;
 
     /**
-     * 获取所有房源
+     * 获取所有房源（支持分页与推荐筛选）
      */
     @GetMapping
-    public ResponseEntity<?> getAllHomestays() {
-        logger.info("获取所有民宿");
-        
+    public ResponseEntity<?> getAllHomestays(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean featured) {
+        logger.info("获取所有民宿，页码: {}, 每页数量: {}, 是否推荐: {}", page, size, featured);
+
         try {
-            List<HomestaySummaryDTO> homestays = homestayQueryService.getAllHomestaySummaries();
-            logger.info("成功获取{}个房源", homestays.size());
-            return ResponseEntity.ok(homestays);
+            Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                    page, size, org.springframework.data.domain.Sort.by(
+                            org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+
+            Page<HomestaySummaryDTO> result = homestayQueryService.getActiveHomestaySummaryPage(featured, pageable);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", result.getContent());
+            response.put("total", result.getTotalElements());
+            response.put("page", result.getNumber());
+            response.put("size", result.getSize());
+            response.put("pages", result.getTotalPages());
+
+            logger.info("成功获取{}个房源", result.getContent().size());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("获取所有房源时发生错误: {}", e.getMessage(), e);
-            
+
             // 返回错误响应而不是抛出异常
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
@@ -83,10 +98,14 @@ public class HomestayController {
             errorResponse.put("error", e.getMessage());
             errorResponse.put("timestamp", new java.util.Date());
             errorResponse.put("path", "/api/homestays");
-            
+
             // 即使出现错误，也返回200状态码和空列表，避免前端500错误
             errorResponse.put("data", new ArrayList<>());
-            
+            errorResponse.put("total", 0);
+            errorResponse.put("page", page);
+            errorResponse.put("size", size);
+            errorResponse.put("pages", 0);
+
             return ResponseEntity.ok(errorResponse);
         }
     }

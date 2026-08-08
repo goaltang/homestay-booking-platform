@@ -45,6 +45,13 @@ public class HomestayDtoAssembler {
     private final HomestayMapper homestayMapper;
 
     public List<HomestayDTO> toDTOs(Collection<Homestay> homestays, List<String> referringSearchCriteria) {
+        return toDTOs(homestays, referringSearchCriteria, true);
+    }
+
+    public List<HomestayDTO> toDTOs(
+            Collection<Homestay> homestays,
+            List<String> referringSearchCriteria,
+            boolean enrichFeatures) {
         if (homestays == null || homestays.isEmpty()) {
             return new ArrayList<>();
         }
@@ -59,7 +66,7 @@ public class HomestayDtoAssembler {
                     continue;
                 }
 
-                HomestayDTO dto = toDTO(homestay, referringSearchCriteria, propertyTypeNameMap);
+                HomestayDTO dto = toDTO(homestay, referringSearchCriteria, propertyTypeNameMap, enrichFeatures);
                 if (dto != null) {
                     result.add(dto);
                 }
@@ -76,20 +83,31 @@ public class HomestayDtoAssembler {
     }
 
     public Page<HomestayDTO> toDTOPage(Page<Homestay> homestaysPage, List<String> referringSearchCriteria) {
+        return toDTOPage(homestaysPage, referringSearchCriteria, true);
+    }
+
+    public Page<HomestayDTO> toDTOPage(
+            Page<Homestay> homestaysPage,
+            List<String> referringSearchCriteria,
+            boolean enrichFeatures) {
         return new PageImpl<>(
-                toDTOs(homestaysPage.getContent(), referringSearchCriteria),
+                toDTOs(homestaysPage.getContent(), referringSearchCriteria, enrichFeatures),
                 homestaysPage.getPageable(),
                 homestaysPage.getTotalElements());
     }
 
     public HomestayDTO toDTO(Homestay homestay, List<String> referringSearchCriteria) {
-        return toDTO(homestay, referringSearchCriteria, Collections.emptyMap());
+        return toDTO(homestay, referringSearchCriteria, true);
+    }
+
+    public HomestayDTO toDTO(Homestay homestay, List<String> referringSearchCriteria, boolean enrichFeatures) {
+        return toDTO(homestay, referringSearchCriteria, Collections.emptyMap(), enrichFeatures);
     }
 
     public List<HomestaySummaryDTO> toSummaryDTOs(
             Collection<Homestay> homestays,
             List<String> referringSearchCriteria) {
-        return toDTOs(homestays, referringSearchCriteria).stream()
+        return toDTOs(homestays, referringSearchCriteria, false).stream()
                 .map(this::toSummaryDTO)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -105,7 +123,7 @@ public class HomestayDtoAssembler {
     }
 
     public HomestaySummaryDTO toSummaryDTO(Homestay homestay, List<String> referringSearchCriteria) {
-        return toSummaryDTO(toDTO(homestay, referringSearchCriteria));
+        return toSummaryDTO(toDTO(homestay, referringSearchCriteria, false));
     }
 
     public List<HomestaySummaryDTO> toSummaryDTOsFromDTOs(Collection<HomestayDTO> homestays) {
@@ -480,7 +498,8 @@ public class HomestayDtoAssembler {
     private HomestayDTO toDTO(
             Homestay homestay,
             List<String> referringSearchCriteria,
-            Map<String, String> propertyTypeNameMap) {
+            Map<String, String> propertyTypeNameMap,
+            boolean enrichFeatures) {
         if (homestay == null) {
             log.warn("Attempted to assemble null Homestay");
             return null;
@@ -498,7 +517,9 @@ public class HomestayDtoAssembler {
             enrichOwnerInfo(dto, homestay);
             enrichGroupInfo(dto, homestay);
             enrichAmenities(dto, homestay);
-            enrichSuggestedFeatures(dto, homestay, referringSearchCriteria);
+            if (enrichFeatures) {
+                enrichSuggestedFeatures(dto, homestay, referringSearchCriteria);
+            }
 
             return dto;
         } catch (Exception exception) {
