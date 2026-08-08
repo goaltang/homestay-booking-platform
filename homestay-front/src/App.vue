@@ -10,6 +10,9 @@
 
     <!-- 修改 v-if 条件，排除登录和注册页 -->
     <AppFooter v-if="showFooter" />
+
+    <!-- AI 智能客服对话框（全局挂载） -->
+    <SupportAgentDialog />
   </div>
 </template>
 
@@ -20,8 +23,9 @@ import { useUserStore } from './stores/user'
 import { useFavoritesStore } from './stores/favorites'
 // import { useAuthStore } from './stores/auth' // authStore 现在由 AppHeader 使用
 // import { getAvatarUrl, handleImageError } from './utils/image' // 这些现在由 AppHeader 处理
-import AppHeader from '@/components/common/AppHeader.vue'; // 导入新的 Header
-import AppFooter from '@/components/common/AppFooter.vue'; // 导入新的 Footer
+import AppHeader from '@/components/common/AppHeader.vue';
+import AppFooter from '@/components/common/AppFooter.vue';
+import SupportAgentDialog from '@/components/chat/SupportAgentDialog.vue';
 
 // const router = useRouter() // router 现在由 AppHeader 使用
 const route = useRoute()

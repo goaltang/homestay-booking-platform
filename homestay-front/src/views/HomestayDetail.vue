@@ -113,6 +113,15 @@
             <!-- 房东详细信息组件 -->
             <HostInfo ref="hostDetailRef" :host-info="hostDetailInfo" :show-brief="false" :show-detail="true" @contact-host="contactHost" />
 
+            <div class="ai-support-entry">
+                <el-button type="primary" plain @click="contactAgent">
+                    <el-icon>
+                        <ChatDotRound />
+                    </el-icon>
+                    问 AI 客服
+                </el-button>
+            </div>
+
             <el-divider />
 
             <!-- 须知事项及规则组件 -->
@@ -148,12 +157,13 @@
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Star, Location, Share } from '@element-plus/icons-vue'
+import { Star, Location, Share, ChatDotRound } from '@element-plus/icons-vue'
 import { getHomestayById } from '@/api/homestay'
 import { getHomestayHostInfo } from '@/api/host'
 import { useUserStore } from '@/stores/user'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useChatStore } from '@/stores/chat'
+import { useSupportAgentStore } from '@/stores/supportAgent'
 import { formatLocation, parsePrice, processImages } from '@/utils/homestayUtils'
 import { useReviews } from '@/composables/useReviews'
 import { useMap } from '@/composables/useMap'
@@ -182,6 +192,7 @@ const router = useRouter()
 const userStore = useUserStore()
 const favoritesStore = useFavoritesStore()
 const chatStore = useChatStore()
+const agentStore = useSupportAgentStore()
 
 const loading = ref(true)
 const homestay = ref<HomestayDetail | null>(null)
@@ -273,6 +284,14 @@ const contactHost = async () => {
         return;
     }
     await chatStore.openChatDialog(homestay.value.id!, homestay.value.ownerId);
+}
+const contactAgent = () => {
+    if (!userStore.isAuthenticated) {
+        ElMessage.warning("请先登录后再咨询客服");
+        router.push("/login");
+        return;
+    }
+    agentStore.openAgentDialog(homestay.value?.id ?? null);
 }
 const showAllPhotos = (index: number = 0) => {
     galleryInitialIndex.value = index
@@ -431,6 +450,10 @@ onMounted(() => {
 .actions {
     display: flex;
     gap: 16px;
+}
+
+.ai-support-entry {
+    margin-top: 12px;
 }
 
 .detail-content {

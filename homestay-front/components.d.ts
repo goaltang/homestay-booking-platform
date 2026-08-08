@@ -112,6 +112,7 @@ declare module 'vue' {
     SearchBar: typeof import('./src/components/SearchBar.vue')['default']
     SearchExperience: typeof import('./src/components/SearchExperience.vue')['default']
     SearchSuggestions: typeof import('./src/components/SearchSuggestions.vue')['default']
+    SupportAgentDialog: typeof import('./src/components/chat/SupportAgentDialog.vue')['default']
     TrustBadges: typeof import('./src/components/home/TrustBadges.vue')['default']
     TrustSection: typeof import('./src/components/home/TrustSection.vue')['default']
   }

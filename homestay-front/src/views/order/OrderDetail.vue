@@ -287,6 +287,13 @@
             <div class="action-buttons card-style">
                 <el-button @click="goToOrders" class="btn-back">返回订单列表</el-button>
 
+                <el-button type="primary" plain @click="contactAgent">
+                    <el-icon>
+                        <ChatDotRound />
+                    </el-icon>
+                    咨询 AI 客服
+                </el-button>
+
                 <!-- 退款被拒特有操作分支 -->
                 <template v-if="orderData.paymentStatus === 'PAID' && orderData.refundRejectionReason">
                     <el-button type="default" plain @click="contactHost">联系房东</el-button>
@@ -467,7 +474,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, Clock, CircleCheck, CircleClose, Location, Calendar, User, UserFilled, PhoneFilled, EditPen } from '@element-plus/icons-vue'
+import { Loading, Clock, CircleCheck, CircleClose, Location, Calendar, User, UserFilled, PhoneFilled, EditPen, ChatDotRound } from '@element-plus/icons-vue'
 import QrcodeVue from 'qrcode.vue'
 import { cancelOrder, generatePaymentQRCode, checkPayment, payOrder, getCheckInCredential, selfCheckIn, confirmArrival } from '../../api/order'
 import { getHomestayById } from '../../api/homestay'
@@ -476,6 +483,7 @@ import dayjs from 'dayjs'
 import { deleteReview, submitReview } from '@/api/review'
 import { requestRefund, getRefundPreview, raiseDispute } from '@/api/refund'
 import { useUserStore } from '@/stores/user'
+import { useSupportAgentStore } from '@/stores/supportAgent'
 import { useOrderStore, type ReviewItem, type OrderItem } from '@/stores/order'
 import ReviewEditModal from '@/components/ReviewEditModal.vue'
 import ReviewForm from '@/components/ReviewForm.vue'
@@ -501,6 +509,7 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const store = useOrderStore()
+const agentStore = useSupportAgentStore()
 
 const loading = ref(true)
 const orderData = computed(() => store.currentOrder)
@@ -1150,6 +1159,15 @@ const contactCustomerService = () => {
 const contactHost = () => {
     if (!orderData.value) return
     ElMessage.info('暂未开通实时聊天，具体联系方式请咨询平台客服')
+}
+
+const contactAgent = () => {
+    if (!userStore.isAuthenticated) {
+        ElMessage.warning('请先登录后再咨询客服')
+        router.push('/login')
+        return
+    }
+    agentStore.openAgentDialog(null, orderData.value?.id ?? null)
 }
 
 
