@@ -30,10 +30,13 @@ import com.homestay3.homestaybackend.service.PromotionMatchService;
 import com.homestay3.homestaybackend.service.SystemConfigService;
 import com.homestay3.homestaybackend.service.search.UserBehaviorTrackingService;
 import com.homestay3.homestaybackend.dto.PricingResult;
+import com.homestay3.homestaybackend.mq.OrderTimeoutMessage;
+import com.homestay3.homestaybackend.mq.OrderTimeoutProducer;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -85,6 +88,16 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
     private final UserBehaviorTrackingService userBehaviorTrackingService;
     private final com.homestay3.homestaybackend.service.PaymentProcessingService paymentProcessingService;
     private final OrderStatusUpdater orderStatusUpdater;
+    private final ObjectProvider<OrderTimeoutProducer> orderTimeoutProducer;
+
+    @Value("${order.timeout.pending-hours:2}")
+    private int pendingTimeoutHours;
+
+    @Value("${order.timeout.confirmed-hours:2}")
+    private int confirmedTimeoutHours;
+
+    @Value("${order.timeout.payment-pending-hours:2}")
+    private int paymentPendingTimeoutHours;
 
     // Note: Payment processing is handled by PaymentProcessingService, not here
 
@@ -299,6 +312,8 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
             }
             savedOrder = orderRepository.save(savedOrder);
 
+            sendTimeoutDelayMessageAfterCommit(savedOrder.getId(), savedOrder.getStatus());
+
             trackBookingAfterCommit(currentUser.getId(), homestay);
 
             return convertToDTO(savedOrder);
@@ -312,6 +327,56 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
         } catch (Exception e) {
             log.error("订单创建过程中发生异常: {}", e.getMessage(), e);
             throw new RuntimeException("订单创建失败，请稍后重试");
+        }
+    }
+
+    /**
+     * 事务提交后发送超时延迟消息。
+     * 选择 afterCommit 而非同步发送，理由：避免事务回滚后消息已发出导致误取消；
+     * 消费者侧通过状态校验做幂等兜底，即使消息发送失败也不影响正确性（轮询兜底）。
+     */
+    private void sendTimeoutDelayMessageAfterCommit(Long orderId, String status) {
+        OrderTimeoutProducer producer = orderTimeoutProducer.getIfAvailable();
+        if (producer == null) {
+            return;
+        }
+        String expectedStatus;
+        long delayMillis;
+        switch (status) {
+            case "PENDING":
+                expectedStatus = "PENDING";
+                delayMillis = pendingTimeoutHours * 3600L * 1000L;
+                break;
+            case "CONFIRMED":
+                expectedStatus = "CONFIRMED";
+                delayMillis = confirmedTimeoutHours * 3600L * 1000L;
+                break;
+            case "PAYMENT_PENDING":
+                expectedStatus = "PAYMENT_PENDING";
+                delayMillis = paymentPendingTimeoutHours * 3600L * 1000L;
+                break;
+            default:
+                return;
+        }
+
+        Runnable sendTask = () -> {
+            try {
+                OrderTimeoutMessage msg = new OrderTimeoutMessage(orderId, expectedStatus, LocalDateTime.now().plusSeconds(delayMillis / 1000));
+                producer.sendDelayMessage(msg, delayMillis);
+            } catch (Exception e) {
+                log.error("发送超时延迟消息失败: orderId={}, status={}, error={}", orderId, expectedStatus, e.getMessage());
+            }
+        };
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendTask.run();
+                }
+            });
+        } else {
+            sendTask.run();
         }
     }
 
@@ -564,6 +629,9 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
 
         // 保存更新后的订单
         Order updatedOrder = orderRepository.save(order);
+
+        sendTimeoutDelayMessageAfterCommit(updatedOrder.getId(), updatedOrder.getStatus());
+
         return convertToDTO(updatedOrder);
     }
 
@@ -878,6 +946,9 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
 
         // 保存更新后的订单
         Order updatedOrder = orderRepository.save(order);
+
+        sendTimeoutDelayMessageAfterCommit(updatedOrder.getId(), updatedOrder.getStatus());
+
         return convertToDTO(updatedOrder);
     }
 

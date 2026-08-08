@@ -11,5 +11,14 @@ services:
       - "9200:9200"
     volumes:
       - es-data:/usr/share/elasticsearch/data
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: homestay-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=homestay
+      - RABBITMQ_DEFAULT_PASS=homestay123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
 volumes:
   es-data:

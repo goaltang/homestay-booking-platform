@@ -121,6 +121,12 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
         
+        <!-- RabbitMQ 消息队列 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        
         <!-- Flyway 数据库迁移 -->
         <dependency>
             <groupId>org.flywaydb</groupId>

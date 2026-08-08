@@ -62,7 +62,7 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 | 管理端 | Vue 3、TypeScript、Vite、Vue Router、Pinia、Element Plus、Axios、ECharts |
 | 后端 | Java 17、Spring Boot 3.0.2、Spring Web、Spring Security、Spring Data JPA、Spring Validation |
 | 数据与缓存 | MySQL 8.0、Redis、Redisson、Flyway、Elasticsearch |
-| 通信与集成 | JWT、WebSocket（STOMP）、支付宝 SDK、SMTP 邮件 |
+| 通信与集成 | JWT、WebSocket（STOMP）、RabbitMQ（AMQP）、支付宝 SDK、SMTP 邮件 |
 | 工程工具 | Maven、npm、MapStruct、Lombok、Docker Compose |
 
 ## 系统架构
@@ -291,9 +291,10 @@ com.homestay3.homestaybackend
 | MySQL | 8.0+ | ✅ |
 | Redis | 6.0+ | ✅ |
 | Elasticsearch | 8.5+ | ❌（可选，搜索功能依赖） |
+| RabbitMQ | 3.13+（management） | ❌（可选，订单超时延迟队列依赖） |
 | Node.js | 18+ | ✅ |
 | npm | 9+ | ✅ |
-| Docker + Docker Compose | 最新稳定版 | ❌（仅用于启动 ES） |
+| Docker + Docker Compose | 最新稳定版 | ❌（仅用于启动 ES / RabbitMQ） |
 
 ### 1. 克隆项目
 
@@ -323,6 +324,14 @@ docker-compose up -d elasticsearch
 ```
 
 > 如果不需要搜索功能，可在 `application.properties` 中设置 `elasticsearch.enabled=false`，后端会自动降级为 JPA 数据库搜索。
+
+**RabbitMQ（可选，订单超时延迟队列）** — 通过 Docker Compose 启动：
+
+```bash
+docker-compose up -d rabbitmq
+```
+
+> 管理台地址：`http://localhost:15672`（默认账号 `homestay / homestay123`，可在 compose 中修改）。订单超时采用「RabbitMQ 延迟队列为主 + 定时轮询兜底」双保险：MQ 不可用时，轮询任务仍会取消超时订单，因此不启动 RabbitMQ 也不影响系统正确性。
 
 ### 3. 配置后端
 
@@ -395,6 +404,9 @@ homestay-backend/src/main/resources/application.properties
 | `spring.data.redis.*` | Redis 地址、端口、密码和数据库编号 |
 | `spring.elasticsearch.*` | Elasticsearch 连接地址（可选） |
 | `elasticsearch.enabled` | 设为 `false` 可跳过 ES，降级为 JPA 搜索 |
+| `spring.rabbitmq.*` | RabbitMQ 连接地址、端口、账号（可选，订单超时延迟队列依赖） |
+| `order.timeout.mq-enabled` | 订单超时 MQ 消费开关，设为 `false` 时仅靠轮询兜底 |
+| `order.timeout.*` | 订单超时时长（pending / confirmed / payment-pending 小时数、预警提前分钟数） |
 | `jwt.secret` | JWT 签名密钥 |
 | `spring.mail.*` | 邮件服务配置 |
 | `payment.alipay.*` | 支付宝沙箱应用、公钥、私钥、网关和回调地址 |
