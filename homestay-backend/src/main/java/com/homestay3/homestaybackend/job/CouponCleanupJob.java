@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +24,7 @@ public class CouponCleanupJob {
      * 每小时执行一次：批量将已过期的 AVAILABLE 券标记为 EXPIRED
      */
     @Scheduled(cron = "0 0 * * * ?")
+    @Transactional
     public void expireOutdatedCoupons() {
         log.info("[定时任务] 开始清理过期优惠券...");
         try {

@@ -63,6 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/reviews/homestay/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/homestay/*/stats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/home/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/announcements/**").permitAll()
                         .requestMatchers("/api/locations/**", "/api/v1/locations/**").permitAll()
                         .requestMatchers("/api/homestay-types/**", "/api/v1/homestay-types/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/amenities/**", "/api/v1/amenities/**").permitAll()
