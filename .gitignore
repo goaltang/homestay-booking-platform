@@ -99,3 +99,7 @@ skills-lock.json
 # --- 个人本地脚本 ---
 load-ai-keys.ps1
 *.local.ps1
+
+# --- Agent 协作过程文件 ---
+TASK.md
+debug/
