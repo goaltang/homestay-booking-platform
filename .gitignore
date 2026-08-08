@@ -101,5 +101,5 @@ load-ai-keys.ps1
 *.local.ps1
 
 # --- Agent 协作过程文件 ---
-TASK.md
+TASK*.md
 debug/
