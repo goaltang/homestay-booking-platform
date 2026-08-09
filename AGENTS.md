@@ -1,166 +1,85 @@
-# AGENTS.md — 项目规范
+# homestay3
 
-## 功能模块文档规范（强制遵循）
+民宿预订系统（学习 + 面试项目）：C 端用户 + 管理后台 + Spring Boot 后端 + Obsidian 文档仓库。
+亮点：RabbitMQ 三场景已上线 —— 订单超时延迟队列(DLX)、批量发券消息驱动、通知推送可靠投递（均带重试队列 + 轮询/降级兜底）。
 
-当为任何功能模块编写或更新文档时（Obsidian vault 中的 `功能模块-*.md` 文件），必须遵循以下结构和原则。
+## 常用命令
 
-### 文档结构（严格顺序）
+### 依赖服务（必须先起）
 
-```markdown
----
-title: 功能名称
-date: YYYY-MM-DD
-tags:
-  - homestay
-  - feature
----
-
-# 功能名称
-
-> 一句话功能描述。路由：`xxx` | 权限：`xxx`
-
-## 一、功能清单
-
-### 1.1 用户可见功能（按用户操作视角分类）
-
-用表格列出，分类如：查看/操作/管理/导出 等。
-
-| 功能 | 说明 |
+| 命令 | 说明 |
 |------|------|
-| ... | ... |
+| `docker-compose up -d` | 启动 ES(9200) + RabbitMQ(5672/15672) |
 
-### 1.2 管理/系统功能（如适用）
+MySQL 需本机已有（localhost:3306/homestay_db，root/111111，见 application.properties）。
 
-## 二、核心业务规则
+### 一键启动（根目录）
 
-状态机、计算公式、权限规则、边界条件等。用表格展示状态定义。
-
-## 三、页面与组件
-
-### 3.1 路由
-
-| 路径 | 组件 | 说明 |
-|------|------|------|
-
-### 3.2 组件结构
-
-用缩进文本树展示组件层级关系。
-
-### 3.3 状态管理
-
-## 四、后端接口
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-
-### 4.1 核心 Service（如需要展开）
-
-## 五、数据模型
-
-### 5.1 数据库表
-
-| 字段 | 类型 | 说明 |
-
-### 5.2 DTO / 类型定义
-
-## 六、实时同步 / 特殊机制（如适用）
-
-WebSocket、定时任务、缓存策略等。
-
-## 七、实现记录
-
-按时间线记录，只写**已实现**的内容。
-
-| 日期 | 功能 | 说明 |
-|------|------|------|
-
-**验证结果**
-- 后端编译/测试：✅/❌
-- 前端构建：✅/❌
-
-## 相关模块
-
-- [[功能模块-xxx]]
-```
-
-### 写作原则
-
-1. **只记录已实现的功能**。不要写"建议""计划""后续可以"等前瞻性内容。如果有未实现的想法，用单独的`TODO.md`或任务系统记录，不要混在功能模块文档中。
-2. **按用户视角分类**，不按技术维度分类。例如用"查看日历/操作日历/导出数据"而不是"前端组件/后端API/数据库"。
-3. **多用表格，少用大段文字**。功能清单、路由、接口、表字段全部用表格。
-4. **实现记录精简**。保留关键文件、测试验证结果即可，不需要贴大段代码。
-5. **状态字段必须表格化**。任何状态枚举（如订单状态、可用性状态）必须给出含义、来源、触发条件。
-6. **组件结构用树形缩进**。不要用文字描述层级关系。
-
-### 反例（不要这样写）
-
-❌ "建议后续支持 iCal 导入导出" — 未实现的功能不要写在文档中
-❌ "前端用了 Vue3 + Element Plus + Pinia" — 技术栈在项目级文档中写，不要重复到每个功能模块
-❌ 大段文字描述页面结构 — 用组件树代替
-❌ 混合"方案设计"和"实施记录" — 这是两份文档，不要混在一起
-
----
-
-## 技术栈速查（供 AI 参考）
-
-- 前端：`homestay-front` — Vue 3 + TypeScript + Element Plus + Vite
-- 管理后台：`homestay-admin` — Vue 3 + Element Plus + Vite
-- 后端：`homestay-backend` — Spring Boot 3 + Java 17 + JPA + Flyway
-- 数据库：MySQL
-- 文档：Obsidian vault（`obsidian-vault/`）
-
----
-
-## 测试安全规范（强制遵循）
-
-### 核心原则：测试绝对不能连接生产/开发数据库
-
-本项目历史上曾发生因测试类连接真实 MySQL 并执行 `deleteAll()` 导致全表数据被清空的事故（`ConcurrentBookingTest`）。所有 AI Agent 和开发人员在编写、审查、运行测试时，必须严格遵守以下规范。
-
-### 1. 数据库隔离（红线）
-
-| 要求 | 说明 |
+| 命令 | 说明 |
 |------|------|
-| 必须指定 test profile | 所有 `@SpringBootTest` 测试类必须加 `@ActiveProfiles("test")` |
-| 必须配独立数据源 | `application-test.properties` 只能使用 H2 内存库或专用测试实例，禁止使用 `localhost:3306` 生产/开发库 |
-| 禁止共享数据源 | 不允许在测试配置中引用 `application.properties` 的主数据库连接串 |
+| `npm run dev` | 后端(8081) + 用户端(5173) |
+| `npm run dev:admin` | 后端(8081) + 管理后台(5174) |
+| `npm run dev:all` | 后端 + 用户端 + 管理后台 全起 |
 
-### 2. 数据清理策略
+### 后端（homestay-backend/）
 
-| ❌ 禁止 | ✅ 正确做法 |
-|--------|-----------|
-| `xxxRepository.deleteAll()` 无条件清空真实表 | 使用 `@Transactional` + `@Rollback` 让 Spring 自动回滚 |
-| 在 `@BeforeEach` 里批量 `deleteAll()` N 张表 | 在内存库中随意清理；或在真实库里只删除自己创建的特定测试数据（按 ID） |
-| 测试方法内直接 `drop table` / `truncate` | 绝对禁止 |
+| 命令 | 说明 |
+|------|------|
+| `mvn spring-boot:run` | 启动，端口 8081 |
+| `mvn test` | 跑测试（H2 内存库，见"测试红线"） |
+| `mvn package` | 打包 |
 
-### 3. 事务保护（底线）
+### 前端（homestay-front/ 与 homestay-admin/）
 
-所有涉及数据库写入的集成测试，类级别必须加：
+| 命令 | 说明 |
+|------|------|
+| `npm run dev` | 开发（front 5173 / admin 5174） |
+| `npm run build` | 构建（vue-tsc 类型检查 + vite build） |
+| `npm run test:run` | 单测（vitest，仅 front 配置） |
 
-```java
-@SpringBootTest
-@Transactional        // ← 测试结束自动回滚
-@ActiveProfiles("test") // ← 走独立数据源
-public class MyIntegrationTest {
-    // ...
-}
-```
+## 架构概览
 
-> **注意**：`@BeforeEach` 中调用的 `deleteAll()` 可能不受 `@Transactional` 回滚保护，因此最佳实践是**不在 `@BeforeEach` 里对真实数据库做全表清理**。
+| 目录 | 职责 | 技术栈 |
+|------|------|--------|
+| homestay-front/ | C 端用户：找房/下单/支付/聊天 | Vue 3 + TS + Element Plus + Vite + Pinia |
+| homestay-admin/ | 管理后台 | Vue 3 + Element Plus + Vite |
+| homestay-backend/ | 后端 API（端口 8081） | Spring Boot 3.0.2 + Java 17 + JPA + Flyway |
+| obsidian-vault/ | 项目文档（功能模块/架构/求职） | Obsidian Markdown |
+| tools/ | 工具脚本 | — |
 
-### 4. 执行前检查清单
+依赖服务：MySQL(3306, Flyway 管表结构)、Elasticsearch(9200, 需 IK 插件)、Redis(缓存/会话)、RabbitMQ(homestay-rabbitmq 容器, homestay/homestay123, 管理台 15672)。
 
-跑 `mvn test` 之前，逐一确认：
+后端启动前提：**ES 必须在线**；RabbitMQ 建议在线（MQ 组件条件装配，缺 MQ 时自动降级轮询/同步兜底）。
+端口：8080 常被本机 Dify 占用，后端固定用 8081。
 
-1. 测试类是否有 `@ActiveProfiles("test")`？
-2. `application-test.properties` 里的数据库是不是 H2 / 嵌入式 / 专用测试实例？
-3. 代码里有没有 `deleteAll()`、`drop`、`truncate` 等危险操作？如果有，确认它操作的是内存库。
+## 代码约定
 
-### 5. 代码审查红线
+- 后端分层：Controller → Service → Repository；出入参用 DTO，不直接暴露 Entity。
+- 表结构变更：Flyway（src/main/resources/db/migration/）加新版本迁移文件，禁止手改表。
+- 认证：Spring Security + JWT（jjwt 0.12.3）。
+- 前端：组合式 API + `<script setup>`；Element Plus 自动导入（unplugin-auto-import），组件无需手动 import。
+- 提交信息：中文，`feat/fix/test/docs` 前缀 + 模块，如 `feat(order): 订单超时延迟队列`。
 
-- 凡是看到 `src/test` 里出现 `deleteAll()` 或 `drop table`，必须强制检查该测试类连接的是哪个数据库。
-- 没有 `@ActiveProfiles("test")` + 独立数据源的 `@SpringBootTest`，一律视为生产环境炸弹，禁止合入。
-
-### 一句话总结
+## 测试红线（强制）
 
 > **没有 `@ActiveProfiles("test")` + 独立数据源的 `@SpringBootTest`，一律视为生产环境炸弹。**
+
+- 所有 `@SpringBootTest` 必须加 `@ActiveProfiles("test")`（application-test.properties 指向 H2 内存库，禁止引用主库连接串）。
+- 禁止 `deleteAll()` / `truncate` / `drop` 真实表；写操作靠 `@Transactional` 自动回滚。
+- 跑 `mvn test` 前检查：①测试类有 test profile？②数据源是 H2？③有无危险清理操作？
+- 历史事故：`ConcurrentBookingTest` 曾连真实 MySQL 执行 `deleteAll()` 清空全表数据。
+
+## 文档规范
+
+Obsidian vault 的 `功能模块-*.md` 有强制模板，完整规范见 `obsidian-vault/02-功能模块/_文档规范模板.md`。核心四条：
+
+1. 只记录**已实现**的功能，不写"建议/计划/后续"。
+2. 按用户视角分类（查看/操作/管理），不按技术维度。
+3. 多用表格（功能清单/路由/接口/表字段/状态枚举），组件结构用树形缩进。
+4. 技术栈在项目级文档写，不重复进功能模块。
+
+## 工具特有文件
+
+- `CLAUDE.md`：graphify 知识图谱工具指令（只影响 Claude Code）。
+- `QWEN.md`：Qwen 工具记忆（Obsidian Local REST API、mem0），API Key 一律从 `.env.local` 读取，禁止明文。
+- 通用规范以本文件（AGENTS.md）为准。
