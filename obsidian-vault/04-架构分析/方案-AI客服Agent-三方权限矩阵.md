@@ -124,3 +124,55 @@ tags:
 - 第一层 FAQ agent = 只读工具集，最先做，零风险
 - 第二层订单服务 agent = 申请型写操作（含新增的 raiseDisputeByGuest）
 - 第三层争议辅助 agent = 给管理员生成"裁决建议草稿"（订单时间线+聊天摘要+历史相似案例），DisputeRecord 是现成的少样本数据
+
+---
+
+## 六、落地记录（2026-08-09 实现完成，v1.0）
+
+> 本节记录 v0.2 设计定稿后的实际实现与决策，标注与设计的对应/偏离。
+
+### 第一层 FAQ Agent（已上线）
+
+- 7 个只读工具白名单：`query_my_order` / `get_refund_preview` / `get_check_in_info` / `get_check_out_info` / `get_homestay_detail` / `get_review_stats` / `calculate_price`
+- 两阶段 JSON 协议（决策轮 + 回答轮），`LlmClient` 封装 OpenAI 兼容 chat/completions，不依赖原生 function calling
+- 三道护栏：敏感词直达人工 / 同会话 3 轮转人工 / LLM 失败兜底转人工
+- 工具返回脱敏（maskOrder：不含 guestPhone/checkInCode/doorPassword/refundTransactionId）
+
+### 第二层 订单服务 Agent（2026-08-09）
+
+**实现（与 v0.2 完全对齐）：**
+
+| v0.2 设计 | 实际落地 |
+|---|---|
+| 新增 `raiseDisputeByGuest` 接口 | `DisputeService.raiseDisputeByGuest(orderId, reason)` + `GuestDisputeController`（`POST /api/guest/disputes`，401/403/400/404 分级） |
+| 触发条件放宽 | 非 `DISPUTE_PENDING` 且不在终态集合 `{REFUNDED, COMPLETED, CANCELLED, CANCELLED_BY_USER, CANCELLED_BY_HOST, CANCELLED_SYSTEM}` 即可发起（房客争议是"对已发生事实的申诉"，不被退款状态机锁死） |
+| 房客权限 | 必须是订单客人（`order.getGuest().getId() == currentUser.getId()`），否则 `AccessDeniedException` |
+| 3 个申请型写操作工具 | `request_user_refund` / `cancel_order_with_reason`（固定 `CANCELLED_BY_USER`）/ `raise_dispute_by_guest`，注册进 AgentToolRegistry（7→10 工具） |
+
+**关键实现决策：起草模式（比 v0.2 更严）**
+
+- 写工具**只起草不执行**：校验订单归属后返回 `pendingAction`（待确认提案：action/orderId/reason/summary），不调任何 service 写方法
+- 新增 `POST /api/support/agent/confirm`：用户确认后才真正执行（调 requestUserRefund / cancelOrderWithReason / raiseDisputeByGuest）
+- `OrderAccessGuard` 提升为 public 并新增 `requireGuestOrder`（必须是订单客人，防越权替他人操作）
+- 前端 `SupportAgentDialog` 渲染"待确认操作"卡片（确认/取消，防重复点击），确认后追加执行结果消息
+- 原因：LLM 可能误判用户意图（问政策 ≠ 要执行），直接执行风险不可控；对齐 v0.2 护栏"客人显式确认后才提交"
+
+### 第三层 争议辅助 Agent（2026-08-09）
+
+- `DisputeAdvisorService.generateAdvice(orderId)`：管理员仲裁前一键生成裁决建议草稿
+- 数据组装：订单时间线（基础字段 + remark 状态流转 + 争议/退款字段）+ 聊天摘要（订单会话最近 50 条，时间正序）+ 历史相似案例（最近 10 条已解决争议，排除当前订单）
+- `LlmClient` 生成建议（倾向 APPROVED/REJECTED + 理由 + 政策建议 + 注意事项，markdown），失败降级返回原始材料不 500
+- `AdminDisputeAdvisorController`：`GET /api/admin/disputes/advisor/{orderId}/advice`，`@PreAuthorize("hasRole('ADMIN')")`
+- **红线**：只生成建议，绝不自动仲裁（不调 resolveDispute、不改订单状态），审批权永远在管理员
+
+### 测试覆盖（agent 模块）
+
+| 测试类 | 覆盖 |
+|---|---|
+| `DisputeServiceImplTest`（13 用例） | 房东/房客发起争议、仲裁、权限、状态机 |
+| `AgentToolRegistryTest`（9 用例） | 10 工具白名单、禁区工具不在注册表 |
+| `AgentWriteToolsTest`（11 用例） | 3 写工具起草模式（verify 不执行）+ confirm 分发 + 越权拒绝 |
+| `SupportAgentServiceImplTest`（9 用例） | 编排、护栏、pendingAction 透传 |
+| `DisputeAdvisorServiceImplTest`（6 用例） | 生成建议全流程 + LLM 失败降级 |
+
+全部通过（2026-08-09 实测：相关测试类 Failures: 0）。
