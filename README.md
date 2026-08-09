@@ -428,6 +428,13 @@ mvn test
 mvn clean package
 ```
 
+测试构成：
+- 单元测试：`src/test/java/.../mq/`（MQ 消费者：订单超时/批量发券/通知推送）、`service/impl/`（订单/优惠券等）
+- API 自动化测试：`src/test/java/.../api/`（AuthApiTest / OrderApiTest / CouponApiTest / NotificationApiTest，验证认证、下单、发券、通知全链路，H2 内存库 + MQ 降级路径）
+- 集成测试：`src/test/java/.../integration/`（历史遗留）
+
+> ⚠️ 测试安全红线：所有测试必须走 `application-test.properties`（H2 内存库），禁止连接真实 MySQL（历史曾发生测试清空生产数据事故）。
+
 ### 用户端
 
 ```bash

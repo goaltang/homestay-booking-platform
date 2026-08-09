@@ -297,12 +297,12 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
         Query query;
         switch (filterType) {
             case "ALL":
-                query = entityManager.createNativeQuery("SELECT id FROM users WHERE enabled = 1");
+                query = entityManager.createNativeQuery("SELECT id FROM users WHERE enabled = TRUE");
                 break;
             case "NEW_USER": {
                 int newUserDays = getIntParam(filterParams, "days", 7);
                 query = entityManager.createNativeQuery(
-                        "SELECT id FROM users WHERE enabled = 1 AND created_at >= :cutoff");
+                        "SELECT id FROM users WHERE enabled = TRUE AND created_at >= :cutoff");
                 query.setParameter("cutoff", LocalDateTime.now().minusDays(newUserDays));
                 break;
             }
@@ -310,14 +310,14 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
                 int inactiveDays = getIntParam(filterParams, "days", 30);
                 query = entityManager.createNativeQuery(
                         "SELECT u.id FROM users u LEFT JOIN user_preference_profile p ON u.id = p.user_id " +
-                        "WHERE u.enabled = 1 AND (p.last_active_at IS NULL OR p.last_active_at < :cutoff)");
+                        "WHERE u.enabled = TRUE AND (p.last_active_at IS NULL OR p.last_active_at < :cutoff)");
                 query.setParameter("cutoff", LocalDateTime.now().minusDays(inactiveDays));
                 break;
             }
             case "NO_ORDER_30D": {
                 int noOrderDays = getIntParam(filterParams, "days", 30);
                 query = entityManager.createNativeQuery(
-                        "SELECT u.id FROM users u WHERE u.enabled = 1 AND u.id NOT IN " +
+                        "SELECT u.id FROM users u WHERE u.enabled = TRUE AND u.id NOT IN " +
                         "(SELECT DISTINCT guest_id FROM orders WHERE created_at >= :cutoff AND guest_id IS NOT NULL)");
                 query.setParameter("cutoff", LocalDateTime.now().minusDays(noOrderDays));
                 break;
@@ -331,7 +331,7 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
                 break;
             }
             default:
-                query = entityManager.createNativeQuery("SELECT id FROM users WHERE enabled = 1");
+                query = entityManager.createNativeQuery("SELECT id FROM users WHERE enabled = TRUE");
         }
 
         List<Number> result = query.getResultList();
