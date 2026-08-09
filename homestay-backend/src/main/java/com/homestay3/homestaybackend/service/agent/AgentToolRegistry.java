@@ -3,17 +3,21 @@ package com.homestay3.homestaybackend.service.agent;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.service.CheckInService;
 import com.homestay3.homestaybackend.service.CheckOutService;
+import com.homestay3.homestaybackend.service.DisputeService;
 import com.homestay3.homestaybackend.service.HomestayQueryService;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PricingService;
 import com.homestay3.homestaybackend.service.ReviewService;
 import com.homestay3.homestaybackend.service.agent.tools.CalculatePriceTool;
+import com.homestay3.homestaybackend.service.agent.tools.CancelOrderWithReasonTool;
 import com.homestay3.homestaybackend.service.agent.tools.GetCheckInInfoTool;
 import com.homestay3.homestaybackend.service.agent.tools.GetCheckOutInfoTool;
 import com.homestay3.homestaybackend.service.agent.tools.GetHomestayDetailTool;
 import com.homestay3.homestaybackend.service.agent.tools.GetRefundPreviewTool;
 import com.homestay3.homestaybackend.service.agent.tools.GetReviewStatsTool;
 import com.homestay3.homestaybackend.service.agent.tools.QueryMyOrderTool;
+import com.homestay3.homestaybackend.service.agent.tools.RaiseDisputeByGuestTool;
+import com.homestay3.homestaybackend.service.agent.tools.RequestUserRefundTool;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,9 +28,10 @@ import java.util.Map;
 
 /**
  * Agent 工具注册表 —— 权限核心
- * 白名单硬编码：只允许第一层 FAQ Agent 的 7 个只读工具，
+ * 白名单硬编码：第一层 FAQ Agent 的 7 个只读工具 + 第二层订单服务 Agent 的 3 个申请型写操作工具，
  * 构造函数内一次性写死，不开放任何动态注册入口。
- * 任何写操作（退款审批/押金/删除等禁区接口）在此注册表中不存在。
+ * 审批类写操作（approveRefund/rejectRefund/executeRefund/processDeposit/confirmPayment/deleteOrder 等禁区接口）一律不注册。
+ * 写操作必须落在"申请→审批"轨道：agent 只代客提交申请，审批权永远在人（房东/管理员）。
  */
 @Service
 public class AgentToolRegistry {
@@ -39,6 +44,7 @@ public class AgentToolRegistry {
                              HomestayQueryService homestayQueryService,
                              ReviewService reviewService,
                              PricingService pricingService,
+                             DisputeService disputeService,
                              OrderRepository orderRepository) {
         Map<String, AgentTool> registry = new LinkedHashMap<>();
         put(registry, new QueryMyOrderTool(orderService, orderRepository));
@@ -48,6 +54,9 @@ public class AgentToolRegistry {
         put(registry, new GetHomestayDetailTool(homestayQueryService));
         put(registry, new GetReviewStatsTool(reviewService));
         put(registry, new CalculatePriceTool(pricingService));
+        put(registry, new RequestUserRefundTool(orderService, orderRepository));
+        put(registry, new CancelOrderWithReasonTool(orderService, orderRepository));
+        put(registry, new RaiseDisputeByGuestTool(disputeService, orderRepository));
         this.tools = Collections.unmodifiableMap(registry);
     }
 

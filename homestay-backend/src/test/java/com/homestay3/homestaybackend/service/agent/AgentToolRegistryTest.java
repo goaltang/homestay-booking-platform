@@ -8,6 +8,7 @@ import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.service.CheckInService;
 import com.homestay3.homestaybackend.service.CheckOutService;
+import com.homestay3.homestaybackend.service.DisputeService;
 import com.homestay3.homestaybackend.service.HomestayQueryService;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PricingService;
@@ -56,6 +57,9 @@ class AgentToolRegistryTest {
     private PricingService pricingService;
 
     @Mock
+    private DisputeService disputeService;
+
+    @Mock
     private OrderRepository orderRepository;
 
     private AgentToolRegistry registry;
@@ -63,15 +67,15 @@ class AgentToolRegistryTest {
     @BeforeEach
     void setUp() {
         registry = new AgentToolRegistry(orderService, checkInService, checkOutService,
-                homestayQueryService, reviewService, pricingService, orderRepository);
+                homestayQueryService, reviewService, pricingService, disputeService, orderRepository);
     }
 
     // ========== 白名单边界 ==========
 
     @Test
-    void whitelistContainsExactlySevenTools() {
-        assertEquals(7, registry.size());
-        assertEquals(7, registry.toolSpecs().size());
+    void whitelistContainsExactlyTenTools() {
+        assertEquals(10, registry.size());
+        assertEquals(10, registry.toolSpecs().size());
     }
 
     @Test
