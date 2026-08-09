@@ -89,28 +89,28 @@ flowchart LR
 
 ```mermaid
 graph TB
-    subgraph 客户端
-        F1[用户端<br/>Vue 3 + TypeScript]
-        F2[房东端<br/>Vue 3 + TypeScript]
-        F3[管理端<br/>Vue 3 + TypeScript]
+    subgraph C["客户端"]
+        F1[用户端<br/>Vue 3 + TS]
+        F2[房东端<br/>Vue 3 + TS]
+        F3[管理端<br/>Vue 3 + TS]
     end
 
-    subgraph 后端服务 [Spring Boot 3 + Java 17]
-        S1[统一认证<br/>Spring Security + JWT]
-        S2[核心业务<br/>房源 / 订单 / 评价 / 支付]
-        S3[定价引擎<br/>动态报价 / 节假日 / 连住]
-        S4[ES 搜索 +<br/>个性化推荐]
-        S5[营销促销<br/>优惠券 / 邀请 / ROI]
-        S6[通知中心<br/>WebSocket 实时推送]
+    subgraph B["后端服务 · Spring Boot 3 + Java 17"]
+        S1[统一认证<br/>Security + JWT]
+        S2[核心业务<br/>房源/订单/支付]
+        S3[定价引擎<br/>动态报价]
+        S4[ES 搜索<br/>+ 推荐]
+        S5[营销促销<br/>优惠券/ROI]
+        S6[通知中心<br/>WebSocket]
     end
 
-    subgraph 数据与缓存
-        D1[(MySQL 8<br/>Flyway V49)]
-        D2[(Redis<br/>分布式锁 + 缓存)]
-        D3[(Elasticsearch<br/>IK + Geo 查询)]
+    subgraph D["数据与缓存"]
+        D1[(MySQL 8<br/>Flyway)]
+        D2[(Redis<br/>锁 + 缓存)]
+        D3[(Elasticsearch<br/>IK + Geo)]
     end
 
-    subgraph 外部服务
+    subgraph E["外部服务"]
         E1[支付宝]
         E2[高德地图]
         E3[SMTP 邮件]

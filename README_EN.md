@@ -89,28 +89,28 @@ flowchart LR
 
 ```mermaid
 graph TB
-    subgraph Clients
-        F1[Guest App<br/>Vue 3 + TypeScript]
-        F2[Host App<br/>Vue 3 + TypeScript]
-        F3[Admin App<br/>Vue 3 + TypeScript]
+    subgraph C["Clients"]
+        F1[Guest App<br/>Vue 3 + TS]
+        F2[Host App<br/>Vue 3 + TS]
+        F3[Admin App<br/>Vue 3 + TS]
     end
 
-    subgraph Backend [Spring Boot 3 + Java 17]
-        S1[Auth<br/>Spring Security + JWT]
-        S2[Core Business<br/>Listings / Orders / Reviews / Payments]
-        S3[Pricing Engine<br/>Dynamic Rates / Holidays / Multi-night]
-        S4[ES Search +<br/>Personalized Recommendations]
-        S5[Marketing<br/>Coupons / Referrals / ROI]
-        S6[Notifications<br/>WebSocket Real-time Push]
+    subgraph B["Backend · Spring Boot 3 + Java 17"]
+        S1[Auth<br/>Security + JWT]
+        S2[Core Business<br/>Listings/Orders/Payments]
+        S3[Pricing Engine<br/>Dynamic Rates]
+        S4[ES Search<br/>+ Recommendations]
+        S5[Marketing<br/>Coupons/ROI]
+        S6[Notifications<br/>WebSocket]
     end
 
-    subgraph Data & Cache
-        D1[(MySQL 8<br/>Flyway V49)]
-        D2[(Redis<br/>Distributed Locks + Cache)]
-        D3[(Elasticsearch<br/>IK + Geo Queries)]
+    subgraph D["Data & Cache"]
+        D1[(MySQL 8<br/>Flyway)]
+        D2[(Redis<br/>Locks + Cache)]
+        D3[(Elasticsearch<br/>IK + Geo)]
     end
 
-    subgraph External Services
+    subgraph E["External Services"]
         E1[Alipay]
         E2[AMap]
         E3[SMTP Email]
