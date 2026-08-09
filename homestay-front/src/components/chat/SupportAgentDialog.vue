@@ -28,6 +28,24 @@
             </div>
             <div class="message-content-wrapper">
               <div class="message-content">{{ msg.content }}</div>
+              <div v-if="msg.pendingAction" class="action-card">
+                <div class="action-card-title">待确认操作</div>
+                <div class="action-card-summary">{{ msg.pendingAction.summary }}</div>
+                <div class="action-card-buttons">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    :loading="msg.confirming"
+                    :disabled="msg.confirming"
+                    @click="handleConfirmAction(msg)"
+                  >
+                    确认执行
+                  </el-button>
+                  <el-button size="small" :disabled="msg.confirming" @click="handleCancelAction(msg)">
+                    取消
+                  </el-button>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -71,13 +89,16 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from "vue";
 import { useSupportAgentStore } from "@/stores/supportAgent";
-import { chatWithAgent } from "@/api/supportAgent";
+import { chatWithAgent, confirmAgentAction } from "@/api/supportAgent";
+import type { AgentPendingAction } from "@/api/supportAgent";
 import { ElMessage } from "element-plus";
 
 interface ChatMessage {
   id: number;
   type: "user" | "agent" | "system";
   content: string;
+  pendingAction?: AgentPendingAction;
+  confirming?: boolean;
 }
 
 let msgIdCounter = 0;
@@ -135,7 +156,9 @@ const handleSend = async () => {
     });
 
     conversationId.value = response.conversationId;
-    messages.value.push({ id: nextMsgId(), type: "agent", content: response.answer });
+    const newMsg: ChatMessage = { id: nextMsgId(), type: "agent", content: response.answer };
+    if (response.pendingAction) newMsg.pendingAction = response.pendingAction;
+    messages.value.push(newMsg);
 
     if (response.handoffToHuman) {
       handedOff.value = true;
@@ -149,6 +172,26 @@ const handleSend = async () => {
     await nextTick();
     scrollToBottom();
   }
+};
+
+const handleConfirmAction = async (msg: ChatMessage) => {
+  if (!msg.pendingAction || msg.confirming) return;
+  msg.confirming = true;
+  try {
+    const response = await confirmAgentAction(msg.pendingAction);
+    msg.pendingAction = undefined;
+    msg.confirming = false;
+    conversationId.value = response.conversationId;
+    messages.value.push({ id: nextMsgId(), type: "agent", content: response.answer });
+  } catch {
+    msg.confirming = false;
+    ElMessage.error("操作执行失败，请稍后重试");
+  }
+};
+
+const handleCancelAction = (msg: ChatMessage) => {
+  msg.pendingAction = undefined;
+  messages.value.push({ id: nextMsgId(), type: "system", content: "已取消该操作" });
 };
 
 watch(
@@ -225,6 +268,41 @@ watch(
 .message-self .message-content {
   background-color: #409eff;
   color: white;
+}
+
+.action-card {
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-card:hover {
+  border-color: #c6e2ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.action-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.action-card-summary {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.5;
+  word-break: break-word;
+  margin-bottom: 10px;
+}
+
+.action-card-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .loading-bubble {
