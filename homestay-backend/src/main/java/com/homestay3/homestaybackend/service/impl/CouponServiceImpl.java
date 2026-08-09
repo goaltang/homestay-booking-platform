@@ -139,7 +139,7 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<AvailableCouponDTO> getMyCoupons(Long userId, String status) {
         List<UserCoupon> coupons;
         if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) {
