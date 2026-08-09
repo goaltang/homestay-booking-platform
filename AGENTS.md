@@ -18,6 +18,15 @@
 - obsidian-vault/ — 项目文档（Obsidian 管理，git 同步 md 文档）
 - 依赖：MySQL(3306, Flyway 管表结构) ｜ ES(9200, 需 IK 插件, **后端启动必须在线**) ｜ Redis(缓存) ｜ RabbitMQ(homestay-rabbitmq, homestay/homestay123, 管理台 15672)
 - 端口：8080 常被本机 Dify 占用，后端固定 8081
+## AI 客服 Agent 模块（三层架构）
+
+> 设计文档：`obsidian-vault/04-架构分析/方案-AI客服Agent-三方权限矩阵.md`（v1.0 含落地记录）；测试报告：`obsidian-vault/04-架构分析/AI客服Agent-测试报告.md`。改动前必读。
+
+- **第一层 FAQ**：`service/agent/tools/` 7 个只读工具 + `AgentToolRegistry`（10 工具白名单硬编码）+ `SupportAgentServiceImpl` 两阶段 JSON 编排 + `LlmClient`（OpenAI 兼容）
+- **第二层 订单服务**：3 个申请型写工具（`request_user_refund`/`cancel_order_with_reason`/`raise_dispute_by_guest`）——**只起草不执行**，返回 `pendingAction`，用户确认后走 `POST /api/support/agent/confirm` 才真正执行；`OrderAccessGuard.requireGuestOrder` 强校验订单客人
+- **第三层 争议辅助**：`DisputeAdvisorService.generateAdvice(orderId)` 给管理员生成裁决建议草稿（时间线+聊天摘要+相似案例+LLM 建议），**只建议绝不自动仲裁**
+- 前端：`homestay-front/src/components/chat/SupportAgentDialog.vue`（确认卡片）+ `src/api/supportAgent.ts`
+- 常见改动：新增工具 → 建类（实现 `AgentTool`）+ 在 `AgentToolRegistry` 构造函数注册 + 更新 `AgentWriteToolsTest`；改权限 → 动 `OrderAccessGuard`；改 LLM 提示 → `SupportAgentServiceImpl` 常量
 
 ## 行为准则
 
