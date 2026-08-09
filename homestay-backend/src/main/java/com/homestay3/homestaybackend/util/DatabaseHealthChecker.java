@@ -59,7 +59,7 @@ public class DatabaseHealthChecker implements CommandLineRunner {
      */
     private void checkRequiredTables() {
         String[] requiredTables = {
-            "homestays", "users", "amenities", "homestay_amenities", 
+            "homestays", "users", "amenities", "homestay_amenity", 
             "homestay_types", "homestay_audit_logs", "orders"
         };
         

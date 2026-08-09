@@ -31,7 +31,7 @@ TRUNCATE TABLE order_price_snapshot;
 TRUNCATE TABLE orders;
 TRUNCATE TABLE homestay_availability;
 TRUNCATE TABLE homestay_groups;
-TRUNCATE TABLE homestay_amenities;
+TRUNCATE TABLE homestay_amenity;
 TRUNCATE TABLE homestay_images;
 TRUNCATE TABLE homestays;
 TRUNCATE TABLE user_favorites;
@@ -45,8 +45,8 @@ SET FOREIGN_KEY_CHECKS=1;
 -- 2. 基础用户：1 个房东 + 1 个 admin + 1000 个住客
 -- -----------------------------------------------------------------------------
 -- 密码统一为 123456（BCrypt 哈希，强度 10）
--- $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
-SET @bcrypt_pwd = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+-- 由 BCryptPasswordEncoder 生成并验证（旧哈希 $2a$10$N9qo8uLO... 不匹配任何密码）
+SET @bcrypt_pwd = '$2a$10$YZcWhCdgQuaipqAyPpKSXuLj.l2xQ5aC5PXj8bXdW9ff3iBW7BV9G';
 
 INSERT INTO users (username, email, password, phone, role, real_name, nickname, created_at, updated_at, enabled)
 VALUES
@@ -113,7 +113,7 @@ BEGIN
       CONCAT('压测房型#', i, '-', city_name),
       'APARTMENT',
       ROUND(100 + RAND() * 900, 2),
-      'LISTED',
+      'ACTIVE',
       2 + FLOOR(RAND() * 4),
       1,
       30,
@@ -156,11 +156,12 @@ BEGIN
 
     SET d = 0;
     WHILE d < 60 DO
-      INSERT INTO homestay_availability (homestay_id, date, available, custom_price, created_at, updated_at)
+      INSERT INTO homestay_availability (homestay_id, date, status, locked, custom_price, created_at, updated_at)
       VALUES (
         h_id,
         DATE_ADD(CURDATE(), INTERVAL d DAY),
-        1,
+        'AVAILABLE',
+        0,
         NULL,
         NOW(), NOW()
       );
@@ -200,13 +201,13 @@ BEGIN
     INSERT INTO orders (
       order_number, homestay_id, guest_id, guest_phone,
       check_in_date, check_out_date, nights, guest_count,
-      price, total_amount, status, payment_status, created_at, updated_at
+      price, total_amount, status, payment_status, version, created_at, updated_at
     ) VALUES (
       CONCAT('PERF', DATE_FORMAT(NOW(), '%Y%m%d'), LPAD(i, 8, '0')),
       h_id, g_id, '13900000000',
       checkin, checkout, nights, 2,
       (SELECT price FROM homestays WHERE id=h_id), total,
-      'COMPLETED', 'PAID',
+      'COMPLETED', 'PAID', 0,
       NOW(), NOW()
     );
 

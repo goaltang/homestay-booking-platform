@@ -33,6 +33,10 @@ vite.config.ts.timestamp-*
 homestay-backend/src/main/resources/application.properties
 homestay-backend/src/main/resources/application-*.properties
 !homestay-backend/src/main/resources/application.example.properties
+!homestay-backend/src/main/resources/application-perf.properties
+
+# --- 性能压测原始数据（k6 全量流，体积大，不入库） ---
+tools/perf/reports/
 
 # --- 文档与绘图 ---
 **/docs/resources/diagrams/draw/HomestayListingManagementFlowchart.drawio
