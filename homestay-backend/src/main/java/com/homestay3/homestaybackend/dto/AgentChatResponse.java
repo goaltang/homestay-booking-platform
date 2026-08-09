@@ -33,4 +33,9 @@ public class AgentChatResponse {
      * 会话ID（请求未提供时由服务端生成）
      */
     private String conversationId;
+
+    /**
+     * 待确认操作（可空；非空时前端渲染确认卡片）
+     */
+    private AgentPendingAction pendingAction;
 }

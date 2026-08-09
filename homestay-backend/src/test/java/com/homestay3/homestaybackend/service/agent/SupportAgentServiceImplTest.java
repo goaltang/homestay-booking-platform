@@ -9,6 +9,7 @@ import com.homestay3.homestaybackend.entity.Order;
 import com.homestay3.homestaybackend.entity.User;
 import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.repository.OrderRepository;
+import com.homestay3.homestaybackend.service.DisputeService;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.agent.impl.SupportAgentServiceImpl;
 import com.homestay3.homestaybackend.service.agent.tools.QueryMyOrderTool;
@@ -53,6 +54,9 @@ class SupportAgentServiceImplTest {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private DisputeService disputeService;
+
     private SupportAgentServiceImpl service;
 
     @BeforeEach
@@ -61,7 +65,8 @@ class SupportAgentServiceImplTest {
         properties.setEnabled(true);
         properties.setApiKey("test-key");
         properties.setMaxToolHops(2);
-        service = new SupportAgentServiceImpl(llmClient, toolRegistry, properties, new ObjectMapper());
+        service = new SupportAgentServiceImpl(llmClient, toolRegistry, properties,
+                new ObjectMapper(), orderRepository, orderService, disputeService);
         when(toolRegistry.toolSpecs()).thenReturn(List.of("- query_my_order: 查询我的订单"));
     }
 
@@ -105,6 +110,35 @@ class SupportAgentServiceImplTest {
         assertFalse(response.isHandoffToHuman());
         verify(toolRegistry, never()).execute(anyString(), any(), anyString());
         verify(llmClient, times(2)).chat(any());
+    }
+
+    // ========== 待确认操作透传 ==========
+
+    @Test
+    void pendingAction_passthrough() {
+        when(llmClient.chat(any()))
+                .thenReturn("{\"need_tool\": true, \"tool\": \"request_user_refund\", \"args\": {\"orderId\": 1, \"reason\": \"行程有变\"}}")
+                .thenReturn("{\"need_tool\": false}")
+                .thenReturn("已为您准备好退款申请，请确认。");
+        when(toolRegistry.execute(eq("request_user_refund"), any(), eq("alice")))
+                .thenReturn(Map.of("pendingAction", Map.of(
+                        "action", "request_user_refund",
+                        "orderId", 1L,
+                        "reason", "行程有变",
+                        "summary", "将为订单 ORDER202608080001 申请退款")));
+
+        AgentChatRequest request = new AgentChatRequest();
+        request.setQuestion("帮我申请退款");
+
+        AgentChatResponse response = service.chat(request, "alice");
+
+        assertEquals("request_user_refund", response.getToolUsed());
+        assertNotNull(response.getPendingAction());
+        assertEquals("request_user_refund", response.getPendingAction().getAction());
+        assertEquals(1L, response.getPendingAction().getOrderId());
+        assertEquals("行程有变", response.getPendingAction().getReason());
+        assertEquals("将为订单 ORDER202608080001 申请退款", response.getPendingAction().getSummary());
+        verify(toolRegistry).execute(eq("request_user_refund"), any(), eq("alice"));
     }
 
     // ========== 护栏：敏感词直达 ==========

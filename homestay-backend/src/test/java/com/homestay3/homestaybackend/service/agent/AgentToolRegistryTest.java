@@ -8,7 +8,6 @@ import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.service.CheckInService;
 import com.homestay3.homestaybackend.service.CheckOutService;
-import com.homestay3.homestaybackend.service.DisputeService;
 import com.homestay3.homestaybackend.service.HomestayQueryService;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PricingService;
@@ -57,9 +56,6 @@ class AgentToolRegistryTest {
     private PricingService pricingService;
 
     @Mock
-    private DisputeService disputeService;
-
-    @Mock
     private OrderRepository orderRepository;
 
     private AgentToolRegistry registry;
@@ -67,7 +63,7 @@ class AgentToolRegistryTest {
     @BeforeEach
     void setUp() {
         registry = new AgentToolRegistry(orderService, checkInService, checkOutService,
-                homestayQueryService, reviewService, pricingService, disputeService, orderRepository);
+                homestayQueryService, reviewService, pricingService, orderRepository);
     }
 
     // ========== 白名单边界 ==========

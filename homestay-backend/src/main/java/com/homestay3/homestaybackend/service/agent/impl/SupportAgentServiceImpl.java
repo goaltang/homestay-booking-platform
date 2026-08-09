@@ -5,10 +5,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homestay3.homestaybackend.config.AgentProperties;
 import com.homestay3.homestaybackend.dto.AgentChatRequest;
 import com.homestay3.homestaybackend.dto.AgentChatResponse;
+import com.homestay3.homestaybackend.dto.AgentPendingAction;
+import com.homestay3.homestaybackend.entity.Order;
 import com.homestay3.homestaybackend.exception.AccessDeniedException;
+import com.homestay3.homestaybackend.model.OrderStatus;
+import com.homestay3.homestaybackend.repository.OrderRepository;
+import com.homestay3.homestaybackend.service.DisputeService;
+import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.agent.AgentToolRegistry;
 import com.homestay3.homestaybackend.service.agent.LlmClient;
 import com.homestay3.homestaybackend.service.agent.SupportAgentService;
+import com.homestay3.homestaybackend.service.agent.tools.OrderAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +87,10 @@ public class SupportAgentServiceImpl implements SupportAgentService {
     private final AgentProperties properties;
     private final ObjectMapper objectMapper;
 
+    private final OrderRepository orderRepository;
+    private final OrderService orderService;
+    private final DisputeService disputeService;
+
     private final Map<String, ConversationState> conversations = new ConcurrentHashMap<>();
 
     @Override
@@ -115,6 +126,7 @@ public class SupportAgentServiceImpl implements SupportAgentService {
                                      String question, String conversationId) {
         List<String> toolTrace = new ArrayList<>();
         String toolUsed = null;
+        AgentPendingAction pendingAction = null;
         int hops = 0;
 
         Decision decision = decide(buildDecisionMessages(request, question, toolTrace));
@@ -123,8 +135,12 @@ public class SupportAgentServiceImpl implements SupportAgentService {
             if (toolUsed == null) {
                 toolUsed = decision.tool();
             }
-            String toolResult = executeToolSafely(decision.tool(), decision.args(), username);
-            toolTrace.add("工具 " + decision.tool() + " 返回数据: " + toolResult);
+            ToolExecutionResult toolResult = executeToolSafely(decision.tool(), decision.args(), username);
+            AgentPendingAction extracted = extractPendingAction(toolResult.raw());
+            if (extracted != null) {
+                pendingAction = extracted;
+            }
+            toolTrace.add("工具 " + decision.tool() + " 返回数据: " + toolResult.text());
             decision = decide(buildDecisionMessages(request, question, toolTrace));
         }
 
@@ -134,6 +150,7 @@ public class SupportAgentServiceImpl implements SupportAgentService {
                 .answer(answer)
                 .handoffToHuman(false)
                 .toolUsed(toolUsed)
+                .pendingAction(pendingAction)
                 .build();
     }
 
@@ -193,17 +210,80 @@ public class SupportAgentServiceImpl implements SupportAgentService {
     /**
      * 工具执行：任何异常都由上层捕获转成文本交给 LLM，绝不让 agent 直接 500
      */
-    private String executeToolSafely(String toolName, Map<String, Object> args, String username) {
+    private ToolExecutionResult executeToolSafely(String toolName, Map<String, Object> args, String username) {
         try {
             Object result = toolRegistry.execute(toolName, args, username);
-            return objectMapper.writeValueAsString(result);
+            return new ToolExecutionResult(result, objectMapper.writeValueAsString(result));
         } catch (AccessDeniedException e) {
             log.warn("Agent 工具 {} 越权访问被拒绝: username={}", toolName, username);
-            return "工具调用失败: 当前用户无权访问该数据";
+            return new ToolExecutionResult(null, "工具调用失败: 当前用户无权访问该数据");
         } catch (Exception e) {
             log.warn("Agent 工具 {} 调用失败: {}", toolName, e.getMessage());
-            return "工具调用失败: " + e.getMessage();
+            return new ToolExecutionResult(null, "工具调用失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 从工具返回结果中提取待确认操作（申请型写工具返回 {"pendingAction": {...}}），否则返回 null
+     */
+    private AgentPendingAction extractPendingAction(Object result) {
+        if (!(result instanceof Map<?, ?> map)) {
+            return null;
+        }
+        Object pending = map.get("pendingAction");
+        if (pending == null) {
+            return null;
+        }
+        return objectMapper.convertValue(pending, AgentPendingAction.class);
+    }
+
+    /**
+     * 确认执行待确认操作（申请型写操作真正执行点）
+     * 只允许订单客人确认，先做归属校验再按 action 分发，防止越权替他人操作
+     */
+    @Override
+    public AgentChatResponse confirmAction(AgentPendingAction pending, String username) {
+        if (pending == null) {
+            throw new IllegalArgumentException("缺少待确认操作");
+        }
+        String action = pending.getAction();
+        Long orderId = pending.getOrderId();
+        String reason = pending.getReason();
+        if (action == null || action.isBlank()) {
+            throw new IllegalArgumentException("缺少操作类型 action");
+        }
+        if (orderId == null) {
+            throw new IllegalArgumentException("缺少订单ID orderId");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("缺少操作原因 reason");
+        }
+
+        String summary;
+        switch (action) {
+            case "request_user_refund" -> {
+                Order order = OrderAccessGuard.requireGuestOrder(orderRepository, orderId, username);
+                orderService.requestUserRefund(orderId, reason);
+                summary = "已为订单 " + order.getOrderNumber() + " 提交退款申请";
+            }
+            case "cancel_order_with_reason" -> {
+                Order order = OrderAccessGuard.requireGuestOrder(orderRepository, orderId, username);
+                orderService.cancelOrderWithReason(orderId, OrderStatus.CANCELLED_BY_USER.name(), reason);
+                summary = "已取消订单 " + order.getOrderNumber();
+            }
+            case "raise_dispute_by_guest" -> {
+                Order order = OrderAccessGuard.requireGuestOrder(orderRepository, orderId, username);
+                disputeService.raiseDisputeByGuest(orderId, reason);
+                summary = "已为订单 " + order.getOrderNumber() + " 发起争议";
+            }
+            default -> throw new IllegalArgumentException("不支持的操作: " + action);
+        }
+
+        return AgentChatResponse.builder()
+                .answer(summary)
+                .handoffToHuman(false)
+                .toolUsed(action)
+                .build();
     }
 
     // ==================== 消息构造 ====================
@@ -316,6 +396,12 @@ public class SupportAgentServiceImpl implements SupportAgentService {
     // ==================== 内部类型 ====================
 
     private record Decision(boolean needTool, String tool, Map<String, Object> args) {
+    }
+
+    /**
+     * 工具执行结果：raw 为工具原始返回值（供提取 pendingAction），text 为序列化后的文本（供 LLM 阅读）
+     */
+    private record ToolExecutionResult(Object raw, String text) {
     }
 
     private static final class ConversationState {

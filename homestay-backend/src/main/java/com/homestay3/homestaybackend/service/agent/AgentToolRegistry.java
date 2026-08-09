@@ -3,7 +3,6 @@ package com.homestay3.homestaybackend.service.agent;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.service.CheckInService;
 import com.homestay3.homestaybackend.service.CheckOutService;
-import com.homestay3.homestaybackend.service.DisputeService;
 import com.homestay3.homestaybackend.service.HomestayQueryService;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PricingService;
@@ -44,7 +43,6 @@ public class AgentToolRegistry {
                              HomestayQueryService homestayQueryService,
                              ReviewService reviewService,
                              PricingService pricingService,
-                             DisputeService disputeService,
                              OrderRepository orderRepository) {
         Map<String, AgentTool> registry = new LinkedHashMap<>();
         put(registry, new QueryMyOrderTool(orderService, orderRepository));
@@ -54,9 +52,9 @@ public class AgentToolRegistry {
         put(registry, new GetHomestayDetailTool(homestayQueryService));
         put(registry, new GetReviewStatsTool(reviewService));
         put(registry, new CalculatePriceTool(pricingService));
-        put(registry, new RequestUserRefundTool(orderService, orderRepository));
-        put(registry, new CancelOrderWithReasonTool(orderService, orderRepository));
-        put(registry, new RaiseDisputeByGuestTool(disputeService, orderRepository));
+        put(registry, new RequestUserRefundTool(orderRepository));
+        put(registry, new CancelOrderWithReasonTool(orderRepository));
+        put(registry, new RaiseDisputeByGuestTool(orderRepository));
         this.tools = Collections.unmodifiableMap(registry);
     }
 

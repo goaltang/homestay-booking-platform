@@ -1,24 +1,23 @@
 package com.homestay3.homestaybackend.service.agent.tools;
 
-import com.homestay3.homestaybackend.dto.OrderDTO;
+import com.homestay3.homestaybackend.entity.Order;
 import com.homestay3.homestaybackend.repository.OrderRepository;
-import com.homestay3.homestaybackend.service.DisputeService;
 import com.homestay3.homestaybackend.service.agent.AgentTool;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 工具：raise_dispute_by_guest —— 代客发起争议（申请型写操作）
- * 提交后订单进入 DISPUTE_PENDING，由管理员仲裁，agent 只代提申请。
+ * 工具：raise_dispute_by_guest —— 代客发起争议（起草模式）
+ * 本工具只起草不执行：校验订单归属后组装待确认提案（pendingAction），
+ * 不调用 disputeService.raiseDisputeByGuest；真正执行由确认接口 /api/support/agent/confirm 完成，
+ * 确认后订单进入 DISPUTE_PENDING，由管理员仲裁。
  */
 public class RaiseDisputeByGuestTool implements AgentTool {
 
-    private final DisputeService disputeService;
     private final OrderRepository orderRepository;
 
-    public RaiseDisputeByGuestTool(DisputeService disputeService, OrderRepository orderRepository) {
-        this.disputeService = disputeService;
+    public RaiseDisputeByGuestTool(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
     }
 
@@ -29,7 +28,7 @@ public class RaiseDisputeByGuestTool implements AgentTool {
 
     @Override
     public String description() {
-        return "代客发起争议（申请型操作，提交后由管理员仲裁）。仅在用户明确要求发起争议/申诉时调用。";
+        return "代客发起争议（本工具只起草不执行，返回待确认操作；用户确认后由确认接口执行）。仅在用户明确要求发起争议/申诉时调用。";
     }
 
     @Override
@@ -44,14 +43,15 @@ public class RaiseDisputeByGuestTool implements AgentTool {
     public Object execute(Map<String, Object> args, String username) {
         Long orderId = ToolArgs.toLong(args.get("orderId"));
         String reason = ToolArgs.toStr(args.get("reason"));
-        OrderAccessGuard.requireAccessibleOrder(orderRepository, orderId, username);
-
-        OrderDTO dto = disputeService.raiseDisputeByGuest(orderId, reason);
+        Order order = OrderAccessGuard.requireAccessibleOrder(orderRepository, orderId, username);
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("orderNumber", dto.getOrderNumber());
-        result.put("status", dto.getStatus());
-        result.put("disputeReason", dto.getDisputeReason());
+        Map<String, Object> pendingAction = new LinkedHashMap<>();
+        pendingAction.put("action", "raise_dispute_by_guest");
+        pendingAction.put("orderId", orderId);
+        pendingAction.put("reason", reason);
+        pendingAction.put("summary", "将为您发起争议（订单 " + order.getOrderNumber() + "）");
+        result.put("pendingAction", pendingAction);
         return result;
     }
 }
