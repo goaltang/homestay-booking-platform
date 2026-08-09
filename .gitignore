@@ -87,7 +87,6 @@ homestay-backend/package-lock.json
 # --- 本地分析与知识库 ---
 .graphifyignore
 graphify-out/
-obsidian-vault/
 
 
 # --- Agent Skills ---
@@ -103,3 +102,7 @@ load-ai-keys.ps1
 # --- Agent 协作过程文件 ---
 TASK*.md
 debug/
+obsidian-vault/.obsidian/
+
+# 求职准备目录不上传（本地保留）
+obsidian-vault/99-求职准备/
