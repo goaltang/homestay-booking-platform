@@ -1,85 +1,53 @@
 # homestay3
 
 民宿预订系统（学习 + 面试项目）：C 端用户 + 管理后台 + Spring Boot 后端 + Obsidian 文档仓库。
-亮点：RabbitMQ 三场景已上线 —— 订单超时延迟队列(DLX)、批量发券消息驱动、通知推送可靠投递（均带重试队列 + 轮询/降级兜底）。
+亮点：RabbitMQ 三场景 —— 订单超时延迟队列(DLX)、批量发券消息驱动、通知推送可靠投递（重试队列 + 轮询/降级兜底）。
 
 ## 常用命令
 
-### 依赖服务（必须先起）
-
-| 命令 | 说明 |
-|------|------|
-| `docker-compose up -d` | 启动 ES(9200) + RabbitMQ(5672/15672) |
-
-MySQL 需本机已有（localhost:3306/homestay_db，root/111111，见 application.properties）。
-
-### 一键启动（根目录）
-
-| 命令 | 说明 |
-|------|------|
-| `npm run dev` | 后端(8081) + 用户端(5173) |
-| `npm run dev:admin` | 后端(8081) + 管理后台(5174) |
-| `npm run dev:all` | 后端 + 用户端 + 管理后台 全起 |
-
-### 后端（homestay-backend/）
-
-| 命令 | 说明 |
-|------|------|
-| `mvn spring-boot:run` | 启动，端口 8081 |
-| `mvn test` | 跑测试（H2 内存库，见"测试红线"） |
-| `mvn package` | 打包 |
-
-### 前端（homestay-front/ 与 homestay-admin/）
-
-| 命令 | 说明 |
-|------|------|
-| `npm run dev` | 开发（front 5173 / admin 5174） |
-| `npm run build` | 构建（vue-tsc 类型检查 + vite build） |
-| `npm run test:run` | 单测（vitest，仅 front 配置） |
+- 依赖：`docker-compose up -d`（ES 9200 + RabbitMQ 5672/15672）；MySQL 需本机已有（3306/homestay_db）
+- 后端：`cd homestay-backend && mvn spring-boot:run`（8081）｜ `mvn test`（H2 内存库，见红线）
+- 前端：`cd homestay-front && npm run dev`（5173）｜ `cd homestay-admin && npm run dev`（5174）｜ `npm run build`（vue-tsc 类型检查 + vite build）
+- 一键：根目录 `npm run dev` / `npm run dev:admin` / `npm run dev:all`
 
 ## 架构概览
 
-| 目录 | 职责 | 技术栈 |
-|------|------|--------|
-| homestay-front/ | C 端用户：找房/下单/支付/聊天 | Vue 3 + TS + Element Plus + Vite + Pinia |
-| homestay-admin/ | 管理后台 | Vue 3 + Element Plus + Vite |
-| homestay-backend/ | 后端 API（端口 8081） | Spring Boot 3.0.2 + Java 17 + JPA + Flyway |
-| obsidian-vault/ | 项目文档（功能模块/架构/求职） | Obsidian Markdown |
-| tools/ | 工具脚本 | — |
+- homestay-front/ — C 端用户（Vue3 + TS + Element Plus + Vite + Pinia），5173
+- homestay-admin/ — 管理后台（同栈），5174
+- homestay-backend/ — 后端 API（Spring Boot 3.0.2 + Java 17 + JPA + Flyway + Security/JWT + Redis + ES + RabbitMQ），8081
+- obsidian-vault/ — 项目文档（Obsidian 管理，git 同步 md 文档）
+- 依赖：MySQL(3306, Flyway 管表结构) ｜ ES(9200, 需 IK 插件, **后端启动必须在线**) ｜ Redis(缓存) ｜ RabbitMQ(homestay-rabbitmq, homestay/homestay123, 管理台 15672)
+- 端口：8080 常被本机 Dify 占用，后端固定 8081
 
-依赖服务：MySQL(3306, Flyway 管表结构)、Elasticsearch(9200, 需 IK 插件)、Redis(缓存/会话)、RabbitMQ(homestay-rabbitmq 容器, homestay/homestay123, 管理台 15672)。
+## 行为准则
 
-后端启动前提：**ES 必须在线**；RabbitMQ 建议在线（MQ 组件条件装配，缺 MQ 时自动降级轮询/同步兜底）。
-端口：8080 常被本机 Dify 占用，后端固定用 8081。
-
-## 代码约定
-
-- 后端分层：Controller → Service → Repository；出入参用 DTO，不直接暴露 Entity。
-- 表结构变更：Flyway（src/main/resources/db/migration/）加新版本迁移文件，禁止手改表。
-- 认证：Spring Security + JWT（jjwt 0.12.3）。
-- 前端：组合式 API + `<script setup>`；Element Plus 自动导入（unplugin-auto-import），组件无需手动 import。
-- 提交信息：中文，`feat/fix/test/docs` 前缀 + 模块，如 `feat(order): 订单超时延迟队列`。
+- **修复所有实例，不只修复报告的那一个。** 找到 bug 或值得改的模式后，全仓库 grep（`src/`、`test/`、`scripts/`）同类模式一并修复——一个修好的调用点配五个没动的兄弟是埋雷。
+- **在共享层解决，不在调用点打补丁。** 动手前先问：这个修复该放公共 Service / 工具类 / 基类，还是调用点？先找已有 helper 再写新代码。但也不要为一个调用方硬造抽象。
+- **修复让系统更简单。** 优先删除、合并代码，而不是加新层、新 flag、新特例。如果修复扩大了系统表面积，找那个能缩小它的版本。
+- **按调用方判断影响面。** 一个被 50 处调用的 helper 改一行 ≠ 小改动。判断影响按调用方，不按 diff 大小。
+- **改动要可验证。** 改后端跑相关 `mvn test`，改前端过 `npm run build` 类型检查；能起服务就冒烟一遍。别只改不验。
 
 ## 测试红线（强制）
 
-> **没有 `@ActiveProfiles("test")` + 独立数据源的 `@SpringBootTest`，一律视为生产环境炸弹。**
+> **没有 `@ActiveProfiles("test")` + 独立数据源(H2) 的 `@SpringBootTest`，一律视为生产环境炸弹。**
 
-- 所有 `@SpringBootTest` 必须加 `@ActiveProfiles("test")`（application-test.properties 指向 H2 内存库，禁止引用主库连接串）。
-- 禁止 `deleteAll()` / `truncate` / `drop` 真实表；写操作靠 `@Transactional` 自动回滚。
+- 所有 `@SpringBootTest` 必须加 `@ActiveProfiles("test")`（application-test.properties = H2 内存库，禁止引用主库连接串）
+- 禁止 `deleteAll()` / `truncate` / `drop` 真实表；写操作靠 `@Transactional` 自动回滚
 - 跑 `mvn test` 前检查：①测试类有 test profile？②数据源是 H2？③有无危险清理操作？
-- 历史事故：`ConcurrentBookingTest` 曾连真实 MySQL 执行 `deleteAll()` 清空全表数据。
+- 历史事故：`ConcurrentBookingTest` 曾连真实 MySQL 执行 `deleteAll()` 清空全表数据
+
+## 代码约定
+
+- 分层：Controller → Service → Repository；出入参用 DTO，不直接暴露 Entity
+- 表结构变更走 Flyway 新迁移文件（`db/migration/`），禁止手改表
+- 前端组合式 API + `<script setup>`；Element Plus 自动导入，组件无需手动 import
+- 提交信息：中文，`feat/fix/test/docs/chore` 前缀 + 模块，如 `feat(order): 订单超时延迟队列`
 
 ## 文档规范
 
-Obsidian vault 的 `功能模块-*.md` 有强制模板，完整规范见 `obsidian-vault/02-功能模块/_文档规范模板.md`。核心四条：
-
-1. 只记录**已实现**的功能，不写"建议/计划/后续"。
-2. 按用户视角分类（查看/操作/管理），不按技术维度。
-3. 多用表格（功能清单/路由/接口/表字段/状态枚举），组件结构用树形缩进。
-4. 技术栈在项目级文档写，不重复进功能模块。
+vault 的 `功能模块-*.md` 有强制模板，完整规范见 `obsidian-vault/02-功能模块/_文档规范模板.md`。
+核心四条：只记已实现；按用户视角分类；多用表格；组件结构树形缩进。
 
 ## 工具特有文件
 
-- `CLAUDE.md`：graphify 知识图谱工具指令（只影响 Claude Code）。
-- `QWEN.md`：Qwen 工具记忆（Obsidian Local REST API、mem0），API Key 一律从 `.env.local` 读取，禁止明文。
-- 通用规范以本文件（AGENTS.md）为准。
+CLAUDE.md / QWEN.md 只记录工具特有指令（graphify、Obsidian API 等），通用规范以本文件为准。
