@@ -8,11 +8,13 @@ import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "order.timeout.mq-enabled", havingValue = "true", matchIfMissing = true)
 public class OrderTimeoutProducer {
 
     private final RabbitTemplate rabbitTemplate;

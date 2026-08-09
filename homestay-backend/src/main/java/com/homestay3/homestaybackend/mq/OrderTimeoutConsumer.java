@@ -14,12 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "order.timeout.mq-enabled", havingValue = "true", matchIfMissing = true)
 public class OrderTimeoutConsumer {
 
     private final OrderRepository orderRepository;

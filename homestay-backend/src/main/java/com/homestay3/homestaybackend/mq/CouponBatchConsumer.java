@@ -9,12 +9,14 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "coupon.batch.mq-enabled", havingValue = "true", matchIfMissing = true)
 public class CouponBatchConsumer {
 
     private static final String RETRY_COUNT_HEADER = "x-retry-count";

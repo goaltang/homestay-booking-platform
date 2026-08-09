@@ -5,11 +5,13 @@ import com.homestay3.homestaybackend.dto.NotificationDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "notification.push.mq-enabled", havingValue = "true", matchIfMissing = true)
 public class NotificationPushProducer {
 
     private final RabbitTemplate rabbitTemplate;
