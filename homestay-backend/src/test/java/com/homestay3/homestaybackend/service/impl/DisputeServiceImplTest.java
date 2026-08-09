@@ -4,6 +4,7 @@ import com.homestay3.homestaybackend.dto.OrderDTO;
 import com.homestay3.homestaybackend.entity.Homestay;
 import com.homestay3.homestaybackend.entity.Order;
 import com.homestay3.homestaybackend.entity.User;
+import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.exception.ResourceNotFoundException;
 import com.homestay3.homestaybackend.model.OrderStatus;
 import com.homestay3.homestaybackend.model.PaymentStatus;
@@ -159,6 +160,76 @@ class DisputeServiceImplTest {
         // when & then
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
             disputeService.raiseDispute(1L, "测试原因");
+        });
+        assertEquals("订单已在争议处理中，请勿重复发起", exception.getMessage());
+    }
+
+    // ========== raiseDisputeByGuest 测试 ==========
+
+    @Test
+    void raiseDisputeByGuest_Success() {
+        // given
+        String disputeReason = "入住体验与描述严重不符";
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
+
+        // when
+        OrderDTO result = disputeService.raiseDisputeByGuest(1L, disputeReason);
+
+        // then
+        assertNotNull(result);
+        verify(orderRepository).save(any(Order.class));
+        // 验证订单状态更新
+        assertEquals(OrderStatus.DISPUTE_PENDING.name(), testOrder.getStatus());
+        // 验证支付状态同步更新为 DISPUTED
+        assertEquals(PaymentStatus.DISPUTED, testOrder.getPaymentStatus());
+        assertEquals(disputeReason, testOrder.getDisputeReason());
+        assertEquals(currentUser.getId(), testOrder.getDisputeRaisedBy());
+        assertNotNull(testOrder.getDisputeRaisedAt());
+        // 验证创建了争议记录
+        verify(disputeRecordService).createDisputeRecord(eq(1L), eq(disputeReason), eq(currentUser.getId()));
+        // 验证争议通知已发送
+        verify(orderNotificationService).sendDisputeRaisedNotification(
+                eq(1L), eq(1L), isNull(), eq("ORDER202403130001"), isNull(), eq(disputeReason));
+    }
+
+    @Test
+    void raiseDisputeByGuest_NotGuest() {
+        // given: 当前用户不是订单客人
+        User otherUser = new User();
+        otherUser.setId(2L);
+        otherUser.setUsername("otheruser");
+        testOrder.setGuest(otherUser);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+
+        // when & then
+        assertThrows(AccessDeniedException.class, () -> {
+            disputeService.raiseDisputeByGuest(1L, "测试原因");
+        });
+        // 未发起争议，状态不应变化
+        assertEquals(OrderStatus.REFUND_PENDING.name(), testOrder.getStatus());
+    }
+
+    @Test
+    void raiseDisputeByGuest_OrderNotFound() {
+        // given
+        when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(ResourceNotFoundException.class, () -> {
+            disputeService.raiseDisputeByGuest(99L, "测试原因");
+        });
+    }
+
+    @Test
+    void raiseDisputeByGuest_AlreadyInDispute() {
+        // given: 订单已在争议中
+        testOrder.setStatus(OrderStatus.DISPUTE_PENDING.name());
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+
+        // when & then
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            disputeService.raiseDisputeByGuest(1L, "测试原因");
         });
         assertEquals("订单已在争议处理中，请勿重复发起", exception.getMessage());
     }

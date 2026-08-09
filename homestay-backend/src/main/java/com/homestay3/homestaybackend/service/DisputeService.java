@@ -18,6 +18,15 @@ public interface DisputeService {
     OrderDTO raiseDispute(Long orderId, String reason);
 
     /**
+     * 房客发起争议
+     * 房客对"退款被拒/押金扣押/入住体验严重不符"发起争议，订单进入 DISPUTE_PENDING，管理员仲裁
+     * @param orderId 订单ID
+     * @param reason 争议原因
+     * @return 发起争议后的订单DTO
+     */
+    OrderDTO raiseDisputeByGuest(Long orderId, String reason);
+
+    /**
      * 解决争议（仲裁）
      * 管理员对争议进行仲裁，批准或拒绝退款
      * @param orderId 订单ID
