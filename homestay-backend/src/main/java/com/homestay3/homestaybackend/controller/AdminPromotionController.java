@@ -12,6 +12,7 @@ import com.homestay3.homestaybackend.service.CouponService;
 import com.homestay3.homestaybackend.service.ReferralService;
 import com.homestay3.homestaybackend.service.RoiAnalysisService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +44,9 @@ public class AdminPromotionController {
     private final CouponBatchIssueService couponBatchIssueService;
     private final ReferralService referralService;
     private final CouponAnalyticsService couponAnalyticsService;
+
+    @Value("${coupon.batch.mq-enabled:true}")
+    private boolean mqEnabled;
 
     // ========== 活动管理 ==========
 
@@ -357,9 +361,11 @@ public class AdminPromotionController {
             String filterType = (String) request.get("filterType");
             @SuppressWarnings("unchecked")
             Map<String, Object> filterParams = (Map<String, Object>) request.getOrDefault("filterParams", Map.of());
-            // 简化：创建任务后立即触发异步执行
+            // MQ 开启：创建任务后由 MQ 消费者驱动执行；关闭：走 @Async 降级路径
             var task = couponBatchIssueService.createBatchTask(templateId, name, filterType, filterParams, null);
-            couponBatchIssueService.executeBatchTask(task.getId());
+            if (!mqEnabled) {
+                couponBatchIssueService.executeBatchTaskAsync(task.getId());
+            }
             return ResponseEntity.ok(Map.of("taskId", task.getId(), "totalCount", task.getTotalCount(), "message", "任务已创建并执行"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homestay3.homestaybackend.entity.CouponBatchIssueItem;
 import com.homestay3.homestaybackend.entity.CouponBatchIssueTask;
 import com.homestay3.homestaybackend.entity.User;
+import com.homestay3.homestaybackend.mq.CouponBatchProducer;
 import com.homestay3.homestaybackend.repository.CouponBatchIssueItemRepository;
 import com.homestay3.homestaybackend.repository.CouponBatchIssueTaskRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
@@ -14,11 +15,16 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,6 +40,10 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
     private final UserRepository userRepository;
     private final CouponService couponService;
     private final ObjectMapper objectMapper;
+    private final ObjectProvider<CouponBatchProducer> couponBatchProducerProvider;
+
+    @Value("${coupon.batch.mq-enabled:true}")
+    private boolean mqEnabled;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -77,11 +87,38 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
             }
         }
 
+        // 事务提交后发送 MQ 消息驱动执行（MQ 关闭时由 Controller / 兜底定时任务降级执行）
+        final Long savedTaskId = task.getId();
+        Runnable sendTask = () -> {
+            try {
+                if (!mqEnabled) {
+                    return;
+                }
+                CouponBatchProducer producer = couponBatchProducerProvider.getIfAvailable();
+                if (producer == null) {
+                    return;
+                }
+                producer.sendTask(savedTaskId);
+            } catch (Exception e) {
+                log.error("发送批量发券 MQ 消息失败: taskId={}, error={}", savedTaskId, e.getMessage(), e);
+            }
+        };
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendTask.run();
+                }
+            });
+        } else {
+            sendTask.run();
+        }
+
         return task;
     }
 
     @Override
-    @Async("taskExecutor")
     @Transactional
     public void executeBatchTask(Long taskId) {
         CouponBatchIssueTask task = taskRepository.findById(taskId).orElse(null);
@@ -137,6 +174,50 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
         task.setFailCount(fail);
         taskRepository.save(task);
         log.info("批量发券任务完成，taskId={}, success={}, fail={}", taskId, success, fail);
+    }
+
+    /**
+     * 异步执行批量发券任务（MQ 降级路径使用）。
+     */
+    @Override
+    @Async("taskExecutor")
+    public void executeBatchTaskAsync(Long taskId) {
+        executeBatchTask(taskId);
+    }
+
+    /**
+     * 兜底定时任务：扫描长时间未开始执行的 PENDING 任务（创建超过 5 分钟），
+     * 消息丢失时重新发 MQ 消息；MQ 关闭时直接异步执行。
+     * 与消费者并发执行同一任务时由 executeBatchTask 的幂等逻辑保证安全。
+     */
+    @Scheduled(fixedRate = 60 * 1000)
+    @Transactional
+    public void processStuckPendingTasks() {
+        try {
+            LocalDateTime cutoff = LocalDateTime.now().minusMinutes(5);
+            List<CouponBatchIssueTask> stuckTasks = taskRepository.findByStatusAndCreatedAtBefore("PENDING", cutoff);
+            if (stuckTasks.isEmpty()) {
+                return;
+            }
+            for (CouponBatchIssueTask task : stuckTasks) {
+                // 执行前再查一次状态，PENDING 才执行（天然幂等）
+                CouponBatchIssueTask latest = taskRepository.findById(task.getId()).orElse(null);
+                if (latest == null || !"PENDING".equals(latest.getStatus())) {
+                    continue;
+                }
+                log.info("兜底定时任务触发批量发券，taskId={}", task.getId());
+                if (mqEnabled) {
+                    CouponBatchProducer producer = couponBatchProducerProvider.getIfAvailable();
+                    if (producer != null) {
+                        producer.sendTask(task.getId());
+                    }
+                } else {
+                    executeBatchTaskAsync(task.getId());
+                }
+            }
+        } catch (Exception e) {
+            log.error("批量发券兜底定时任务执行异常", e);
+        }
     }
 
     @Override
@@ -216,12 +297,12 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
         Query query;
         switch (filterType) {
             case "ALL":
-                query = entityManager.createNativeQuery("SELECT id FROM users WHERE status = 'ACTIVE'");
+                query = entityManager.createNativeQuery("SELECT id FROM users WHERE enabled = 1");
                 break;
             case "NEW_USER": {
                 int newUserDays = getIntParam(filterParams, "days", 7);
                 query = entityManager.createNativeQuery(
-                        "SELECT id FROM users WHERE status = 'ACTIVE' AND created_at >= :cutoff");
+                        "SELECT id FROM users WHERE enabled = 1 AND created_at >= :cutoff");
                 query.setParameter("cutoff", LocalDateTime.now().minusDays(newUserDays));
                 break;
             }
@@ -229,14 +310,14 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
                 int inactiveDays = getIntParam(filterParams, "days", 30);
                 query = entityManager.createNativeQuery(
                         "SELECT u.id FROM users u LEFT JOIN user_preference_profile p ON u.id = p.user_id " +
-                        "WHERE u.status = 'ACTIVE' AND (p.last_active_at IS NULL OR p.last_active_at < :cutoff)");
+                        "WHERE u.enabled = 1 AND (p.last_active_at IS NULL OR p.last_active_at < :cutoff)");
                 query.setParameter("cutoff", LocalDateTime.now().minusDays(inactiveDays));
                 break;
             }
             case "NO_ORDER_30D": {
                 int noOrderDays = getIntParam(filterParams, "days", 30);
                 query = entityManager.createNativeQuery(
-                        "SELECT u.id FROM users u WHERE u.status = 'ACTIVE' AND u.id NOT IN " +
+                        "SELECT u.id FROM users u WHERE u.enabled = 1 AND u.id NOT IN " +
                         "(SELECT DISTINCT guest_id FROM orders WHERE created_at >= :cutoff AND guest_id IS NOT NULL)");
                 query.setParameter("cutoff", LocalDateTime.now().minusDays(noOrderDays));
                 break;
@@ -250,7 +331,7 @@ public class CouponBatchIssueServiceImpl implements CouponBatchIssueService {
                 break;
             }
             default:
-                query = entityManager.createNativeQuery("SELECT id FROM users WHERE status = 'ACTIVE'");
+                query = entityManager.createNativeQuery("SELECT id FROM users WHERE enabled = 1");
         }
 
         List<Number> result = query.getResultList();

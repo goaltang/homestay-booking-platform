@@ -15,9 +15,14 @@ public interface CouponBatchIssueService {
                                           Map<String, Object> filterParams, Long createdBy);
 
     /**
-     * 执行批量发券任务（异步）
+     * 执行批量发券任务（同步，MQ 消费者调用；异常抛给消费者触发重试）
      */
     void executeBatchTask(Long taskId);
+
+    /**
+     * 异步执行批量发券任务（MQ 关闭时的降级路径）
+     */
+    void executeBatchTaskAsync(Long taskId);
 
     /**
      * 查询任务列表
