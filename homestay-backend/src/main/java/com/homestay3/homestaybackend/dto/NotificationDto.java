@@ -3,6 +3,7 @@ package com.homestay3.homestaybackend.dto;
 import com.homestay3.homestaybackend.model.enums.EntityType;
 import com.homestay3.homestaybackend.model.enums.NotificationType;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Map;
  * 通知数据传输对象 (用于 API 响应)
  */
 @Data
+@NoArgsConstructor
 public class NotificationDTO {
     private Long id;
     private Long userId;
