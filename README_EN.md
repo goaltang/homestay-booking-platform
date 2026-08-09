@@ -54,6 +54,26 @@ This workflow lets a single engineer deliver all three frontends (guest / host /
 - **Payment integration**: Alipay sandbox payments (page redirect + QR code), with order payment, async callbacks, status queries, and refunds.
 - **Production-grade backend**: Unified responses, global exception handling, permission annotations, DTO mapping, caching, database migrations, and audit logging.
 
+### Message Architecture (RabbitMQ - Three Scenarios)
+
+```mermaid
+flowchart LR
+    subgraph S1["① Order Timeout · DLX Delayed Queue"]
+        direction LR
+        O1[Order created] --> O2[Delayed queue<br/>TTL 2h] --> O3[DLX dead-letter<br/>→ consumer queue] --> O4[Idempotent check<br/>→ auto cancel]
+    end
+    subgraph S2["② Batch Coupon Issuance · Event-driven + Retry Queue"]
+        direction LR
+        C1[Task created] --> C2[Main queue] --> C3[Consumer issues coupons<br/>item by item] --> C4[Failures → retry queue<br/>auto-retry after 60s, max 3]
+    end
+    subgraph S3["③ Notification Push · Reliable Delivery"]
+        direction LR
+        N1[Transaction commit] --> N2[Main queue] --> N3[WebSocket<br/>real-time push] --> N4[No loss on crash<br/>re-push after restart]
+    end
+```
+
+> Common pattern across all three: main queue + retry/delayed queue (TTL dead-letter back to main), manual consumer ack + idempotency check, `mq-enabled` toggle for graceful degradation, scheduled tasks as fallback. Full diagrams: `obsidian-vault/03-后端/后端-RabbitMQ 消息架构.md`.
+
 ## Tech Stack
 
 | Layer | Technologies |
