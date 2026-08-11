@@ -40,7 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         "/api/auth/forgot-password",
         "/api/auth/reset-password",
         "/api/auth/check-username",
-        "/api/auth/check-email"
+        "/api/auth/check-email",
+        "/swagger-ui",
+        "/v3/api-docs",
+        "/swagger-resources"
     );
 
     @Override

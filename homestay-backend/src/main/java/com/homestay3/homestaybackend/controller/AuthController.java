@@ -5,6 +5,8 @@ import com.homestay3.homestaybackend.dto.AuthResponse;
 import com.homestay3.homestaybackend.dto.PasswordResetRequest;
 import com.homestay3.homestaybackend.dto.RegisterRequest;
 import com.homestay3.homestaybackend.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,12 +25,14 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "用户认证", description = "C端用户注册、登录、密码找回等认证接口")
 public class AuthController {
 
     private final AuthService authService;
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/register")
+    @Operation(summary = "用户注册", description = "注册新用户并返回 JWT")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
         log.info("注册请求: {}", request.getUsername());
         try {
@@ -41,6 +45,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "用户登录", description = "用户名密码登录，返回 JWT")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
         log.info("登录请求: {}", request.getUsername());
         try {

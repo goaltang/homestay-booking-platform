@@ -7,6 +7,8 @@ import com.homestay3.homestaybackend.dto.AgentPendingAction;
 import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.exception.ResourceNotFoundException;
 import com.homestay3.homestaybackend.service.agent.SupportAgentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -28,6 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/support/agent")
 @RequiredArgsConstructor
+@Tag(name = "AI客服 Agent", description = "AI 客服智能问答与订单申请型操作（只起草不执行，需用户确认）")
 public class SupportAgentController {
 
     private static final Logger log = LoggerFactory.getLogger(SupportAgentController.class);
@@ -36,6 +39,7 @@ public class SupportAgentController {
     private final AgentProperties agentProperties;
 
     @PostMapping("/chat")
+    @Operation(summary = "AI 客服对话", description = "FAQ 问答 + 订单服务申请型操作，返回 pendingAction 需用户确认")
     public ResponseEntity<?> chat(@Valid @RequestBody AgentChatRequest request,
                                   Authentication authentication) {
         if (!agentProperties.isEnabled()) {
@@ -51,6 +55,7 @@ public class SupportAgentController {
      * 前端在展示确认卡片后由用户点击确认调用；服务端校验订单归属后按 action 分发执行
      */
     @PostMapping("/confirm")
+    @Operation(summary = "确认执行待确认操作", description = "用户确认后真正执行退款/取消/投诉等申请型操作")
     public ResponseEntity<?> confirmAction(@RequestBody AgentPendingAction pending,
                                            Authentication authentication) {
         if (!agentProperties.isEnabled()) {

@@ -21,6 +21,8 @@ import com.homestay3.homestaybackend.service.HomestayQueryService;
 import com.homestay3.homestaybackend.service.HomestayRecommendationService;
 import com.homestay3.homestaybackend.service.HomestaySearchService;
 import com.homestay3.homestaybackend.util.UserUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping({"/api/homestays", "/api/v1/homestays"})
 @RequiredArgsConstructor
+@Tag(name = "民宿", description = "民宿列表、详情、搜索、发布等接口")
 public class HomestayController {
 
     private static final Logger logger = LoggerFactory.getLogger(HomestayController.class);
@@ -66,6 +69,7 @@ public class HomestayController {
      * 获取所有房源（支持分页与推荐筛选）
      */
     @GetMapping
+    @Operation(summary = "民宿列表", description = "分页获取在售民宿列表，可按推荐筛选")
     public ResponseEntity<?> getAllHomestays(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -125,6 +129,7 @@ public class HomestayController {
      * 根据ID获取房源详情
      */
     @GetMapping("/{id}")
+    @Operation(summary = "民宿详情", description = "根据 ID 获取民宿完整详情")
     public ResponseEntity<HomestayDetailDTO> getHomestayById(
             @PathVariable Long id, 
             @RequestParam(name = "referring_criteria", required = false) String referringCriteriaString) {

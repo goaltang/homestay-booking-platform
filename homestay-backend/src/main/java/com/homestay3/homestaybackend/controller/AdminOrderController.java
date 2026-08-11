@@ -7,6 +7,8 @@ import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
 import com.homestay3.homestaybackend.exception.ResourceNotFoundException;
 import com.homestay3.homestaybackend.util.SortUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,7 @@ import java.util.Set;
 @RequestMapping("/api/admin/orders")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "管理后台-订单", description = "管理员订单查询、退款审批、纠纷处理、导出接口")
 public class AdminOrderController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminOrderController.class);
@@ -45,6 +48,7 @@ public class AdminOrderController {
      * 获取订单列表，支持分页和更丰富的筛选
      */
     @GetMapping
+    @Operation(summary = "订单列表", description = "分页查询订单，支持状态、支付、房东等多条件筛选")
     public ResponseEntity<?> getOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,

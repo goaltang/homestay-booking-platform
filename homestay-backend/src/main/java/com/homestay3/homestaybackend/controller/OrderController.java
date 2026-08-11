@@ -13,6 +13,8 @@ import com.homestay3.homestaybackend.service.IOrderTimeoutService;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
 import com.homestay3.homestaybackend.service.impl.OrderStatusUpdater;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +40,7 @@ import java.time.LocalDate;
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Tag(name = "订单", description = "C端订单创建、查询、支付、退款、评价等接口")
 public class OrderController {
 
     private final OrderService orderService;
@@ -49,6 +52,7 @@ public class OrderController {
     private static final Logger log = LoggerFactory.getLogger(OrderController.class);
 
     @PostMapping
+    @Operation(summary = "创建订单", description = "提交订单并返回订单详情")
     public ResponseEntity<?> createOrder(@RequestBody OrderDTO orderDTO) {
         try {
             OrderDTO createdOrder = orderService.createOrder(orderDTO);
