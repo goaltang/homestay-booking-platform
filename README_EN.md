@@ -87,60 +87,9 @@ flowchart LR
 
 ## Architecture
 
-```mermaid
-graph TB
-    subgraph C["Clients"]
-        F1[Guest App<br/>Vue 3 + TS]
-        F2[Host App<br/>Vue 3 + TS]
-        F3[Admin App<br/>Vue 3 + TS]
-    end
+![Architecture](docs/architecture.png)
 
-    subgraph B["Backend · Spring Boot 3 + Java 17"]
-        S1[Auth<br/>Security + JWT]
-        S2[Core Business<br/>Listings/Orders/Payments]
-        S3[Pricing Engine<br/>Dynamic Rates]
-        S4[ES Search<br/>+ Recommendations]
-        S5[Marketing<br/>Coupons/ROI]
-        S6[Notifications<br/>WebSocket]
-    end
-
-    subgraph D["Data & Cache"]
-        D1[(MySQL 8<br/>Flyway)]
-        D2[(Redis<br/>Locks + Cache)]
-        D3[(Elasticsearch<br/>IK + Geo)]
-    end
-
-    subgraph E["External Services"]
-        E1[Alipay]
-        E2[AMap]
-        E3[SMTP Email]
-    end
-
-    F1 --> S1
-    F2 --> S1
-    F3 --> S1
-    F1 --> S2
-    F2 --> S2
-    F3 --> S2
-    F1 --> S3
-    F2 --> S3
-    F1 --> S4
-    F1 --> S5
-    F2 --> S5
-    F1 --> S6
-    F2 --> S6
-
-    S2 --> D1
-    S3 --> D1
-    S4 --> D3
-    S4 --> D2
-    S5 --> D1
-    S6 --> D2
-    S2 --> D2
-    S2 --> E1
-    S2 --> E2
-    S1 --> E3
-```
+> Vector version: [docs/architecture.svg](docs/architecture.svg) (local `docs/architecture.drawio` is the editable draw.io source, excluded from git per .gitignore).
 
 ## User Roles
 

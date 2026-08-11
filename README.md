@@ -87,60 +87,9 @@ flowchart LR
 
 ## 系统架构
 
-```mermaid
-graph TB
-    subgraph C["客户端"]
-        F1[用户端<br/>Vue 3 + TS]
-        F2[房东端<br/>Vue 3 + TS]
-        F3[管理端<br/>Vue 3 + TS]
-    end
+![系统架构](docs/architecture.png)
 
-    subgraph B["后端服务 · Spring Boot 3 + Java 17"]
-        S1[统一认证<br/>Security + JWT]
-        S2[核心业务<br/>房源/订单/支付]
-        S3[定价引擎<br/>动态报价]
-        S4[ES 搜索<br/>+ 推荐]
-        S5[营销促销<br/>优惠券/ROI]
-        S6[通知中心<br/>WebSocket]
-    end
-
-    subgraph D["数据与缓存"]
-        D1[(MySQL 8<br/>Flyway)]
-        D2[(Redis<br/>锁 + 缓存)]
-        D3[(Elasticsearch<br/>IK + Geo)]
-    end
-
-    subgraph E["外部服务"]
-        E1[支付宝]
-        E2[高德地图]
-        E3[SMTP 邮件]
-    end
-
-    F1 --> S1
-    F2 --> S1
-    F3 --> S1
-    F1 --> S2
-    F2 --> S2
-    F3 --> S2
-    F1 --> S3
-    F2 --> S3
-    F1 --> S4
-    F1 --> S5
-    F2 --> S5
-    F1 --> S6
-    F2 --> S6
-
-    S2 --> D1
-    S3 --> D1
-    S4 --> D3
-    S4 --> D2
-    S5 --> D1
-    S6 --> D2
-    S2 --> D2
-    S2 --> E1
-    S2 --> E2
-    S1 --> E3
-```
+> 矢量版：[docs/architecture.svg](docs/architecture.svg)（本地 `docs/architecture.drawio` 为 draw.io 可编辑源，按 .gitignore 约定不入库）。
 
 ## 系统角色
 
