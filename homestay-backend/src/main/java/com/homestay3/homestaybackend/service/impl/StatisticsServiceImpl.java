@@ -56,6 +56,12 @@ public class StatisticsServiceImpl implements StatisticsService {
         long todayOrders = orderRepository.countByCreatedAtBetween(today.atStartOfDay(), today.plusDays(1).atStartOfDay());
         long todayUsers = userRepository.countByCreatedAtBetween(today.atStartOfDay(), today.plusDays(1).atStartOfDay());
         
+        // 昨日统计（用于仪表盘环比）
+        LocalDate yesterday = today.minusDays(1);
+        long yesterdayHomestays = homestayRepository.countByCreatedAtBetween(yesterday.atStartOfDay(), today.atStartOfDay());
+        long yesterdayOrders = orderRepository.countByCreatedAtBetween(yesterday.atStartOfDay(), today.atStartOfDay());
+        long yesterdayUsers = userRepository.countByCreatedAtBetween(yesterday.atStartOfDay(), today.atStartOfDay());
+        
         // 设置结果
         result.put("total", Map.of(
             "homestays", homestayCount,
@@ -73,6 +79,12 @@ public class StatisticsServiceImpl implements StatisticsService {
             "newHomestays", todayHomestays,
             "newOrders", todayOrders,
             "newUsers", todayUsers
+        ));
+        
+        result.put("yesterday", Map.of(
+            "newHomestays", yesterdayHomestays,
+            "newOrders", yesterdayOrders,
+            "newUsers", yesterdayUsers
         ));
         
         return result;
