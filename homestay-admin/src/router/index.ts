@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { reactive } from "vue";
 import type { RouteRecordRaw } from "vue-router";
 
 const routes: RouteRecordRaw[] = [
@@ -344,6 +345,44 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+// ---------- 路由切换顶部进度条（layout 顶部渲染，纯 CSS transition 模拟） ----------
+export const routeProgress = reactive({
+  visible: false,
+  width: 0,
+});
+
+let progressTimer: ReturnType<typeof setTimeout> | undefined;
+
+const startProgress = () => {
+  if (progressTimer) clearTimeout(progressTimer);
+  routeProgress.visible = true;
+  routeProgress.width = 0;
+  requestAnimationFrame(() => {
+    routeProgress.width = 80;
+  });
+};
+
+const finishProgress = () => {
+  routeProgress.width = 100;
+  if (progressTimer) clearTimeout(progressTimer);
+  progressTimer = setTimeout(() => {
+    routeProgress.visible = false;
+    routeProgress.width = 0;
+  }, 200);
+};
+
+router.beforeEach(() => {
+  startProgress();
+});
+
+router.afterEach(() => {
+  finishProgress();
+});
+
+router.onError(() => {
+  finishProgress();
 });
 
 router.onError((error) => {

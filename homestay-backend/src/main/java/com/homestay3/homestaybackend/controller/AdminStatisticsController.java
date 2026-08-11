@@ -179,11 +179,11 @@ public class AdminStatisticsController {
         
         byte[] data = statisticsService.exportStatistics(start, end);
         String filename = "statistics_" + start.format(DateTimeFormatter.ISO_DATE) + 
-                "_to_" + end.format(DateTimeFormatter.ISO_DATE) + ".xlsx";
+                "_to_" + end.format(DateTimeFormatter.ISO_DATE) + ".csv";
         
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
                 .contentLength(data.length)
                 .body(new ByteArrayResource(data));
     }

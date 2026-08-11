@@ -85,8 +85,8 @@
           <el-pagination
             background
             layout="total, sizes, prev, pager, next, jumper"
-            :current-page="query.pageIndex"
-            :page-size="query.pageSize"
+            :current-page="pageIndex"
+            :page-size="pageSize"
             :page-sizes="[10, 20, 50, 100]"
             :total="pageTotal"
             @current-change="handlePageChange"
@@ -103,14 +103,15 @@ import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search, Refresh } from '@element-plus/icons-vue';
 import { getOperationLogsApi, OperationLog, LogQueryParams } from '@/api/systemConfig';
+import { usePagination } from '@/composables/usePagination';
 
 const tableData = ref<OperationLog[]>([]);
 const loading = ref(false);
 const pageTotal = ref(0);
 
-const query = reactive<LogQueryParams & { pageIndex: number; pageSize: number; dateRange?: string[] }>({
-  pageIndex: 1,
-  pageSize: 20,
+const { pageIndex, pageSize, currentChange, sizeChange, reset, buildParams } = usePagination(20);
+
+const query = reactive<LogQueryParams & { dateRange?: string[] }>({
   operator: '',
   operationType: '',
   resource: '',
@@ -126,8 +127,7 @@ onMounted(() => {
 const getLogs = () => {
   loading.value = true;
   const params: LogQueryParams = {
-    page: query.pageIndex - 1,
-    size: query.pageSize,
+    ...buildParams(),
     operator: query.operator || undefined,
     operationType: query.operationType || undefined,
     resource: query.resource || undefined,
@@ -158,7 +158,7 @@ const getLogs = () => {
 };
 
 const handleSearch = () => {
-  query.pageIndex = 1;
+  reset();
   getLogs();
 };
 
@@ -169,18 +169,17 @@ const clearSearch = () => {
   query.startTime = '';
   query.endTime = '';
   query.dateRange = [];
-  query.pageIndex = 1;
+  reset();
   getLogs();
 };
 
 const handlePageChange = (val: number) => {
-  query.pageIndex = val;
+  currentChange(val);
   getLogs();
 };
 
 const handleSizeChange = (val: number) => {
-  query.pageSize = val;
-  query.pageIndex = 1;
+  sizeChange(val);
   getLogs();
 };
 

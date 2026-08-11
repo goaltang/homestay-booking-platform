@@ -13,12 +13,25 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     }),
     Components({
-      resolvers: [ElementPlusResolver()],
+      // directives: true —— 按需注册 v-loading 等指令（移除 app.use(ElementPlus) 后必须）
+      resolvers: [ElementPlusResolver({ directives: true })],
     }),
   ],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "element-plus": ["element-plus", "@element-plus/icons-vue"],
+          echarts: ["echarts", "zrender"],
+          "china-area-data": ["element-china-area-data"],
+          "vue-core": ["vue", "vue-router", "pinia"],
+        },
+      },
     },
   },
   server: {

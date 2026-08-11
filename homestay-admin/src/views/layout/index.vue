@@ -1,5 +1,10 @@
 <template>
   <div class="common-layout">
+    <div
+      class="route-progress"
+      :class="{ 'route-progress--active': routeProgress.visible }"
+      :style="{ width: routeProgress.width + '%' }"
+    ></div>
     <el-container>
       <el-aside :width="isCollapse ? '64px' : '200px'">
         <div class="sidebar">
@@ -98,6 +103,7 @@ import { Fold, Expand, CaretBottom } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { menuData } from '@/config/menu'
+import { routeProgress } from '@/router'
 import type { Menus } from '@/types/menu'
 
 const route = useRoute()
@@ -153,6 +159,25 @@ const handleLogout = () => {
 <style scoped lang="scss">
 .common-layout {
   height: 100vh;
+}
+
+// 路由切换顶部进度条：默认隐藏，切换时由 router 守卫驱动宽度/透明度
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background-color: var(--el-color-primary);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3000;
+  transition:
+    width 0.25s ease,
+    opacity 0.3s ease;
+
+  &--active {
+    opacity: 1;
+  }
 }
 
 .sidebar {

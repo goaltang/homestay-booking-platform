@@ -77,8 +77,8 @@
           <el-pagination
             background
             layout="total, sizes, prev, pager, next, jumper"
-            :current-page="query.pageIndex"
-            :page-size="query.pageSize"
+            :current-page="pageIndex"
+            :page-size="pageSize"
             :page-sizes="[10, 20, 50, 100]"
             :total="pageTotal"
             @current-change="handlePageChange"
@@ -95,14 +95,15 @@ import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search, Refresh } from '@element-plus/icons-vue';
 import { getLoginLogsApi, LoginLog, LoginLogQueryParams } from '@/api/loginLog';
+import { usePagination } from '@/composables/usePagination';
 
 const tableData = ref<LoginLog[]>([]);
 const loading = ref(false);
 const pageTotal = ref(0);
 
-const query = reactive<LoginLogQueryParams & { pageIndex: number; pageSize: number; dateRange?: string[] }>({
-  pageIndex: 1,
-  pageSize: 20,
+const { pageIndex, pageSize, currentChange, sizeChange, reset, buildParams } = usePagination(20);
+
+const query = reactive<LoginLogQueryParams & { dateRange?: string[] }>({
   username: '',
   loginType: '',
   startTime: '',
@@ -118,8 +119,7 @@ onMounted(() => {
 const getLogs = () => {
   loading.value = true;
   const params: LoginLogQueryParams = {
-    page: query.pageIndex - 1,
-    size: query.pageSize,
+    ...buildParams(),
     username: query.username || undefined,
     loginType: query.loginType || undefined,
     startTime: query.dateRange && query.dateRange.length === 2 ? query.dateRange[0] : undefined,
@@ -150,7 +150,7 @@ const getLogs = () => {
 };
 
 const handleSearch = () => {
-  query.pageIndex = 1;
+  reset();
   getLogs();
 };
 
@@ -161,18 +161,17 @@ const clearSearch = () => {
   query.endTime = '';
   query.dateRange = [];
   query.loginStatus = '';
-  query.pageIndex = 1;
+  reset();
   getLogs();
 };
 
 const handlePageChange = (val: number) => {
-  query.pageIndex = val;
+  currentChange(val);
   getLogs();
 };
 
 const handleSizeChange = (val: number) => {
-  query.pageSize = val;
-  query.pageIndex = 1;
+  sizeChange(val);
   getLogs();
 };
 

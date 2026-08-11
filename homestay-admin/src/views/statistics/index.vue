@@ -325,7 +325,18 @@ const exportData = async () => {
             endDate: endDate.toISOString().split('T')[0]
         };
 
-        await exportStatistics(params);
+        const blob = await exportStatistics(params);
+
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `statistics_${params.startDate}_${params.endDate}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
         ElMessage.success('导出成功');
     } catch (error) {
         console.error('导出数据失败:', error);
