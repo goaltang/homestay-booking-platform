@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.NotificationBroadcastJobDTO;
 import com.homestay3.homestaybackend.dto.NotificationDTO;
 import com.homestay3.homestaybackend.entity.NotificationBroadcastJob;
@@ -46,6 +47,7 @@ public class AdminNotificationController {
      * @return 任务提交结果
      */
     @PostMapping("/broadcast")
+    @OperationLog(operationType = "CREATE", resource = "NOTIFICATION", detail = "全员广播通知")
     public ResponseEntity<NotificationBroadcastJobDTO> broadcastSystemNotification(
             @RequestBody Map<String, String> body) {
         String content = body.get("content");
@@ -87,6 +89,7 @@ public class AdminNotificationController {
      * @return 创建的通知详情
      */
     @PostMapping("/send")
+    @OperationLog(operationType = "CREATE", resource = "NOTIFICATION", detail = "发送系统通知")
     public ResponseEntity<NotificationDTO> sendSystemNotificationToUser(
             @RequestBody Map<String, Object> body) {
         Object userIdRaw = body.get("userId");

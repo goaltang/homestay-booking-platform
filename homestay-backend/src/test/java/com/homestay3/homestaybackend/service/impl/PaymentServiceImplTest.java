@@ -21,7 +21,6 @@ import com.homestay3.homestaybackend.repository.RefundRecordRepository;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
 import com.homestay3.homestaybackend.service.gateway.AlipayGateway;
-import com.homestay3.homestaybackend.util.RedisLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -70,9 +69,6 @@ class PaymentServiceImplTest {
 
     @Mock
     private AlipayGateway alipayGateway;
-
-    @Mock
-    private RedisLock redisLock;
 
     @Spy
     private OrderStatusUpdater orderStatusUpdater = new OrderStatusUpdater();
@@ -470,16 +466,10 @@ class PaymentServiceImplTest {
                     .build();
         }
 
-        private void mockRedisLockSuccess() {
-            when(redisLock.generateRequestId()).thenReturn("test-request-id");
-            when(redisLock.tryLock(anyString(), anyString(), any(Duration.class))).thenReturn(true);
-            when(redisLock.unlock(anyString(), anyString())).thenReturn(true);
-        }
 
         @Test
         @DisplayName("正常回调处理成功")
         void handlePaymentNotify_Success() {
-            mockRedisLockSuccess();
             PaymentNotifyResult result = createNotifyResult();
             when(paymentRecordRepository.findByOutTradeNo("HST202401011200001001"))
                     .thenReturn(Optional.of(paymentRecord));
@@ -500,7 +490,6 @@ class PaymentServiceImplTest {
         @Test
         @DisplayName("重复回调 - 幂等跳过（已处理）")
         void handlePaymentNotify_DuplicateSkipped() {
-            mockRedisLockSuccess();
             PaymentNotifyResult result = createNotifyResult();
             paymentRecord.setStatus("SUCCESS"); // 已经处理过
             when(paymentRecordRepository.findByOutTradeNo("HST202401011200001001"))
@@ -516,7 +505,6 @@ class PaymentServiceImplTest {
         @Test
         @DisplayName("乐观锁冲突 - 安全跳过")
         void handlePaymentNotify_OptimisticLockConflict() {
-            mockRedisLockSuccess();
             PaymentNotifyResult result = createNotifyResult();
             when(paymentRecordRepository.findByOutTradeNo("HST202401011200001001"))
                     .thenReturn(Optional.of(paymentRecord));
@@ -530,7 +518,6 @@ class PaymentServiceImplTest {
         @Test
         @DisplayName("支付记录不存在 - 抛出异常")
         void handlePaymentNotify_RecordNotFound() {
-            mockRedisLockSuccess();
             PaymentNotifyResult result = createNotifyResult();
             when(paymentRecordRepository.findByOutTradeNo("HST202401011200001001"))
                     .thenReturn(Optional.empty());

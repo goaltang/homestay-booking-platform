@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.entity.CouponTemplate;
 import com.homestay3.homestaybackend.entity.PromotionCampaign;
 import com.homestay3.homestaybackend.entity.PromotionUsage;
@@ -87,6 +88,7 @@ public class AdminPromotionController {
     }
 
     @PostMapping("/campaigns")
+    @OperationLog(operationType = "CREATE", resource = "PROMOTION", detail = "创建活动")
     public ResponseEntity<?> createCampaign(@RequestBody PromotionCampaign campaign) {
         try {
             // 设置规则的级联回引用
@@ -101,6 +103,7 @@ public class AdminPromotionController {
     }
 
     @PutMapping("/campaigns/{id}")
+    @OperationLog(operationType = "UPDATE", resource = "PROMOTION", resourceId = "#id", detail = "更新活动")
     public ResponseEntity<?> updateCampaign(@PathVariable Long id, @RequestBody PromotionCampaign campaign) {
         Optional<PromotionCampaign> existingOpt = campaignRepository.findById(id);
         if (existingOpt.isEmpty()) {
@@ -133,6 +136,7 @@ public class AdminPromotionController {
     }
 
     @PostMapping("/campaigns/{id}/publish")
+    @OperationLog(operationType = "UPDATE", resource = "PROMOTION", resourceId = "#id", detail = "发布活动")
     public ResponseEntity<?> publishCampaign(@PathVariable Long id) {
         Optional<PromotionCampaign> opt = campaignRepository.findById(id);
         if (opt.isEmpty()) {
@@ -145,6 +149,7 @@ public class AdminPromotionController {
     }
 
     @PostMapping("/campaigns/{id}/pause")
+    @OperationLog(operationType = "UPDATE", resource = "PROMOTION", resourceId = "#id", detail = "暂停活动")
     public ResponseEntity<?> pauseCampaign(@PathVariable Long id) {
         Optional<PromotionCampaign> opt = campaignRepository.findById(id);
         if (opt.isEmpty()) {
@@ -157,6 +162,7 @@ public class AdminPromotionController {
     }
 
     @DeleteMapping("/campaigns/{id}")
+    @OperationLog(operationType = "DELETE", resource = "PROMOTION", resourceId = "#id", detail = "删除活动")
     public ResponseEntity<?> deleteCampaign(@PathVariable Long id) {
         Optional<PromotionCampaign> opt = campaignRepository.findById(id);
         if (opt.isEmpty()) {
@@ -200,6 +206,7 @@ public class AdminPromotionController {
     }
 
     @PostMapping("/templates")
+    @OperationLog(operationType = "CREATE", resource = "PROMOTION", detail = "创建优惠券模板")
     public ResponseEntity<?> createTemplate(@RequestBody CouponTemplate template) {
         try {
             CouponTemplate saved = couponService.createTemplate(template);

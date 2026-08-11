@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.OrderDTO;
 import com.homestay3.homestaybackend.service.DisputeService;
 import com.homestay3.homestaybackend.service.OrderService;
@@ -132,6 +133,7 @@ public class AdminOrderController {
      * 更新订单状态
      */
     @PutMapping("/{id}/status")
+    @OperationLog(operationType = "UPDATE", resource = "ORDER", resourceId = "#id", detail = "更新订单状态")
     public ResponseEntity<?> updateOrderStatus(
             @PathVariable Long id,
             @RequestBody Map<String, Object> statusData
@@ -146,6 +148,7 @@ public class AdminOrderController {
      * 管理员手动确认订单支付
      */
     @PutMapping("/{id}/confirm-payment")
+    @OperationLog(operationType = "UPDATE", resource = "ORDER", resourceId = "#id", detail = "手动确认支付")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> confirmOrderPayment(@PathVariable Long id) {
         logger.info("管理员手动确认订单支付，ID: {}", id);
@@ -166,6 +169,7 @@ public class AdminOrderController {
      * 管理员直接执行退款（ADMIN_INITIATED类型，不需要审批）
      */
     @PostMapping("/{id}/refund")
+    @OperationLog(operationType = "UPDATE", resource = "ORDER", resourceId = "#id", detail = "直接执行退款")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> executeRefund(@PathVariable Long id, @RequestBody Map<String, String> request) {
         logger.info("管理员直接执行退款，订单ID: {}", id);
@@ -187,6 +191,7 @@ public class AdminOrderController {
      * 管理员审批退款申请（仅限HOST_CANCELLED类型）
      */
     @PostMapping("/{id}/refund/approve")
+    @OperationLog(operationType = "UPDATE", resource = "ORDER", resourceId = "#id", detail = "审批退款")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> approveRefund(@PathVariable Long id, @RequestBody Map<String, String> request) {
         logger.info("管理员审批退款申请，订单ID: {}", id);
@@ -218,6 +223,7 @@ public class AdminOrderController {
      * 管理员拒绝退款申请
      */
     @PostMapping("/{id}/refund/reject")
+    @OperationLog(operationType = "UPDATE", resource = "ORDER", resourceId = "#id", detail = "拒绝退款")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> rejectRefund(@PathVariable Long id, @RequestBody Map<String, String> request) {
         logger.info("管理员拒绝退款申请，订单ID: {}", id);
@@ -239,6 +245,7 @@ public class AdminOrderController {
      * 发起争议（当房东对退款有异议时）
      */
     @PostMapping("/{id}/dispute")
+    @OperationLog(operationType = "CREATE", resource = "ORDER", resourceId = "#id", detail = "发起争议")
     @PreAuthorize("hasRole('ADMIN') or hasRole('HOST')")
     public ResponseEntity<?> raiseDispute(@PathVariable Long id, @RequestBody Map<String, String> request) {
         logger.info("发起争议，订单ID: {}", id);
@@ -263,6 +270,7 @@ public class AdminOrderController {
      * 解决争议（管理员仲裁）
      */
     @PostMapping("/{id}/dispute/resolve")
+    @OperationLog(operationType = "UPDATE", resource = "ORDER", resourceId = "#id", detail = "解决争议")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> resolveDispute(@PathVariable Long id, @RequestBody Map<String, String> request) {
         logger.info("解决争议，订单ID: {}", id);
@@ -293,6 +301,7 @@ public class AdminOrderController {
      * 删除订单
      */
     @DeleteMapping("/{id}")
+    @OperationLog(operationType = "DELETE", resource = "ORDER", resourceId = "#id")
     public ResponseEntity<?> deleteOrder(@PathVariable Long id) {
         logger.info("管理员删除订单，ID: {}", id);
         orderService.deleteOrder(id);

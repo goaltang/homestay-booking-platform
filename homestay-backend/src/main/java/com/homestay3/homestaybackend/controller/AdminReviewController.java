@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.ReviewDTO;
 import com.homestay3.homestaybackend.service.ReviewService;
 import com.homestay3.homestaybackend.util.SortUtils;
@@ -68,6 +69,7 @@ public class AdminReviewController {
     /**
      * 删除评价
      */
+    @OperationLog(operationType = "DELETE", resource = "REVIEW")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteReview(@PathVariable Long id) {
         logger.info("管理员删除评价，ID: {}", id);
@@ -78,6 +80,7 @@ public class AdminReviewController {
     /**
      * 审核评价 (隐藏/显示)
      */
+    @OperationLog(operationType = "CREATE", resource = "REVIEW")
     @PostMapping("/{id}/action")
     public ResponseEntity<?> reviewAction(
             @PathVariable Long id,
@@ -110,6 +113,7 @@ public class AdminReviewController {
     /**
      * 批量设置评价可见性
      */
+    @OperationLog(operationType = "CREATE", resource = "REVIEW")
     @PostMapping("/batch/visibility")
     public ResponseEntity<?> batchSetVisibility(@RequestBody Map<String, Object> request) {
         @SuppressWarnings("unchecked")
@@ -129,6 +133,7 @@ public class AdminReviewController {
     /**
      * 批量删除评价
      */
+    @OperationLog(operationType = "CREATE", resource = "REVIEW")
     @PostMapping("/batch/delete")
     public ResponseEntity<?> batchDelete(@RequestBody Map<String, Object> request) {
         @SuppressWarnings("unchecked")

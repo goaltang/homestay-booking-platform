@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.ApiResponse;
 import com.homestay3.homestaybackend.entity.PricingRule;
 import com.homestay3.homestaybackend.service.AdminPricingRuleService;
@@ -30,6 +31,7 @@ public class AdminPricingRuleController {
     }
 
     @PostMapping
+    @OperationLog(operationType = "CREATE", resource = "PRICINGRULE")
     public ResponseEntity<?> create(@RequestBody PricingRule rule) {
         Long userId = UserUtil.getCurrentUserId();
         PricingRule saved = adminPricingRuleService.createRule(rule, userId);
@@ -37,6 +39,7 @@ public class AdminPricingRuleController {
     }
 
     @PutMapping("/{id}")
+    @OperationLog(operationType = "UPDATE", resource = "PRICINGRULE", resourceId = "#id")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody PricingRule rule) {
         Long userId = UserUtil.getCurrentUserId();
         try {
@@ -49,6 +52,7 @@ public class AdminPricingRuleController {
     }
 
     @DeleteMapping("/{id}")
+    @OperationLog(operationType = "DELETE", resource = "PRICINGRULE", resourceId = "#id")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Long userId = UserUtil.getCurrentUserId();
         try {
@@ -61,6 +65,7 @@ public class AdminPricingRuleController {
     }
 
     @PatchMapping("/{id}/toggle")
+    @OperationLog(operationType = "UPDATE", resource = "PRICINGRULE", resourceId = "#id")
     public ResponseEntity<?> toggle(@PathVariable Long id) {
         Long userId = UserUtil.getCurrentUserId();
         try {

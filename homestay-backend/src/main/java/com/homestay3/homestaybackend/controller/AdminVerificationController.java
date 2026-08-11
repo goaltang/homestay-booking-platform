@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.VerificationDTO;
 import com.homestay3.homestaybackend.entity.User;
 import com.homestay3.homestaybackend.model.VerificationStatus;
@@ -125,6 +126,7 @@ public class AdminVerificationController {
     /**
      * 审核通过
      */
+    @OperationLog(operationType = "CREATE", resource = "VERIFICATION")
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approveVerification(
             @PathVariable Long id,
@@ -168,6 +170,7 @@ public class AdminVerificationController {
     /**
      * 审核拒绝
      */
+    @OperationLog(operationType = "CREATE", resource = "VERIFICATION")
     @PostMapping("/{id}/reject")
     public ResponseEntity<?> rejectVerification(
             @PathVariable Long id,

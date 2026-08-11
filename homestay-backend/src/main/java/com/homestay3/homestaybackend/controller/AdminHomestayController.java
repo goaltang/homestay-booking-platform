@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.HomestayAdminDetailDTO;
 import com.homestay3.homestaybackend.dto.HomestayAdminSummaryDTO;
 import com.homestay3.homestaybackend.dto.HomestayDetailDTO;
@@ -137,6 +138,7 @@ public class AdminHomestayController {
      * 创建房源
      */
     @PostMapping
+    @OperationLog(operationType = "CREATE", resource = "HOMESTAY", detail = "创建房源")
     public ResponseEntity<HomestayWriteResponse> createHomestay(@RequestBody HomestayWriteRequest request) {
         logger.info("管理员创建房源: {}", request.getTitle());
         HomestayWriteResponse createdHomestay = homestayResponseAdapter.toWriteResponse(
@@ -148,6 +150,7 @@ public class AdminHomestayController {
      * 更新房源
      */
     @PutMapping("/{id}")
+    @OperationLog(operationType = "UPDATE", resource = "HOMESTAY", resourceId = "#id", detail = "更新房源")
     public ResponseEntity<HomestayWriteResponse> updateHomestay(
             @PathVariable Long id,
             @RequestBody HomestayWriteRequest request) {
@@ -161,6 +164,7 @@ public class AdminHomestayController {
      * 删除房源
      */
     @DeleteMapping("/{id}")
+    @OperationLog(operationType = "DELETE", resource = "HOMESTAY", resourceId = "#id")
     public ResponseEntity<?> deleteHomestay(@PathVariable Long id) {
         logger.info("管理员删除房源，ID: {}", id);
         homestayCommandService.deleteHomestay(id);
@@ -171,6 +175,7 @@ public class AdminHomestayController {
      * 更新房源状态
      */
     @PutMapping("/{id}/status")
+    @OperationLog(operationType = "UPDATE", resource = "HOMESTAY", resourceId = "#id", detail = "更新房源状态")
     public ResponseEntity<HomestayStatusResponse> updateHomestayStatus(
             @PathVariable Long id,
             @RequestBody Map<String, Object> statusData
@@ -186,6 +191,7 @@ public class AdminHomestayController {
      * 更新房源首页精选状态
      */
     @PutMapping("/{id}/featured")
+    @OperationLog(operationType = "UPDATE", resource = "HOMESTAY", resourceId = "#id", detail = "更新精选状态")
     public ResponseEntity<HomestayWriteResponse> updateHomestayFeatured(
             @PathVariable Long id,
             @RequestBody Map<String, Object> featuredData
@@ -206,6 +212,7 @@ public class AdminHomestayController {
      * 批量删除房源
      */
     @DeleteMapping("/batch")
+    @OperationLog(operationType = "DELETE", resource = "HOMESTAY", detail = "批量删除房源")
     public ResponseEntity<?> batchDeleteHomestays(@RequestBody Map<String, List<Long>> request) {
         List<Long> ids = request.get("ids");
         
@@ -234,6 +241,7 @@ public class AdminHomestayController {
      * 批量更新房源状态
      */
     @PutMapping("/batch/status")
+    @OperationLog(operationType = "UPDATE", resource = "HOMESTAY", detail = "批量更新房源状态")
     @SuppressWarnings("unchecked")
     public ResponseEntity<?> batchUpdateHomestayStatus(@RequestBody Map<String, Object> request) {
         List<Long> ids = (List<Long>) request.get("ids");
@@ -268,6 +276,7 @@ public class AdminHomestayController {
      * 强制下架房源（因违规）
      */
     @PostMapping("/{id}/force-delist")
+    @OperationLog(operationType = "UPDATE", resource = "HOMESTAY", resourceId = "#id", detail = "强制下架房源")
     public ResponseEntity<?> forceDelistHomestay(
             @PathVariable Long id,
             @RequestBody Map<String, String> request
@@ -299,6 +308,7 @@ public class AdminHomestayController {
      * 批量补全缺失的地理编码坐标
      */
     @PostMapping("/batch-populate-coordinates")
+    @OperationLog(operationType = "UPDATE", resource = "HOMESTAY", detail = "批量补全坐标")
     public ResponseEntity<?> batchPopulateCoordinates(@RequestBody(required = false) Map<String, Object> request) {
         int batchSize = 100;
         if (request != null && request.get("batchSize") instanceof Number) {
@@ -324,6 +334,7 @@ public class AdminHomestayController {
      * 全量重建 ES 搜索索引
      */
     @PostMapping("/rebuild-index")
+    @OperationLog(operationType = "UPDATE", resource = "HOMESTAY", detail = "重建ES索引")
     public ResponseEntity<?> rebuildElasticsearchIndex() {
         logger.info("管理员请求重建 ES 房源索引");
         try {
@@ -344,6 +355,7 @@ public class AdminHomestayController {
      * 批量强制下架房源
      */
     @PostMapping("/batch/force-delist")
+    @OperationLog(operationType = "UPDATE", resource = "HOMESTAY", detail = "批量强制下架房源")
     @SuppressWarnings("unchecked")
     public ResponseEntity<?> batchForceDelistHomestays(@RequestBody Map<String, Object> request) {
         List<Long> ids = (List<Long>) request.get("ids");

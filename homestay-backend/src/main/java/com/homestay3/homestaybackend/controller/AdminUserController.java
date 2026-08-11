@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.UserDTO;
 import com.homestay3.homestaybackend.service.UserService;
 import com.homestay3.homestaybackend.util.SortUtils;
@@ -72,6 +73,7 @@ public class AdminUserController {
     /**
      * 创建用户
      */
+    @OperationLog(operationType = "CREATE", resource = "USER")
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody UserDTO userDTO) {
         logger.info("管理员创建用户: {}", userDTO.getUsername());
@@ -82,6 +84,7 @@ public class AdminUserController {
     /**
      * 更新用户
      */
+    @OperationLog(operationType = "UPDATE", resource = "USER")
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         logger.info("管理员更新用户，ID: {}", id);
@@ -92,6 +95,7 @@ public class AdminUserController {
     /**
      * 删除用户
      */
+    @OperationLog(operationType = "DELETE", resource = "USER")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         logger.info("管理员删除用户，ID: {}", id);
@@ -102,6 +106,7 @@ public class AdminUserController {
     /**
      * 更新用户状态
      */
+    @OperationLog(operationType = "UPDATE", resource = "USER")
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateUserStatus(
             @PathVariable Long id,
@@ -116,6 +121,7 @@ public class AdminUserController {
     /**
      * 重置用户密码
      */
+    @OperationLog(operationType = "CREATE", resource = "USER")
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<?> resetUserPassword(@PathVariable Long id) {
         logger.info("管理员重置用户密码，ID: {}", id);

@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.ApiResponse;
 import com.homestay3.homestaybackend.dto.BannerDTO;
 import com.homestay3.homestaybackend.entity.Banner;
@@ -55,12 +56,14 @@ public class AdminBannerController {
     }
 
     @PostMapping
+    @OperationLog(operationType = "CREATE", resource = "BANNER", resourceId = "#result?.body?.data?.id")
     public ResponseEntity<ApiResponse<BannerDTO>> create(@RequestBody Banner banner) {
         BannerDTO created = homeService.createBanner(banner);
         return ResponseEntity.ok(ApiResponse.success(created, "创建成功"));
     }
 
     @PutMapping("/{id}")
+    @OperationLog(operationType = "UPDATE", resource = "BANNER", resourceId = "#id")
     public ResponseEntity<ApiResponse<BannerDTO>> update(@PathVariable Long id, @RequestBody Banner banner) {
         BannerDTO updated = homeService.updateBanner(id, banner);
         if (updated == null) {
@@ -70,12 +73,14 @@ public class AdminBannerController {
     }
 
     @DeleteMapping("/{id}")
+    @OperationLog(operationType = "DELETE", resource = "BANNER", resourceId = "#id")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         homeService.deleteBanner(id);
         return ResponseEntity.ok(ApiResponse.success("删除成功"));
     }
 
     @PatchMapping("/{id}/toggle")
+    @OperationLog(operationType = "UPDATE", resource = "BANNER", resourceId = "#id")
     public ResponseEntity<ApiResponse<BannerDTO>> toggleEnabled(@PathVariable Long id) {
         BannerDTO updated = homeService.toggleBannerEnabled(id);
         if (updated == null) {

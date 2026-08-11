@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.service.search.HomestayIndexingService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ public class AdminSearchController {
     /**
      * 全量重建 ES 搜索索引
      */
+    @OperationLog(operationType = "CREATE", resource = "SEARCH")
     @PostMapping("/index/rebuild")
     public ResponseEntity<?> rebuildElasticsearchIndex() {
         logger.info("管理员请求重建 ES 房源索引");

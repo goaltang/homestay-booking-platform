@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.entity.AbExperiment;
 import com.homestay3.homestaybackend.service.AbTestService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class AdminAbTestController {
     }
 
     @PostMapping
+    @OperationLog(operationType = "CREATE", resource = "ABTEST")
     public ResponseEntity<?> createExperiment(@RequestBody Map<String, Object> request) {
         try {
             AbExperiment experiment = new AbExperiment();
@@ -50,6 +52,7 @@ public class AdminAbTestController {
     }
 
     @PutMapping("/{id}")
+    @OperationLog(operationType = "UPDATE", resource = "ABTEST", resourceId = "#id")
     public ResponseEntity<?> updateExperiment(@PathVariable Long id, @RequestBody AbExperiment experiment) {
         try {
             return ResponseEntity.ok(abTestService.updateExperiment(id, experiment));
@@ -59,6 +62,7 @@ public class AdminAbTestController {
     }
 
     @DeleteMapping("/{id}")
+    @OperationLog(operationType = "DELETE", resource = "ABTEST", resourceId = "#id")
     public ResponseEntity<?> deleteExperiment(@PathVariable Long id) {
         try {
             abTestService.deleteExperiment(id);
@@ -69,6 +73,7 @@ public class AdminAbTestController {
     }
 
     @PostMapping("/{id}/start")
+    @OperationLog(operationType = "UPDATE", resource = "ABTEST", resourceId = "#id", detail = "启动实验")
     public ResponseEntity<?> startExperiment(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(abTestService.startExperiment(id));
@@ -78,6 +83,7 @@ public class AdminAbTestController {
     }
 
     @PostMapping("/{id}/stop")
+    @OperationLog(operationType = "UPDATE", resource = "ABTEST", resourceId = "#id", detail = "停止实验")
     public ResponseEntity<?> stopExperiment(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(abTestService.stopExperiment(id));

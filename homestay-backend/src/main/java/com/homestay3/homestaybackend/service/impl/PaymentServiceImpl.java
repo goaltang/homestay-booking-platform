@@ -1,6 +1,7 @@
 package com.homestay3.homestaybackend.service.impl;
 
 import com.alibaba.fastjson2.JSON;
+import com.homestay3.homestaybackend.annotation.RedisLock;
 import com.homestay3.homestaybackend.dto.OrderDTO;
 import com.homestay3.homestaybackend.dto.payment.PaymentNotifyResult;
 import com.homestay3.homestaybackend.dto.payment.PaymentRequest;
@@ -53,7 +54,6 @@ public class PaymentServiceImpl implements PaymentService {
     private com.homestay3.homestaybackend.service.PaymentProcessingService paymentProcessingService;
 
     private final AlipayGateway alipayGateway;
-    private final com.homestay3.homestaybackend.util.RedisLock redisLock;
     private final OrderStatusUpdater orderStatusUpdater;
 
     @Override
@@ -242,16 +242,8 @@ public class PaymentServiceImpl implements PaymentService {
      * 使用 Redis 分布式锁 + 乐观锁 双重防护，确保回调幂等性
      */
     @Transactional
+    @RedisLock(key = "'payment:notify:' + #result.outTradeNo")
     public void handlePaymentNotify(PaymentNotifyResult result) {
-        // 第零层防护：Redis 分布式锁，按商户订单号加锁
-        String lockKey = "payment:notify:" + result.getOutTradeNo();
-        String requestId = redisLock.generateRequestId();
-
-        if (!redisLock.tryLock(lockKey, requestId, Duration.ofSeconds(30))) {
-            log.info("支付回调正在被其他节点处理，跳过: {}", result.getOutTradeNo());
-            return;
-        }
-
         try {
             log.debug("开始处理支付回调，商户订单号: {}", result.getOutTradeNo());
 
@@ -287,8 +279,6 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (Exception e) {
             log.error("处理支付回调异常", e);
             throw new RuntimeException("处理支付回调失败", e);
-        } finally {
-            redisLock.unlock(lockKey, requestId);
         }
     }
 

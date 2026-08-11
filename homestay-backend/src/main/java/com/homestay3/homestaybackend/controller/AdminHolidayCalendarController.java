@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.entity.HolidayCalendar;
 import com.homestay3.homestaybackend.repository.HolidayCalendarRepository;
 import com.homestay3.homestaybackend.service.HolidayPresetService;
@@ -38,6 +39,7 @@ public class AdminHolidayCalendarController {
     }
 
     @PostMapping
+    @OperationLog(operationType = "CREATE", resource = "HOLIDAYCALENDAR", resourceId = "#result?.body?.id")
     public ResponseEntity<?> create(@RequestBody HolidayCalendar holiday) {
         if (holidayCalendarRepository.existsByDateAndRegionCode(holiday.getDate(), holiday.getRegionCode())) {
             return ResponseEntity.badRequest().body("该日期已存在");
@@ -47,6 +49,7 @@ public class AdminHolidayCalendarController {
     }
 
     @PutMapping("/{id}")
+    @OperationLog(operationType = "UPDATE", resource = "HOLIDAYCALENDAR", resourceId = "#id")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody HolidayCalendar holiday) {
         return holidayCalendarRepository.findById(id)
                 .map(existing -> {
@@ -61,6 +64,7 @@ public class AdminHolidayCalendarController {
     }
 
     @DeleteMapping("/{id}")
+    @OperationLog(operationType = "DELETE", resource = "HOLIDAYCALENDAR", resourceId = "#id")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         holidayCalendarRepository.deleteById(id);
         return ResponseEntity.ok().build();
@@ -70,6 +74,7 @@ public class AdminHolidayCalendarController {
      * 一键生成指定年份的节假日（含调休补班）
      */
     @PostMapping("/generate/{year}")
+    @OperationLog(operationType = "CREATE", resource = "HOLIDAYCALENDAR", detail = "一键生成节假日")
     public ResponseEntity<?> generate(@PathVariable int year) {
         List<HolidayCalendar> saved = holidayPresetService.generateForYear(year);
         return ResponseEntity.ok(Map.of(
@@ -83,6 +88,7 @@ public class AdminHolidayCalendarController {
      * 批量导入节假日
      */
     @PostMapping("/batch")
+    @OperationLog(operationType = "CREATE", resource = "HOLIDAYCALENDAR", detail = "批量导入节假日")
     public ResponseEntity<?> batchCreate(@RequestBody List<HolidayCalendar> holidays) {
         if (holidays == null || holidays.isEmpty()) {
             return ResponseEntity.badRequest().body("数据不能为空");

@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.dto.HomestayGroupDTO;
 import com.homestay3.homestaybackend.service.HomestayGroupService;
 import lombok.RequiredArgsConstructor;
@@ -50,12 +51,14 @@ public class AdminGroupController {
     }
 
     @PutMapping("/{id}/toggle-enabled")
+    @OperationLog(operationType = "UPDATE", resource = "GROUP", resourceId = "#id")
     public ResponseEntity<?> toggleEnabled(@PathVariable Long id, @RequestParam boolean enabled) {
         log.info("管理员{}分组: {}", enabled ? "启用" : "禁用", id);
         return ResponseEntity.ok(groupService.adminToggleGroupEnabled(id, enabled));
     }
 
     @DeleteMapping("/{id}")
+    @OperationLog(operationType = "DELETE", resource = "GROUP", resourceId = "#id")
     public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
         log.info("管理员删除分组: {}", id);
         try {

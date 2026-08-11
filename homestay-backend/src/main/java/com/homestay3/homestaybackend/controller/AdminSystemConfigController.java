@@ -1,6 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
-import com.homestay3.homestaybackend.entity.OperationLog;
+import com.homestay3.homestaybackend.annotation.OperationLog;
 import com.homestay3.homestaybackend.entity.SystemConfig;
 import com.homestay3.homestaybackend.service.OperationLogService;
 import com.homestay3.homestaybackend.service.SystemConfigService;
@@ -57,6 +57,7 @@ public class AdminSystemConfigController {
      * 批量获取配置值
      */
     @PostMapping("/configs/batch")
+    @OperationLog(operationType = "CREATE", resource = "SYSTEM_CONFIG", detail = "批量查询配置")
     public ResponseEntity<Map<String, Object>> getConfigsByKeys(@RequestBody List<String> keys) {
         Map<String, String> configs = systemConfigService.getConfigsByKeys(keys);
         return ResponseEntity.ok(Map.of("success", true, "data", configs));
@@ -66,6 +67,8 @@ public class AdminSystemConfigController {
      * 创建配置
      */
     @PostMapping("/configs")
+    @OperationLog(operationType = "CREATE", resource = "SYSTEM_CONFIG", resourceId = "#config.configKey",
+            detail = "创建配置: #{#config.configName} = #{#config.configValue}")
     public ResponseEntity<Map<String, Object>> createConfig(@RequestBody SystemConfig config,
                                                               @RequestParam(required = false) String operator,
                                                               @RequestParam(required = false) String ipAddress) {
@@ -74,11 +77,6 @@ public class AdminSystemConfigController {
                 return ResponseEntity.ok(Map.of("success", false, "message", "配置键已存在"));
             }
             SystemConfig saved = systemConfigService.saveConfig(config);
-
-            // 记录日志
-            operationLogService.log(operator, "CREATE", "SYSTEM_CONFIG",
-                    saved.getConfigKey(), ipAddress,
-                    "创建配置: " + saved.getConfigName() + " = " + saved.getConfigValue(), "SUCCESS");
 
             return ResponseEntity.ok(Map.of("success", true, "data", saved, "message", "创建成功"));
         } catch (Exception e) {
@@ -90,6 +88,8 @@ public class AdminSystemConfigController {
      * 更新配置
      */
     @PutMapping("/configs/key/{key}")
+    @OperationLog(operationType = "UPDATE", resource = "SYSTEM_CONFIG", resourceId = "#key",
+            detail = "修改配置: #{#config.configName}, 值: #{#config.configValue}")
     public ResponseEntity<Map<String, Object>> updateConfig(@PathVariable String key,
                                                               @RequestBody SystemConfig config,
                                                               @RequestParam(required = false) String operator,
@@ -98,13 +98,7 @@ public class AdminSystemConfigController {
             SystemConfig existing = systemConfigService.getConfigByKey(key)
                     .orElseThrow(() -> new RuntimeException("配置不存在"));
 
-            String oldValue = existing.getConfigValue();
             SystemConfig updated = systemConfigService.updateConfig(key, config);
-
-            // 记录日志
-            operationLogService.log(operator, "UPDATE", "SYSTEM_CONFIG",
-                    key, ipAddress,
-                    String.format("修改配置: %s, 值: %s -> %s", updated.getConfigName(), oldValue, updated.getConfigValue()), "SUCCESS");
 
             return ResponseEntity.ok(Map.of("success", true, "data", updated, "message", "更新成功"));
         } catch (Exception e) {
@@ -116,6 +110,8 @@ public class AdminSystemConfigController {
      * 删除配置
      */
     @DeleteMapping("/configs/{id}")
+    @OperationLog(operationType = "DELETE", resource = "SYSTEM_CONFIG", resourceId = "#id",
+            detail = "删除配置: #{#id}")
     public ResponseEntity<Map<String, Object>> deleteConfig(@PathVariable Long id,
                                                               @RequestParam(required = false) String operator,
                                                               @RequestParam(required = false) String ipAddress) {
@@ -127,11 +123,6 @@ public class AdminSystemConfigController {
 
             systemConfigService.deleteConfig(id);
 
-            // 记录日志
-            operationLogService.log(operator, "DELETE", "SYSTEM_CONFIG",
-                    config.getConfigKey(), ipAddress,
-                    "删除配置: " + config.getConfigName(), "SUCCESS");
-
             return ResponseEntity.ok(Map.of("success", true, "message", "删除成功"));
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of("success", false, "message", "删除失败: " + e.getMessage()));
@@ -142,6 +133,7 @@ public class AdminSystemConfigController {
      * 初始化默认配置
      */
     @PostMapping("/configs/init")
+    @OperationLog(operationType = "CREATE", resource = "SYSTEM_CONFIG", detail = "初始化默认配置")
     public ResponseEntity<Map<String, Object>> initDefaultConfigs() {
         try {
             systemConfigService.initDefaultConfigs();
@@ -169,7 +161,7 @@ public class AdminSystemConfigController {
         Sort sort = Sort.by(Sort.Direction.DESC, "operateTime");
         PageRequest pageRequest = PageRequest.of(page, size, sort);
 
-        Page<OperationLog> logs;
+        Page<com.homestay3.homestaybackend.entity.OperationLog> logs;
         if (operator == null && operationType == null && resource == null && startTime == null && endTime == null) {
             logs = operationLogService.getLogs(pageRequest);
         } else {
@@ -193,7 +185,7 @@ public class AdminSystemConfigController {
      */
     @GetMapping("/logs/recent")
     public ResponseEntity<Map<String, Object>> getRecentLogs(@RequestParam(defaultValue = "50") int limit) {
-        Page<OperationLog> logs = operationLogService.getRecentLogs(PageRequest.of(0, limit));
+        Page<com.homestay3.homestaybackend.entity.OperationLog> logs = operationLogService.getRecentLogs(PageRequest.of(0, limit));
         return ResponseEntity.ok(Map.of("success", true, "data", logs.getContent()));
     }
 }
