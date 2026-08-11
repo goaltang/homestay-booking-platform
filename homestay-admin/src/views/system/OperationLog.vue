@@ -108,7 +108,7 @@ const tableData = ref<OperationLog[]>([]);
 const loading = ref(false);
 const pageTotal = ref(0);
 
-const query = reactive<LogQueryParams & { dateRange?: string[] }>({
+const query = reactive<LogQueryParams & { pageIndex: number; pageSize: number; dateRange?: string[] }>({
   pageIndex: 1,
   pageSize: 20,
   operator: '',

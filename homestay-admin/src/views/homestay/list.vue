@@ -149,11 +149,11 @@
                         {{ currentDetailItem.description || '暂无描述' }}
                     </el-descriptions-item>
                     <!-- 房东信息 -->
-                    <el-descriptions-item label="房东姓名" v-if="currentDetailItem.landlord">
-                        {{ currentDetailItem.landlord.name || 'N/A' }}
+                    <el-descriptions-item label="房东姓名" v-if="currentDetailItem.ownerName">
+                        {{ currentDetailItem.ownerName || 'N/A' }}
                     </el-descriptions-item>
-                    <el-descriptions-item label="房东手机" v-if="currentDetailItem.landlord">
-                        {{ currentDetailItem.landlord.phone || 'N/A' }}
+                    <el-descriptions-item label="房东手机" v-if="currentDetailItem.ownerPhone">
+                        {{ currentDetailItem.ownerPhone || 'N/A' }}
                     </el-descriptions-item>
                 </el-descriptions>
 
@@ -305,7 +305,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Document, ArrowRight, Plus, Warning, ArrowDown } from '@element-plus/icons-vue'
+import { ArrowRight, Plus, Warning, ArrowDown } from '@element-plus/icons-vue'
 import {
     getHomestayList,
     deleteHomestay,

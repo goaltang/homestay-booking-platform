@@ -397,7 +397,7 @@ onMounted(() => {
 }
 
 .upload-placeholder:hover {
-  border-color: #409eff;
+  border-color: var(--el-color-primary);
 }
 
 .gradient-preview {

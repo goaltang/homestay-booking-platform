@@ -992,7 +992,7 @@ onMounted(() => {
 
                 &.unread {
                     background-color: #f0f9ff;
-                    border-left: 4px solid #409eff;
+                    border-left: 4px solid var(--el-color-primary);
 
                     .notification-title {
                         font-weight: 600;
@@ -1007,7 +1007,7 @@ onMounted(() => {
                         font-size: 24px;
 
                         &.icon-primary {
-                            color: #409eff;
+                            color: var(--el-color-primary);
                         }
 
                         &.icon-success {

@@ -304,12 +304,7 @@ const handleAddClean = () => {
   dateRange.value = null
 }
 
-// 覆盖 handleEdit，同步日期范围
-const _rawEdit = (row: any) => {
-  // useCrud 的 handleEdit 会把整行赋给 form
-  // 但日期范围需要单独处理
-}
-
+// 覆盖 handleEdit，同步日期范围（编辑逻辑见 handleEditWithDate）
 const handleEditWithDate = (row: any) => {
   // 手动处理编辑
   editMode.value = true

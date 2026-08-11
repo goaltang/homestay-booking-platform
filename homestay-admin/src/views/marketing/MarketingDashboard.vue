@@ -104,7 +104,7 @@
               <span class="bearer-name">平台承担</span>
               <el-progress
                 :percentage="calculatePercent(statistics.platformDiscount, statistics.totalDiscount)"
-                color="#409eff"
+                color="#6366f1"
               />
               <span class="bearer-amount">¥{{ formatAmount(statistics.platformDiscount) }}</span>
             </div>
@@ -322,7 +322,7 @@ onMounted(loadStatistics);
 .stat-value {
   font-size: 28px;
   font-weight: bold;
-  color: #409eff;
+  color: var(--el-color-primary);
   text-align: center;
 }
 .stat-label {

@@ -100,7 +100,7 @@ const tableData = ref<LoginLog[]>([]);
 const loading = ref(false);
 const pageTotal = ref(0);
 
-const query = reactive<LoginLogQueryParams & { dateRange?: string[] }>({
+const query = reactive<LoginLogQueryParams & { pageIndex: number; pageSize: number; dateRange?: string[] }>({
   pageIndex: 1,
   pageSize: 20,
   username: '',

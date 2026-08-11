@@ -382,7 +382,7 @@ onUnmounted(() => {
             }
 
             .icon-1 {
-                background-color: #409EFF;
+                background-color: var(--el-color-primary);
             }
 
             .icon-2 {

@@ -3,6 +3,22 @@
  */
 import type { Homestay } from "@/types";
 
+// 订单状态常量（后端状态码与前端展示码一致，此处统一声明避免魔法字符串）
+export const ORDER_STATUS = {
+  BACKEND: {
+    PENDING: "PENDING",
+    PAID: "PAID",
+    CANCELLED: "CANCELLED",
+    COMPLETED: "COMPLETED",
+  },
+  FRONTEND: {
+    PENDING: "PENDING",
+    PAID: "PAID",
+    CANCELLED: "CANCELLED",
+    COMPLETED: "COMPLETED",
+  },
+} as const;
+
 // 分页参数转换 - 前端从1开始，后端也从1开始，后端控制器会自行处理
 export function adaptPageParams(params: any) {
   const adaptedParams = { ...params };

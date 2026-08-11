@@ -89,7 +89,12 @@ export interface User {
 // 房源搜索参数
 export interface HomestaySearchParams extends PageParams {
   name?: string;
+  title?: string;
   status?: string;
+  type?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  landlordName?: string;
   sort?: string;
 }
 

@@ -262,7 +262,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
     Refresh, Document, Check, Close, Timer, Download
 } from '@element-plus/icons-vue'
@@ -678,7 +678,7 @@ const initTrendChart = () => {
                 type: 'line',
                 data: trendData.value.totalReviews,
                 smooth: true,
-                itemStyle: { color: '#409EFF' }
+                itemStyle: { color: '#6366f1' }
             },
             {
                 name: '批准数',
@@ -755,6 +755,29 @@ const initPieChart = () => {
 }
 
 // 事件处理
+// 查看演示数据说明
+const checkDataSource = () => {
+    ElMessageBox.alert(
+        '数据加载失败或暂无真实数据时，页面展示演示数据（带"演示数据"标签）。点击"刷新数据"可重新拉取真实统计。',
+        '演示数据说明',
+        { confirmButtonText: '知道了', type: 'info' }
+    )
+}
+
+// 查看审核员详情
+const viewReviewerDetails = (reviewerName: string) => {
+    const reviewer = reviewerStats.value.find((r: any) => r.reviewerName === reviewerName)
+    if (!reviewer) {
+        ElMessage.warning('未找到该审核员的统计数据')
+        return
+    }
+    ElMessageBox.alert(
+        `审核员：${reviewer.reviewerName}\n审核总数：${reviewer.total || 0}\n通过：${reviewer.approved || 0}\n拒绝：${reviewer.rejected || 0}\n平均效率：${reviewer.efficiency ?? '-'}`,
+        '审核员详情',
+        { confirmButtonText: '关闭' }
+    )
+}
+
 const refreshData = async () => {
     await loadStatistics()
     await nextTick()
@@ -1169,7 +1192,7 @@ onUnmounted(() => {
             .efficiency-value {
                 font-size: 16px;
                 font-weight: bold;
-                color: #409eff;
+                color: var(--el-color-primary);
             }
         }
     }

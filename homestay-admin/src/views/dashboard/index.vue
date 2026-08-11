@@ -32,7 +32,7 @@
                     </div>
                     <div class="stat-card__label">{{ stat.label }}</div>
                 </div>
-                <div class="stat-card__trend" :class="{ 'trend-up': stat.trend > 0, 'trend-down': stat.trend < 0 }">
+                <div v-if="stat.trend !== null" class="stat-card__trend" :class="{ 'trend-up': stat.trend > 0, 'trend-down': stat.trend < 0 }">
                     <el-icon v-if="stat.trend !== 0">
                         <component :is="stat.trend > 0 ? 'ArrowUp' : 'ArrowDown'" />
                     </el-icon>
@@ -42,7 +42,7 @@
         </div>
 
         <!-- 图表区域 -->
-        <div class="charts-grid" :class="{ 'animate-in': mounted }">
+        <div v-loading="loading" class="charts-grid" :class="{ 'animate-in': mounted }">
             <div class="chart-card chart-card--area">
                 <div class="chart-card__header">
                     <span class="chart-card__title">订单趋势</span>
@@ -70,12 +70,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, markRaw } from 'vue'
 import { User, House, ShoppingCart } from '@element-plus/icons-vue'
-import * as echarts from 'echarts'
+import * as echarts from 'echarts/core'
+import { LineChart, PieChart } from 'echarts/charts'
+import {
+    GridComponent,
+    TooltipComponent,
+    LegendComponent
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import LinearGradient from 'zrender/lib/graphic/LinearGradient'
 import { codeToText } from 'element-china-area-data'
 import { getStatistics, getOrderTrend, getHomestayDistribution } from '@/api/dashboard'
 import { ElMessage } from 'element-plus'
+
+echarts.use([LineChart, PieChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
 const username = ref(localStorage.getItem('homestay_admin_username') || localStorage.getItem('username') || '管理员')
 const mounted = ref(false)
@@ -85,6 +95,17 @@ const distributionChartRef = ref<HTMLElement | null>(null)
 let orderChart: echarts.ECharts | null = null
 let distributionChart: echarts.ECharts | null = null
 let animationFrames: number[] = []
+let resizeTimer: ReturnType<typeof setTimeout> | null = null
+const loading = ref(false)
+
+// 图表 resize（防抖，避免频繁触发）
+const handleResize = () => {
+    if (resizeTimer) clearTimeout(resizeTimer)
+    resizeTimer = setTimeout(() => {
+        orderChart?.resize()
+        distributionChart?.resize()
+    }, 200)
+}
 
 // 问候语
 const greeting = computed(() => {
@@ -115,14 +136,14 @@ interface StatItem {
     label: string
     icon: typeof User
     color: string
-    trend: number
+    trend: number | null
 }
 
 const statCards = reactive<StatItem[]>([
-    { key: 'homestays', value: 0, label: '房源总数', icon: House, color: 'blue', trend: 0 },
-    { key: 'orders', value: 0, label: '订单总数', icon: ShoppingCart, color: 'purple', trend: 0 },
-    { key: 'users', value: 0, label: '用户总数', icon: User, color: 'orange', trend: 0 },
-    { key: 'todayOrders', value: 0, label: '今日订单', icon: ShoppingCart, color: 'green', trend: 0 },
+    { key: 'homestays', value: 0, label: '房源总数', icon: markRaw(House), color: 'blue', trend: null },
+    { key: 'orders', value: 0, label: '订单总数', icon: markRaw(ShoppingCart), color: 'purple', trend: null },
+    { key: 'users', value: 0, label: '用户总数', icon: markRaw(User), color: 'orange', trend: null },
+    { key: 'todayOrders', value: 0, label: '今日订单', icon: markRaw(ShoppingCart), color: 'green', trend: null },
 ])
 
 const statValueRefs = ref<(HTMLElement | null)[]>([])
@@ -196,7 +217,7 @@ const initOrderChart = (dates: string[], data: number[]) => {
                 lineStyle: { color: '#6366f1', width: 2 },
                 itemStyle: { color: '#6366f1' },
                 areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    color: new LinearGradient(0, 0, 0, 1, [
                         { offset: 0, color: 'rgba(99, 102, 241, 0.4)' },
                         { offset: 1, color: 'rgba(99, 102, 241, 0.02)' }
                     ])
@@ -216,6 +237,10 @@ const initDistributionChart = (provinces: string[], counts: number[]) => {
     const total = counts.reduce((a, b) => a + b, 0)
     // 把 code 转成中文名（codeToText 用的是 2 位省级码，后端返回的是 6 位码）
     const provinceNames = provinces.map(p => codeToText[p.slice(0, 2)] || p)
+
+    // 12 色色板，避免省份多时相邻同色
+    const palette = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e',
+        '#f97316', '#eab308', '#22c55e', '#14b8a6', '#0ea5e9', '#64748b']
 
     distributionChart.setOption({
         tooltip: {
@@ -254,13 +279,16 @@ const initDistributionChart = (provinces: string[], counts: number[]) => {
                     }
                 },
                 labelLine: { show: false },
-                data: provinceNames.map((p, i) => ({
-                    name: p,
-                    value: counts[i],
-                    itemStyle: {
-                        color: ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308'][i % 8]
-                    }
-                }))
+                // 空数据时显示占位项，避免白板
+                data: provinceNames.length === 0
+                    ? [{ name: '暂无数据', value: 1, itemStyle: { color: '#e2e8f0' } }]
+                    : provinceNames.map((p, i) => ({
+                        name: p,
+                        value: counts[i],
+                        itemStyle: {
+                            color: palette[i % palette.length]
+                        }
+                    }))
             }
         ]
     })
@@ -268,6 +296,7 @@ const initDistributionChart = (provinces: string[], counts: number[]) => {
 
 // 获取数据
 const fetchData = async () => {
+    loading.value = true
     try {
         const [statsRes, trendRes, distRes] = await Promise.all([
             getStatistics(),
@@ -283,10 +312,22 @@ const fetchData = async () => {
             { key: 'todayOrders', value: statsRes.today?.newOrders || 0 }
         ]
 
+        // 环比昨日：昨日为 0 时无对比基数，不展示趋势
+        const calcTrend = (today: number, yesterday: number): number | null => {
+            if (yesterday === 0) return null
+            return Math.round(((today - yesterday) / yesterday) * 100)
+        }
+
+        const yesterdayStats = statsRes.yesterday || { newHomestays: 0, newOrders: 0, newUsers: 0 }
         stats.forEach((s, i) => {
             statCards[i].value = s.value
-            // 模拟趋势数据（实际项目中应该有同比数据）
-            statCards[i].trend = Math.floor(Math.random() * 20) - 5
+            statCards[i].trend = calcTrend(
+                s.value,
+                s.key === 'homestays' ? yesterdayStats.newHomestays
+                    : s.key === 'orders' ? yesterdayStats.newOrders
+                        : s.key === 'users' ? yesterdayStats.newUsers
+                            : yesterdayStats.newOrders
+            )
         })
 
         // 入场动画
@@ -301,6 +342,8 @@ const fetchData = async () => {
     } catch (error) {
         console.error('获取数据失败:', error)
         ElMessage.error('获取数据失败，请稍后重试')
+    } finally {
+        loading.value = false
     }
 }
 
@@ -317,26 +360,21 @@ onMounted(() => {
     mounted.value = true
     fetchData()
 
-    window.addEventListener('resize', () => {
-        orderChart?.resize()
-        distributionChart?.resize()
-    })
+    window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
     animationFrames.forEach(id => cancelAnimationFrame(id))
+    if (resizeTimer) clearTimeout(resizeTimer)
     orderChart?.dispose()
     distributionChart?.dispose()
-    window.removeEventListener('resize', () => {
-        orderChart?.resize()
-        distributionChart?.resize()
-    })
+    window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <style scoped lang="scss">
-// 直接使用颜色值（scoped 样式中 :root 变量不生效）
-$primary: #6366f1;
+// 品牌主色引用全局 CSS 变量，与 Element Plus 主题保持单一来源
+$primary: var(--el-color-primary);
 $blue: #3b82f6;
 $purple: #8b5cf6;
 $orange: #f97316;

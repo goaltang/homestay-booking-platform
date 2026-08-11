@@ -23,6 +23,11 @@ export function getStatistics() {
       newOrders: number;
       newUsers: number;
     };
+    yesterday: {
+      newHomestays: number;
+      newOrders: number;
+      newUsers: number;
+    };
   }>;
 }
 

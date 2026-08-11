@@ -156,7 +156,7 @@
             <div class="batch-operation-bar" v-if="selectedRows.length > 0">
                 <div class="batch-info">
                     <el-icon class="info-icon"><InfoFilled /></el-icon>
-                    <span>已选择 <strong style="color: #409eff; font-size: 16px;">{{ selectedRows.length }}</strong> 项订单可以进行操作</span>
+                    <span>已选择 <strong style="color: #6366f1; font-size: 16px;">{{ selectedRows.length }}</strong> 项订单可以进行操作</span>
                 </div>
                 <div class="batch-buttons">
                     <el-button size="default" type="warning" plain @click="handleBatchRefund">批量发起退款</el-button>
@@ -487,7 +487,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { format } from 'date-fns'
-import { Search, Refresh, Download, Clock, Money, Warning, WarningFilled, House, ArrowDown } from '@element-plus/icons-vue'
+import { Search, Refresh, Download, Clock, Money, Warning, WarningFilled, House, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import {
     getAdminOrders,
     updateOrderStatus,
@@ -591,7 +591,7 @@ const disputeForm = reactive({
     orderNumber: '',
     refundReason: '',
     disputeReason: '',
-    resolution: 'APPROVED',
+    resolution: 'APPROVED' as 'APPROVED' | 'REJECTED',
     note: ''
 })
 
@@ -845,6 +845,12 @@ const handleSortChange = ({ prop, order }: { prop: string; order: string | null 
 const handleSearch = () => {
     currentPage.value = 1
     fetchData()
+}
+
+// 高级搜索展开状态
+const isSearchExpanded = ref(false)
+const toggleSearch = () => {
+    isSearchExpanded.value = !isSearchExpanded.value
 }
 
 // 重置搜索
@@ -1583,7 +1589,7 @@ onMounted(() => {
 
                     &.primary {
                         background-color: #ecf5ff;
-                        color: #409eff;
+                        color: var(--el-color-primary);
                     }
                 }
 
@@ -1609,7 +1615,7 @@ onMounted(() => {
         }
 
         .total-card {
-            border-left: 3px solid #409eff;
+            border-left: 3px solid var(--el-color-primary);
         }
     }
 
@@ -1674,7 +1680,7 @@ onMounted(() => {
 
         .nights {
             font-size: 12px;
-            color: #409eff;
+            color: var(--el-color-primary);
             font-weight: 500;
         }
     }

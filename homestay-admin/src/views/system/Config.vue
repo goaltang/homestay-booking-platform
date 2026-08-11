@@ -315,6 +315,6 @@ getListWithFilter()
 .empty-tips { margin-top: 10px; text-align: center; }
 .form-tip { color: #999; font-size: 12px; margin-top: 5px; }
 .card-header { display: flex; justify-content: space-between; align-items: center; }
-.config-key { font-family: monospace; color: #409eff; }
+.config-key { font-family: monospace; color: var(--el-color-primary); }
 .config-value { font-family: monospace; }
 </style>

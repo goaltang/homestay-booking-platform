@@ -11,7 +11,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    Countup: typeof import('./src/components/countup.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
@@ -70,15 +69,9 @@ declare module 'vue' {
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElUpload: typeof import('element-plus/es')['ElUpload']
-    Header: typeof import('./src/components/header.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    Sidebar: typeof import('./src/components/sidebar.vue')['default']
-    TableCustom: typeof import('./src/components/table-custom.vue')['default']
-    TableDetail: typeof import('./src/components/table-detail.vue')['default']
-    TableEdit: typeof import('./src/components/table-edit.vue')['default']
     TableSearch: typeof import('./src/components/table-search.vue')['default']
-    Tabs: typeof import('./src/components/tabs.vue')['default']
   }
   export interface GlobalDirectives {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

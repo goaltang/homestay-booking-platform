@@ -112,6 +112,12 @@ export const menuData: Menus[] = [
     icon: "ChatDotSquare",
   },
   {
+    id: "statistics",
+    title: "统计分析",
+    index: "/statistics",
+    icon: "DataAnalysis",
+  },
+  {
     id: "marketing",
     title: "营销管理",
     index: "/marketing",

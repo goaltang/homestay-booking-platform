@@ -578,7 +578,7 @@ onMounted(getList)
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
-.stat-primary { background: linear-gradient(135deg, #409eff, #66b1ff); }
+.stat-primary { background: linear-gradient(135deg, var(--el-color-primary), #66b1ff); }
 .stat-danger  { background: linear-gradient(135deg, #f56c6c, #f89898); }
 .stat-warning { background: linear-gradient(135deg, #e6a23c, #eebe77); }
 .stat-success { background: linear-gradient(135deg, #67c23a, #95d475); }

@@ -1,9 +1,17 @@
 <template>
   <div class="common-layout">
     <el-container>
-      <el-aside width="200px">
+      <el-aside :width="isCollapse ? '64px' : '200px'">
         <div class="sidebar">
-          <el-menu :default-active="route.path" class="el-menu-vertical" :collapse="isCollapse" router>
+          <el-menu
+            :default-active="route.path"
+            class="el-menu-vertical"
+            :collapse="isCollapse"
+            router
+            background-color="#304156"
+            text-color="#bfcbd9"
+            active-text-color="#6366f1"
+          >
             <template v-for="item in menuData" :key="item.id">
               <el-sub-menu v-if="item.children" :index="item.index">
                 <template #title>
@@ -45,8 +53,13 @@
                 </el-icon>
               </el-button>
               <el-breadcrumb separator="/">
-                <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-                <el-breadcrumb-item>{{ route.meta?.title }}</el-breadcrumb-item>
+                <el-breadcrumb-item
+                  v-for="(item, index) in breadcrumbItems"
+                  :key="index"
+                  :to="index < breadcrumbItems.length - 1 ? { path: '/' } : undefined"
+                >
+                  {{ item }}
+                </el-breadcrumb-item>
               </el-breadcrumb>
             </div>
             <div class="right">
@@ -85,17 +98,45 @@ import { Fold, Expand, CaretBottom } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { menuData } from '@/config/menu'
+import type { Menus } from '@/types/menu'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-const isCollapse = ref(false)
+
+// 折叠状态持久化，刷新后保持
+const COLLAPSE_KEY = 'admin_sidebar_collapsed'
+const isCollapse = ref(localStorage.getItem(COLLAPSE_KEY) === '1')
 
 const username = computed(() => userStore.username || '管理员')
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
+  localStorage.setItem(COLLAPSE_KEY, isCollapse.value ? '1' : '0')
 }
+
+// 多级面包屑：从菜单树反查当前路由的层级链（首页 / 一级 / 二级 / 三级）
+const breadcrumbItems = computed(() => {
+  const chain: string[] = []
+  const find = (items: Menus[], path: string): boolean => {
+    for (const item of items) {
+      if (item.index === path) {
+        chain.push(item.title)
+        return true
+      }
+      if (item.children) {
+        chain.push(item.title)
+        if (find(item.children, path)) return true
+        chain.pop()
+      }
+    }
+    return false
+  }
+  if (find(menuData, route.path)) return chain
+  // 兜底：未匹配到菜单的路由（如编辑页）显示自身标题
+  const title = route.meta?.title as string | undefined
+  return title ? ['首页', title] : ['首页']
+})
 
 const handleLogout = () => {
   ElMessageBox.confirm('确定要退出登录吗？', '提示', {
@@ -117,10 +158,29 @@ const handleLogout = () => {
 .sidebar {
   height: 100vh;
   background-color: #304156;
+  transition: width 0.3s ease;
 
   .el-menu {
     height: 100%;
     border-right: none;
+    // 深色侧栏的 hover/激活配色（覆盖 EP 默认浅色变量）
+    --el-menu-hover-bg-color: #263445;
+    --el-menu-active-color: #6366f1;
+  }
+
+  // 激活菜单项：靛蓝半透明底 + 左侧高亮条
+  :deep(.el-menu-item.is-active) {
+    background-color: rgba(99, 102, 241, 0.18);
+  }
+
+  // 折叠后仅显示图标，垂直居中
+  :deep(.el-menu--collapse) {
+    .el-menu-item,
+    .el-sub-menu__title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 }
 

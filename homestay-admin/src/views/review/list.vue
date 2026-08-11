@@ -298,7 +298,7 @@ const handleBatchDelete = async () => {
 
         .batch-info {
             font-size: 14px;
-            color: #409EFF;
+            color: var(--el-color-primary);
             font-weight: 500;
             margin-right: 10px;
         }

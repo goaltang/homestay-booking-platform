@@ -708,7 +708,7 @@ onMounted(fetchData);
 }
 .tier-config-section {
   background: #f0f9ff;
-  border: 1px dashed #409eff;
+  border: 1px dashed var(--el-color-primary);
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 12px;

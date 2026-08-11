@@ -23,7 +23,7 @@
 
             <div class="remember-forgot">
               <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
-              <el-button type="text" class="forgot-link" @click="showResetDialog = true">忘记密码？</el-button>
+              <span class="forgot-tip">忘记密码请联系系统管理员</span>
             </div>
 
             <el-button type="primary" class="submit-btn" :loading="loading" @click="handleLogin">
@@ -33,28 +33,6 @@
         </el-card>
       </div>
     </div>
-
-    <!-- 重置密码对话框 -->
-    <el-dialog v-model="showResetDialog" title="重置管理员密码" width="400px">
-      <el-form ref="resetFormRef" :model="resetForm" :rules="resetRules" label-position="top">
-        <el-form-item label="安全码" prop="securityCode">
-          <el-input v-model="resetForm.securityCode" placeholder="请输入安全码" />
-          <div class="security-tip">如忘记安全码，请联系系统管理员</div>
-        </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="resetForm.newPassword" type="password" placeholder="请输入新密码" show-password />
-        </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="resetForm.confirmPassword" type="password" placeholder="请确认新密码" show-password />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showResetDialog = false">取消</el-button>
-          <el-button type="primary" :loading="resetLoading" @click="handleResetPassword">确认重置</el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -69,24 +47,12 @@ import { login } from '@/api/auth';
 const router = useRouter();
 const userStore = useUserStore();
 const loginFormRef = ref<FormInstance>();
-const resetFormRef = ref<FormInstance>();
 const loading = ref(false);
-const resetLoading = ref(false);
-const showResetDialog = ref(false);
-
-// 安全码，这里设置为固定值，实际应用中应该存储在服务器
-const SECURITY_CODE = "admin123";
 
 const loginForm = reactive({
   username: "",
   password: "",
   remember: false
-});
-
-const resetForm = reactive({
-  securityCode: "",
-  newPassword: "",
-  confirmPassword: ""
 });
 
 const rules = {
@@ -98,29 +64,6 @@ const rules = {
     { required: true, message: "请输入密码", trigger: "blur" },
     { min: 6, max: 20, message: "长度在 6 到 20 个字符", trigger: "blur" },
   ],
-};
-
-const resetRules = {
-  securityCode: [
-    { required: true, message: "请输入安全码", trigger: "blur" }
-  ],
-  newPassword: [
-    { required: true, message: "请输入新密码", trigger: "blur" },
-    { min: 6, max: 20, message: "长度在 6 到 20 个字符", trigger: "blur" }
-  ],
-  confirmPassword: [
-    { required: true, message: "请确认新密码", trigger: "blur" },
-    {
-      validator: (_rule: any, value: string, callback: (error?: Error) => void) => {
-        if (value !== resetForm.newPassword) {
-          callback(new Error("两次输入的密码不一致"));
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur"
-    }
-  ]
 };
 
 const handleLogin = async () => {
@@ -172,41 +115,6 @@ const handleLogin = async () => {
     ElMessage.error(errorMessage);
   } finally {
     loading.value = false;
-  }
-};
-
-// 处理重置密码
-const handleResetPassword = async () => {
-  if (!resetFormRef.value) return;
-
-  try {
-    await resetFormRef.value.validate();
-    resetLoading.value = true;
-
-    // 验证安全码
-    if (resetForm.securityCode !== SECURITY_CODE) {
-      ElMessage.error("安全码错误");
-      return;
-    }
-
-    // 模拟API调用延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 在实际应用中，这里会调用API更新密码
-    // 此处仅做前端模拟：保存新密码到localStorage以便模拟登录使用
-    localStorage.setItem("admin_password", resetForm.newPassword);
-
-    ElMessage.success("密码重置成功，请使用新密码登录");
-    showResetDialog.value = false;
-
-    // 填充用户名为admin，方便用户直接登录
-    loginForm.username = "admin";
-    loginForm.password = "";
-  } catch (error) {
-    console.error("重置密码错误:", error);
-    ElMessage.error("密码重置失败，请重试");
-  } finally {
-    resetLoading.value = false;
   }
 };
 
@@ -282,7 +190,7 @@ initRememberedUsername();
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
-  background: linear-gradient(45deg, #1E88E5, #64B5F6);
+  background: linear-gradient(45deg, #6366f1, #9294f5);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -315,15 +223,9 @@ initRememberedUsername();
   margin-bottom: 24px;
 }
 
-.forgot-link {
-  color: #1E88E5;
-  font-size: 14px;
-  text-decoration: none;
-  transition: opacity 0.3s;
-}
-
-.forgot-link:hover {
-  opacity: 0.8;
+.forgot-tip {
+  color: #909399;
+  font-size: 13px;
 }
 
 .submit-btn {
@@ -333,7 +235,7 @@ initRememberedUsername();
   font-size: 16px;
   font-weight: 500;
   letter-spacing: 1px;
-  background: linear-gradient(45deg, #1E88E5, #64B5F6);
+  background: linear-gradient(45deg, #6366f1, #9294f5);
   border: none;
   border-radius: 8px;
   transition: all 0.3s ease;
@@ -341,13 +243,7 @@ initRememberedUsername();
 
 .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(30, 136, 229, 0.3);
-}
-
-.security-tip {
-  color: #909399;
-  font-size: 12px;
-  margin-top: 5px;
+  box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
 }
 
 :deep(.el-form-item__label) {
@@ -364,11 +260,11 @@ initRememberedUsername();
 }
 
 :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 }
 
 :deep(.el-input__prefix) {
   margin-right: 8px;
-  color: #1E88E5;
+  color: #6366f1;
 }
 </style>

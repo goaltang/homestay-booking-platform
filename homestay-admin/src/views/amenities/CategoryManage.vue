@@ -207,7 +207,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Delete, Edit, Search, Plus, Refresh, Lock, InfoFilled, PictureFilled, Link } from '@element-plus/icons-vue';
+import { Delete, Edit, Search, Plus, Refresh, Lock, InfoFilled, PictureFilled } from '@element-plus/icons-vue';
 import { getCategoriesApi, createCategoryApi, updateCategoryApi, deleteCategoryApi, batchDeleteCategoriesApi } from '@/api/amenities';
 
 // 数据类型定义
@@ -585,7 +585,7 @@ const handleBatchDelete = () => {
     justify-content: center;
     align-items: center;
     height: 40px;
-    color: #409EFF;
+    color: var(--el-color-primary);
 }
 
 .icon-preview-large {
@@ -594,7 +594,7 @@ const handleBatchDelete = () => {
     align-items: center;
     height: 100%;
     font-size: 30px;
-    color: #409EFF;
+    color: var(--el-color-primary);
     border: 1px dashed #d9d9d9;
     border-radius: 4px;
     padding: 10px 0;
@@ -701,8 +701,8 @@ const handleBatchDelete = () => {
 
 .icon-item.is-selected {
     background-color: #ecf5ff;
-    border-color: #409EFF;
-    color: #409EFF;
+    border-color: var(--el-color-primary);
+    color: var(--el-color-primary);
 }
 
 .icon-item .el-icon {

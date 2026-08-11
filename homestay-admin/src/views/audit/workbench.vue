@@ -2456,7 +2456,7 @@ onUnmounted(() => {
                     &:hover {
                         transform: translateY(-2px);
                         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-                        border-color: #409eff;
+                        border-color: var(--el-color-primary);
                     }
 
                     &.selected {
@@ -2615,7 +2615,7 @@ onUnmounted(() => {
 
                 .el-icon {
                     margin-right: 8px;
-                    color: #409eff;
+                    color: var(--el-color-primary);
                 }
 
                 .el-tag {
@@ -2635,7 +2635,7 @@ onUnmounted(() => {
                     width: 100%;
                     height: 160px;
                     border-radius: 8px;
-                    border: 2px solid #409eff;
+                    border: 2px solid var(--el-color-primary);
                     object-fit: cover;
                 }
 
@@ -2745,7 +2745,7 @@ onUnmounted(() => {
                     transition: all 0.3s ease;
 
                     &:hover {
-                        border-color: #409eff;
+                        border-color: var(--el-color-primary);
                     }
 
                     &.is-checked {
@@ -2812,7 +2812,7 @@ onUnmounted(() => {
                     }
 
                     .reviewer-info {
-                        border-left-color: #409eff;
+                        border-left-color: var(--el-color-primary);
                     }
 
                     .reason-info {
@@ -2871,13 +2871,13 @@ onUnmounted(() => {
         }
 
         .current-item {
-            color: #409eff;
+            color: var(--el-color-primary);
             font-size: 13px;
             margin-top: 8px;
             padding: 8px 12px;
             background: #f0f9ff;
             border-radius: 4px;
-            border-left: 3px solid #409eff;
+            border-left: 3px solid var(--el-color-primary);
         }
     }
 
@@ -2895,7 +2895,7 @@ onUnmounted(() => {
                 transition: all 0.3s ease;
 
                 &:hover {
-                    border-color: #409eff;
+                    border-color: var(--el-color-primary);
                 }
 
                 &.is-checked {
@@ -2934,7 +2934,7 @@ onUnmounted(() => {
 
     .el-card {
         &.selected {
-            border: 2px solid #409eff;
+            border: 2px solid var(--el-color-primary);
             box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
         }
     }

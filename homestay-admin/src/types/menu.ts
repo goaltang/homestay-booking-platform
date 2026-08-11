@@ -3,7 +3,6 @@ export interface Menus {
   title: string;
   index: string;
   icon?: string;
-  permiss?: string;
   children?: MenusChildren[];
 }
 
@@ -12,6 +11,5 @@ export interface MenusChildren {
   pid: string;
   index: string;
   title: string;
-  permiss?: string;
   children?: MenusChildren[];
 }

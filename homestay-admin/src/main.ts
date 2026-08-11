@@ -5,31 +5,10 @@ import "element-plus/dist/index.css";
 import App from "./App.vue";
 import router from "./router";
 import { createPinia } from "pinia";
-import { useUserStore } from "@/stores/user";
 import "./style.css";
 
 const app = createApp(App);
 const pinia = createPinia();
-
-// 权限指令 — 基于用户角色控制元素显示
-app.directive("permiss", {
-  mounted(el, binding) {
-    const userStore = useUserStore();
-    const requiredRoles = binding.value;
-
-    if (!requiredRoles) return;
-
-    const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-    const userRole = userStore.userInfo?.role || '';
-    const hasPermission = roles.some(
-      (role: string) => userRole.toUpperCase() === role.toUpperCase()
-    );
-
-    if (!hasPermission) {
-      el.parentNode?.removeChild(el);
-    }
-  },
-});
 
 // 全局错误处理
 app.config.errorHandler = (err, instance, info) => {
