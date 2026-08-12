@@ -47,7 +47,8 @@ class HomestaySearchServiceEsIntegrationTest {
 
     @Container
     static ElasticsearchContainer elasticsearch = new ElasticsearchContainer(
-            DockerImageName.parse("homestay-es-ik:test"))
+            DockerImageName.parse("homestay-es-ik:test")
+                    .asCompatibleSubstituteFor("docker.elastic.co/elasticsearch/elasticsearch"))
             .withEnv("xpack.security.enabled", "false")
             .withEnv("discovery.type", "single-node");
 
