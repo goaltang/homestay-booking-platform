@@ -10,6 +10,7 @@ import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.repository.ReviewRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,27 +35,37 @@ public class HomeService {
     private final BannerRepository bannerRepository;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final @Qualifier("taskExecutor") java.util.concurrent.Executor taskExecutor;
 
     @Cacheable("homeStats")
     public HomeStatsDTO getStats() {
-        Long homestayCount = homestayRepository.countByStatus(HomestayStatus.ACTIVE);
-        Long cityCount = homestayRepository.countDistinctCityTextByStatus(HomestayStatus.ACTIVE);
+        // 近30天订单数查询的时间范围
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        LocalDateTime now = LocalDateTime.now();
 
-        Long totalReviews = reviewRepository.countPublicReviews();
-        Long positiveReviews = reviewRepository.countPublicPositiveReviews(4);
+        // 5 个相互独立的只读 count 查询并行执行
+        CompletableFuture<Long> homestayCountF = CompletableFuture.supplyAsync(() -> homestayRepository.countByStatus(HomestayStatus.ACTIVE), taskExecutor);
+        CompletableFuture<Long> cityCountF = CompletableFuture.supplyAsync(() -> homestayRepository.countDistinctCityTextByStatus(HomestayStatus.ACTIVE), taskExecutor);
+        CompletableFuture<Long> totalReviewsF = CompletableFuture.supplyAsync(() -> reviewRepository.countPublicReviews(), taskExecutor);
+        CompletableFuture<Long> positiveReviewsF = CompletableFuture.supplyAsync(() -> reviewRepository.countPublicPositiveReviews(4), taskExecutor);
+        CompletableFuture<Long> thirtyDaysOrdersF = CompletableFuture.supplyAsync(() -> orderRepository.countByCreatedAtBetween(thirtyDaysAgo, now), taskExecutor);
+
+        // 汇合：任一子任务失败会以 CompletionException 包装抛出，与串行抛异常语义一致
+        CompletableFuture.allOf(homestayCountF, cityCountF, totalReviewsF, positiveReviewsF, thirtyDaysOrdersF).join();
+
+        Long homestayCount = homestayCountF.join();
+        Long cityCount = cityCountF.join();
+        Long totalReviews = totalReviewsF.join();
+        Long positiveReviews = positiveReviewsF.join();
+        Long recentOrders = thirtyDaysOrdersF.join();
 
         Double positiveRate = 0.0;
         if (totalReviews != null && totalReviews > 0 && positiveReviews != null) {
             positiveRate = Math.round((positiveReviews.doubleValue() / totalReviews.doubleValue()) * 1000) / 10.0;
         }
 
-        // 近30天订单数
-        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        LocalDateTime now = LocalDateTime.now();
-        Long recentOrders = orderRepository.countByCreatedAtBetween(thirtyDaysAgo, now);
-
-        // 今日可预订房源数（简化：统计活跃房源数，实际应考虑房态）
-        Long availableToday = homestayRepository.countByStatus(HomestayStatus.ACTIVE);
+        // 今日可预订房源数（简化：统计活跃房源数，实际应考虑房态）—— 与房源总数同口径，复用并行结果
+        Long availableToday = homestayCount;
 
         return HomeStatsDTO.builder()
                 .homestayCount(homestayCount != null ? homestayCount : 0L)
