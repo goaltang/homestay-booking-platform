@@ -9,9 +9,6 @@ import com.homestay3.homestaybackend.repository.HomestayRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
 import com.homestay3.homestaybackend.service.HomestaySearchService;
 import com.homestay3.homestaybackend.service.search.HomestayIndexingService;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +18,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.DockerClientFactory;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
@@ -32,30 +30,25 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * ES 搜索路径集成测试：验证 Elasticsearch 可用时的搜索行为。
- * 使用 Testcontainers 启动真实 ES 实例。
- * 若当前环境无 Docker，则自动跳过全部测试。
+ * 使用 Testcontainers 启动真实 ES 实例（@Container 静态字段在 Spring 上下文加载前启动，
+ * 保证 HomestayDocumentRepository 初始化时 ES 已就绪）。
+ * 当前环境无 Docker 时自动跳过（disabledWithoutDocker）。
  */
+@Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = {"elasticsearch.enabled=true", "spring.data.elasticsearch.repositories.enabled=true"})
 class HomestaySearchServiceEsIntegrationTest {
 
-    static ElasticsearchContainer elasticsearch;
-
-    static boolean isDockerAvailable() {
-        try {
-            DockerClientFactory.instance().client();
-            return true;
-        } catch (Throwable ex) {
-            return false;
-        }
-    }
+    @Container
+    static ElasticsearchContainer elasticsearch = new ElasticsearchContainer(
+            DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.5.0"))
+            .withEnv("xpack.security.enabled", "false")
+            .withEnv("discovery.type", "single-node");
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        if (elasticsearch != null && elasticsearch.isRunning()) {
-            registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
-        }
+        registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
     }
 
     @Autowired
@@ -69,23 +62,6 @@ class HomestaySearchServiceEsIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @BeforeAll
-    static void beforeAll() {
-        Assumptions.assumeTrue(isDockerAvailable(), "跳过 ES 集成测试：当前环境未安装或启动 Docker");
-        elasticsearch = new ElasticsearchContainer(
-                DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.5.0"))
-                .withEnv("xpack.security.enabled", "false")
-                .withEnv("discovery.type", "single-node");
-        elasticsearch.start();
-    }
-
-    @AfterAll
-    static void afterAll() {
-        if (elasticsearch != null && elasticsearch.isRunning()) {
-            elasticsearch.stop();
-        }
-    }
 
     @BeforeEach
     void setUp() {
