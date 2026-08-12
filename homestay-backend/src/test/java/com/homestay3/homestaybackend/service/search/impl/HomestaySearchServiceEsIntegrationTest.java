@@ -98,6 +98,7 @@ class HomestaySearchServiceEsIntegrationTest {
                 .username("testowner")
                 .email("owner@test.com")
                 .password("password")
+                .role("ROLE_HOST")
                 .build();
         owner = userRepository.save(owner);
 
@@ -144,6 +145,7 @@ class HomestaySearchServiceEsIntegrationTest {
                 .username("testowner2")
                 .email("owner2@test.com")
                 .password("password")
+                .role("ROLE_HOST")
                 .build();
         owner = userRepository.save(owner);
 
