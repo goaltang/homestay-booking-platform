@@ -10,7 +10,7 @@
 
 民宿预订平台是一个连接房客、房东和平台管理员的综合业务系统，覆盖房源发布、平台审核、在线搜索、下单支付、入住退房、评价反馈、收益统计和后台监管等完整流程。
 
-> 25 个业务模块 · 10W+ 行代码 · 223 次 commit · 持续迭代 16 个月 · 50+ 篇项目文档
+> 25 个业务模块 · 10W+ 行代码 · 267 次 commit · 持续迭代 16 个月 · 50+ 篇项目文档
 
 ## 项目背景
 
@@ -53,6 +53,18 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 - **地图找房体验**：集成高德地图，支持位置搜索、周边检索、距离计算和地图展示。
 - **支付集成**：接入支付宝沙箱支付（页面跳转支付 + 扫码支付），支持订单支付、异步回调、状态查询和退款。
 - **工程化后端**：统一响应、全局异常、权限注解、DTO 映射、缓存、数据库迁移和审计日志。
+
+### 近期工程化增强（2026-08）
+
+| 能力 | 实现方式 | 效果/意义 |
+|---|---|---|
+| 接口限流 | `@RateLimit` 注解 + AOP 切面，Redis Lua 固定窗口计数，超限返回 429，Redis 异常自动降级放行 | 保护敏感接口（支付创建、批量发券等），注解即用 |
+| LLM 调用重试 | `LlmClient` 标注 `@Retryable`（3 次、指数退避），`@EnableRetry` 开启 | AI 客服在 LLM 服务抖动时自动重试，不丢请求 |
+| 首页统计并行化 | `HomeService` 五路 `CompletableFuture` 并行 count + `allOf().join()` | 首页统计接口 P95 显著下降（压测对比见 vault） |
+| AOP 操作日志 | `@OperationLog` 注解（SpEL 动态 detail/resourceId）+ 切面异步落库 | 管理员操作全程可审计，69 处标注点 |
+| API 接口文档 | springdoc-openapi 2.2.0 自动生成，Swagger UI 开箱即用 | 启动后访问 `http://localhost:8081/swagger-ui.html` |
+| 仪表盘真实环比 | 统计接口补充昨日数据，前端计算真实环比 | 取代随机数趋势，数据可信 |
+| 管理后台构建分包 | manualChunks 拆包 + Element Plus 按需引入（unplugin） | 主 chunk 1.1MB → 35KB，白屏修复（移除 transition 包裹懒加载组件） |
 
 ### 消息架构（RabbitMQ 三场景）
 
@@ -115,6 +127,9 @@ flowchart LR
 | 在线支付 | 支付宝页面跳转或扫码支付、支付状态查询、支付成功回跳 |
 | 订单管理 | 订单列表、订单详情、取消订单、退款申请、状态跟踪 |
 | 收藏评价 | 收藏/取消收藏、完成订单后评价、查看我的评价 |
+| 优惠券中心 | 可领优惠券列表、我的券包、领取（防超领）、订单核销 |
+| 邀请返利 | 邀请码分享、被邀请人注册后双方奖励 |
+| 实名认证 | 身份认证资料提交与审核状态跟踪 |
 | 消息通知 | 房客与房东即时通讯、未读提醒、系统通知（WebSocket 实时推送） |
 
 ### 房东端
@@ -127,6 +142,7 @@ flowchart LR
 | 房源发布 | 基本信息、位置、设施、描述、图片等分步录入 |
 | 订单处理 | 查看订单、确认订单、拒绝订单、退款审核、争议处理 |
 | 入住退房 | 生成入住凭证、自助入住码、办理入住、退房结算、押金和额外费用 |
+| 房东日历 | 日期库存/房价一览、锁房、订单日程、按日期调价 |
 | 收益管理 | 总收益、本月收益、未结算收益、日/月趋势统计、数据导出 |
 | 评价管理 | 评分分布、评价列表、房东回复、未回复提醒 |
 | 消息通知 | 会话列表、聊天记录、订单和审核通知 |
@@ -142,7 +158,8 @@ flowchart LR
 | 违规管理 | 举报列表、处理/忽略举报、违规扫描、重复举报统计 |
 | 数据统计 | 订单、收入、用户、房源概览和趋势分析 |
 | 定价规则 | 全局/城市/房东/房源多级定价规则配置与优先级管理 |
-| 优惠券管理 | 模板创建、批量发放、使用统计与 ROI 分析 |
+| 优惠券管理 | 模板创建、批量发放（MQ 消息驱动 + 重试队列）、使用统计与 ROI 分析 |
+| 营销活动 | 活动 campaign 管理、自动启停、A/B 实验（多版本对照与数据回收） |
 | 系统配置 | 平台配置、政策配置、费用配置 |
 | 公告管理 | 发布系统通知和活动公告 |
 | 日志审计 | 管理员操作日志、登录日志 |
@@ -156,7 +173,10 @@ flowchart LR
 | 数据访问 | 使用 Spring Data JPA、Repository 和 Specification 支持复杂查询 |
 | 数据迁移 | 使用 Flyway 管理数据库结构演进（V1 ~ V49） |
 | 缓存加速 | 使用 Redis 缓存热点数据和推荐数据，Spring Cache 管理推荐缓存 |
-| 分布式锁 | 基于 Redis + Lua 脚本实现分布式锁，支持故障降级 |
+| 分布式锁 | 基于 Redis + Lua 脚本实现分布式锁，支持故障降级；`@RedisLock` 注解 + 切面（SpEL key）开箱即用 |
+| 接口限流 | `@RateLimit` 注解 + 切面（Redis Lua 固定窗口），超限 429，Redis 异常降级放行 |
+| 接口文档 | springdoc-openapi 自动生成 OpenAPI 3 文档，Swagger UI 开箱即用 |
+| 性能优化 | 首页统计五路 `CompletableFuture` 并行化、接口耗时统计切面（ApiTimingAspect） |
 | 实时通信 | 使用 WebSocket（STOMP 协议）支持聊天消息和通知的实时推送 |
 | 搜索服务 | 基于 Elasticsearch 构建房源搜索引擎，支持增量同步与全量重建 |
 | 推荐服务 | 多策略推荐引擎 + 用户画像服务 + 行为追踪，支持缓存与降级 |
@@ -164,7 +184,7 @@ flowchart LR
 | 支付集成 | 接入支付宝沙箱支付，支持页面跳转支付、扫码支付、异步通知、订单查询和退款 |
 | 异常处理 | 使用 `@RestControllerAdvice` 统一处理业务异常和系统异常 |
 | 对象映射 | 使用 MapStruct 完成 Entity、DTO、Request、Response 转换 |
-| 审计记录 | 异步记录管理员操作、登录行为和关键业务状态变化 |
+| 审计记录 | 异步记录管理员操作（`@OperationLog` 注解）、登录行为和关键业务状态变化 |
 | 定时任务 | 订单状态自动流转、超时处理、优惠券清理、用户画像聚合 |
 | AI 智能客服 | 三层 Agent：FAQ 咨询（只读工具）、订单服务（申请型写操作，起草+确认）、争议辅助（管理员裁决建议草稿） |
 
@@ -246,12 +266,16 @@ com.homestay3.homestaybackend
 ├── controller/              # REST API 控制器
 ├── service/                 # 核心业务逻辑
 │   ├── search/              # 搜索与推荐相关服务
+│   ├── agent/               # AI 客服（工具、LLM 客户端）
 │   └── gateway/             # 支付网关
 ├── repository/              # JPA 数据访问层
 ├── entity/                  # 数据库实体
 ├── dto/                     # 数据传输对象
 ├── mapper/                  # MapStruct 映射
 ├── model/                   # 枚举和常量
+├── annotation/              # 自定义注解（@RateLimit / @OperationLog / @RedisLock）
+├── aspect/                  # AOP 切面（限流 / 操作日志 / 分布式锁 / 接口耗时）
+├── mq/                      # RabbitMQ 生产者与消费者
 ├── exception/               # 全局异常处理
 ├── security/                # JWT 与认证授权
 ├── util/                    # 通用工具类
@@ -270,7 +294,7 @@ com.homestay3.homestaybackend
 | Maven | 3.6+ | ✅ |
 | MySQL | 8.0+ | ✅ |
 | Redis | 6.0+ | ✅ |
-| Elasticsearch | 8.5+ | ❌（可选，搜索功能依赖） |
+| Elasticsearch | 8.5+ | ✅（后端启动依赖 ES 客户端连接，即使 `elasticsearch.enabled=false` 也需容器在线） |
 | RabbitMQ | 3.13+（management） | ❌（可选，订单超时延迟队列依赖） |
 | Node.js | 18+ | ✅ |
 | npm | 9+ | ✅ |
@@ -303,7 +327,7 @@ redis-server --daemonize yes
 docker-compose up -d elasticsearch
 ```
 
-> 如果不需要搜索功能，可在 `application.properties` 中设置 `elasticsearch.enabled=false`，后端会自动降级为 JPA 数据库搜索。
+> 注意：`elasticsearch.enabled=false` 仅关闭索引同步与 ES 搜索降级为 JPA，但 ElasticsearchRepository 仍会初始化，**ES 容器必须保持在线**，否则后端启动失败。
 
 **RabbitMQ（可选，订单超时延迟队列）** — 通过 Docker Compose 启动：
 
@@ -334,7 +358,7 @@ mvn clean compile
 mvn spring-boot:run
 ```
 
-后端默认运行在 `http://localhost:8080`。Flyway 会自动执行全部数据库迁移（V1 ~ V49，共 41 个脚本），无需手动建表。
+后端默认运行在 `http://localhost:8081`。Flyway 会自动执行全部数据库迁移（V1 ~ V49，共 41 个脚本），无需手动建表。
 
 ### 5. 启动用户端和房东端
 
@@ -345,7 +369,7 @@ npm install
 npm run dev
 ```
 
-访问 `http://localhost:5173`。Vite 已配置代理，`/api` 请求自动转发到后端 `http://127.0.0.1:8080`。
+访问 `http://localhost:5173`。Vite 已配置代理，`/api` 请求自动转发到后端 `http://127.0.0.1:8081`。
 
 ### 6. 启动管理员端
 
@@ -359,14 +383,10 @@ npm run dev
 
 ### 首次使用
 
-项目没有预置管理员账号。首次启动后端时，`DataInitializer` 会自动初始化默认设施数据。
+首次启动后端时，`DataInitializer` 会自动初始化默认设施数据，`AdminServiceImpl` 会自动创建默认管理员账号 **admin / admin888**（`ROLE_ADMIN`，仅当 `admin` 用户不存在时创建）。
 
+- **管理员**：直接用 `admin / admin888` 登录管理端（`localhost:5174`）。
 - **房客 / 房东**：在用户端 (`localhost:5173`) 注册账号即可使用。
-- **管理员**：注册后，在数据库中将用户的 `role` 字段改为 `ADMIN`：
-
-```sql
-UPDATE users SET role = 'ADMIN' WHERE email = 'your-email@example.com';
-```
 
 ## 配置说明
 
@@ -391,6 +411,9 @@ homestay-backend/src/main/resources/application.properties
 | `spring.mail.*` | 邮件服务配置 |
 | `payment.alipay.*` | 支付宝沙箱应用、公钥、私钥、网关和回调地址 |
 | `file.upload-dir` | 上传文件保存目录 |
+| `agent.llm.*` | AI 客服 LLM 配置（开关、模型、超时、API Key） |
+| `*.mq-enabled` | 三个 MQ 场景开关：`order.timeout` / `coupon.batch` / `notification.push`，设为 `false` 走定时任务/降级路径 |
+| `springdoc.*` | 接口文档配置（可选，默认 `/swagger-ui.html` + `/v3/api-docs`） |
 
 前端环境变量：
 
@@ -408,10 +431,10 @@ mvn test
 mvn clean package
 ```
 
-测试构成：
-- 单元测试：`src/test/java/.../mq/`（MQ 消费者：订单超时/批量发券/通知推送）、`service/impl/`（订单/优惠券等）
+测试构成（60 个测试类，全部 H2 内存库）：
+- 单元测试：`src/test/java/.../mq/`（MQ 消费者：订单超时/批量发券/通知推送）、`service/impl/`（订单/支付/券/争议/通知/审核等核心规则）、`service/agent/`（AI 客服：工具注册/写工具只读校验/两阶段编排）、`service/search/`（ES 降级/画像聚合）、`aspect/`（@RateLimit/@RedisLock/@OperationLog 三个切面）
 - API 自动化测试：`src/test/java/.../api/`（AuthApiTest / OrderApiTest / CouponApiTest / NotificationApiTest，验证认证、下单、发券、通知全链路，H2 内存库 + MQ 降级路径）
-- 集成测试：`src/test/java/.../integration/`（历史遗留）
+- 集成测试：`src/test/java/.../integration/`（BookingWorkflow / ConcurrentBooking 并发防超卖等）
 
 > ⚠️ 测试安全红线：所有测试必须走 `application-test.properties`（H2 内存库），禁止连接真实 MySQL（历史曾发生测试清空生产数据事故）。
 
@@ -443,8 +466,9 @@ npm run build
 
 ## 安全说明
 
-本仓库 `application.properties` 中的数据库密码、JWT 密钥、支付宝私钥等敏感信息均为占位符，
-请复制为 `application-local.properties` 并填入本地真实值（已在 `.gitignore` 中排除）。
+本仓库不包含任何真实密钥：`application.properties` 已被 `.gitignore` 排除，仓库内仅提供
+`application.example.properties` 模板（数据库密码、JWT 密钥、支付宝私钥、LLM API Key 等均为占位符）。
+请复制为 `application-local.properties` 并填入本地真实值，切勿将真实密钥提交到仓库。
 
 ## 许可证
 

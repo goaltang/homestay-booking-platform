@@ -14,7 +14,7 @@
 
 | 子项目 | 技术栈 | 默认端口 | 说明 |
 |---|---|---|---|
-| `homestay-backend` | Java 17 + Spring Boot 3.0.2 + Maven | 8080 | 后端 API 服务 |
+| `homestay-backend` | Java 17 + Spring Boot 3.0.2 + Maven | 8081 | 后端 API 服务 |
 | `homestay-front` | Vue 3 + TypeScript + Vite 5 | 5173 | 用户端 + 房东端 |
 | `homestay-admin` | Vue 3 + TypeScript + Vite 6 | 5174 | 管理员端 |
 
@@ -147,7 +147,7 @@ mvn spring-boot:run
 
 ```bash
 # 等待约 30 秒后
-curl -s http://localhost:8080/api/homestays?page=0&size=1
+curl -s http://localhost:8081/api/homestays?page=0&size=1
 # 预期: 返回 JSON 响应（可能为空列表）
 ```
 
@@ -168,7 +168,7 @@ npm run dev
 
 验证：浏览器打开 `http://localhost:5173`，应看到首页。
 
-> Vite 代理配置：`/api` → `http://127.0.0.1:8080`，`/uploads` → `http://127.0.0.1:8080`
+> Vite 代理配置：`/api` → `http://127.0.0.1:8081`，`/uploads` → `http://127.0.0.1:8081`
 
 ### 步骤 8：启动管理员端
 
@@ -180,11 +180,13 @@ npm run dev
 
 验证：浏览器打开 `http://localhost:5174`，应看到登录页。
 
-> Vite 代理配置：`/api` → `http://localhost:8080`
+> Vite 代理配置：`/api` → `http://localhost:8081`
 
-### 步骤 9：创建管理员账号
+### 步骤 9：管理员登录
 
-项目不预置管理员账号。先在用户端 (`localhost:5173`) 注册一个普通账号，然后在数据库中提升角色：
+后端首次启动时会自动创建默认管理员 **admin / admin888**（`ROLE_ADMIN`，仅当 `admin` 用户不存在时创建）。
+
+直接用默认账号登录管理端 (`localhost:5174`)；如需自定义管理员，可在用户端注册后提升角色：
 
 ```bash
 mysql -u root -p homestay_db -e "UPDATE users SET role = 'ADMIN' WHERE email = '你注册的邮箱';"
@@ -206,7 +208,7 @@ mysql -u root -p homestay_db -e "SELECT id, email, role FROM users WHERE role = 
 | 后端启动报 `Communications link failure` | MySQL 未启动或密码错误 | 检查 MySQL 状态和 `spring.datasource.*` 配置 |
 | 后端启动报 `Unable to connect to Redis` | Redis 未启动 | `redis-server --daemonize yes` |
 | 后端启动报 ES 连接失败 | Elasticsearch 未启动 | 启动 ES 或设置 `elasticsearch.enabled=false` |
-| 前端 `/api` 请求 404 | 后端未启动或端口不对 | 确认后端在 8080 端口运行 |
+| 前端 `/api` 请求 404 | 后端未启动或端口不对 | 确认后端在 8081 端口运行 |
 | 前端端口被占用 | 5173/5174 已被使用 | Vite 会自动分配新端口，查看终端输出 |
 | `mvn` 下载依赖超时 | 网络问题 | 配置 Maven 镜像（如阿里云） |
 | `npm install` 超时 | 网络问题 | 配置 npm 镜像：`npm config set registry https://registry.npmmirror.com` |
@@ -268,7 +270,7 @@ STEP 5: 配置后端
 STEP 6: 启动后端
   RUN: cd homestay-backend && mvn clean compile -q && mvn spring-boot:run &
   WAIT: 直到日志出现 "Started HomestayBackendApplication"（约 30-60s）
-  VERIFY: curl -s http://localhost:8080/api/homestays?page=0&size=1 | head -c 200
+  VERIFY: curl -s http://localhost:8081/api/homestays?page=0&size=1 | head -c 200
   EXPECT: JSON 响应（{"success":true,...} 或类似）
 
 STEP 7: 启动用户端
@@ -289,9 +291,9 @@ STEP 9: 创建管理员（可选）
 ### Agent 注意事项
 
 1. **数据库迁移自动执行**：后端启动时 Flyway 自动运行 V1~V49 迁移，不需要手动建表或导入 SQL。
-2. **ES 可选**：如果环境中没有 Docker，设置 `elasticsearch.enabled=false` 即可跳过，搜索功能降级为 JPA。
-3. **前端代理**：两个前端项目的 Vite 配置已内置 `/api` 代理到 `localhost:8080`，不需要额外配置 CORS。
-4. **端口冲突**：如果 8080/5173/5174 被占用，修改对应配置文件中的端口。
+2. **ES 必须在线**：即使设置 `elasticsearch.enabled=false`（仅关闭索引同步、搜索降级 JPA），ES 容器仍需保持运行，否则后端启动失败。
+3. **前端代理**：两个前端项目的 Vite 配置已内置 `/api` 代理到 `localhost:8081`，不需要额外配置 CORS。
+4. **端口冲突**：如果 8081/5173/5174 被占用，修改对应配置文件中的端口。
 5. **不要修改 `application.properties` 中的默认开发值**（MySQL 密码 `111111`、Redis 密码 `000000`），除非环境确实不同。这些是开发环境约定值。
 6. **npm 镜像**：在中国大陆环境下，先执行 `npm config set registry https://registry.npmmirror.com`。
 7. **Maven 镜像**：在中国大陆环境下，在 `~/.m2/settings.xml` 中配置阿里云镜像。
@@ -300,7 +302,7 @@ STEP 9: 创建管理员（可选）
 
 安装完成后，逐项确认：
 
-- [ ] `curl -s http://localhost:8080/api/homestays?page=0&size=1` 返回 JSON
+- [ ] `curl -s http://localhost:8081/api/homestays?page=0&size=1` 返回 JSON
 - [ ] `curl -s http://localhost:5173` 返回 HTML
 - [ ] `curl -s http://localhost:5174` 返回 HTML
 - [ ] 用户端注册 → 登录 → 浏览房源 流程正常
@@ -316,7 +318,7 @@ This project consists of 3 independently runnable sub-projects:
 
 | Sub-project | Stack | Default Port | Description |
 |---|---|---|---|
-| `homestay-backend` | Java 17 + Spring Boot 3.0.2 + Maven | 8080 | Backend API server |
+| `homestay-backend` | Java 17 + Spring Boot 3.0.2 + Maven | 8081 | Backend API server |
 | `homestay-front` | Vue 3 + TypeScript + Vite 5 | 5173 | Guest + Host app |
 | `homestay-admin` | Vue 3 + TypeScript + Vite 6 | 5174 | Admin app |
 
@@ -398,7 +400,7 @@ mvn clean compile
 mvn spring-boot:run
 ```
 
-Verify: `curl -s http://localhost:8080/api/homestays?page=0&size=1` returns JSON.
+Verify: `curl -s http://localhost:8081/api/homestays?page=0&size=1` returns JSON.
 
 Flyway automatically runs all 41 migrations (V1–V49) on startup.
 
@@ -423,15 +425,15 @@ npm run dev
 
 Open `http://localhost:5174`.
 
-### Step 9: Create Admin Account
+### Step 9: Admin Login
 
-Register a normal account on the guest app, then promote it:
+On first startup, the backend auto-creates the default admin **admin / admin888** (`ROLE_ADMIN`, only if the `admin` user doesn't exist).
+
+Log in at `http://localhost:5174` with the default account. For a custom admin, register on the guest app and promote the role:
 
 ```bash
 mysql -u root -p homestay_db -e "UPDATE users SET role = 'ADMIN' WHERE email = 'your@email.com';"
 ```
-
-Log in at `http://localhost:5174` with the promoted account.
 
 ### Troubleshooting
 
@@ -440,7 +442,7 @@ Log in at `http://localhost:5174` with the promoted account.
 | `Communications link failure` on startup | MySQL not running or wrong password | Check MySQL status and `spring.datasource.*` |
 | `Unable to connect to Redis` | Redis not running | `redis-server --daemonize yes` |
 | ES connection error on startup | Elasticsearch not running | Start ES or set `elasticsearch.enabled=false` |
-| Frontend `/api` returns 404 | Backend not running | Ensure backend is on port 8080 |
+| Frontend `/api` returns 404 | Backend not running | Ensure backend is on port 8081 |
 | Port already in use | 5173/5174 occupied | Vite auto-assigns a new port — check terminal |
 | `mvn` dependency download timeout | Network issue | Configure Maven mirror (e.g., Aliyun) |
 | `npm install` timeout | Network issue | `npm config set registry https://registry.npmmirror.com` |
@@ -450,7 +452,7 @@ Log in at `http://localhost:5174` with the promoted account.
 For AI agents automating the installation, follow the structured flow in the [AI Agent 安装指引](#ai-agent-安装指引) section above. Key points:
 
 1. **Flyway handles all DB migrations** (V1–V49, 41 scripts) — never run SQL manually.
-2. **ES is optional** — set `elasticsearch.enabled=false` to skip.
+2. **ES is required at startup** — even with `elasticsearch.enabled=false` (which only disables index sync and falls back to JPA search), the ES container must stay running or the backend won't start.
 3. **Vite proxies are pre-configured** — no CORS setup needed.
 4. **Default dev credentials**: MySQL `root/111111`, Redis `000000` — change only if your environment differs.
-5. **Verification**: `curl localhost:8080/api/homestays?page=0&size=1` should return JSON after backend starts.
+5. **Verification**: `curl localhost:8081/api/homestays?page=0&size=1` should return JSON after backend starts.

@@ -10,7 +10,7 @@ English | **[中文](README.md)**
 
 A full-featured homestay booking platform connecting guests, hosts, and platform administrators. It covers the complete lifecycle: property listing, platform review, online search, booking & payment, check-in / check-out, reviews, earnings analytics, and back-office governance.
 
-> 25 business modules · 100K+ lines of code · 223 commits · 16 months of continuous iteration · 50+ project docs
+> 25 business modules · 100K+ lines of code · 267 commits · 16 months of continuous iteration · 50+ project docs
 
 ## Background
 
@@ -53,6 +53,18 @@ This workflow lets a single engineer deliver all three frontends (guest / host /
 - **Map-based search**: AMap (Gaode) integration for location search, nearby discovery, distance calculation, and map display.
 - **Payment integration**: Alipay sandbox payments (page redirect + QR code), with order payment, async callbacks, status queries, and refunds.
 - **Production-grade backend**: Unified responses, global exception handling, permission annotations, DTO mapping, caching, database migrations, and audit logging.
+
+### Recent Engineering Enhancements (2026-08)
+
+| Capability | Implementation | Impact |
+|---|---|---|
+| API rate limiting | `@RateLimit` annotation + AOP aspect (Redis Lua fixed-window counter), 429 on overflow, graceful degradation if Redis fails | Protects sensitive endpoints (payment creation, batch coupon issue); annotation-based |
+| LLM call retry | `@Retryable` on `LlmClient` (3 attempts, exponential backoff) with `@EnableRetry` | AI support agent survives LLM service hiccups without losing requests |
+| Home stats parallelization | `HomeService` runs five `CompletableFuture` counts in parallel with `allOf().join()` | Significant P95 reduction (benchmark comparison in vault) |
+| AOP operation logging | `@OperationLog` annotation (SpEL dynamic detail/resourceId) + aspect async persistence | Full audit trail for admin actions, 69 annotated points |
+| API docs | springdoc-openapi 2.2.0 auto-generates OpenAPI 3 docs, Swagger UI out of the box | Visit `http://localhost:8081/swagger-ui.html` after startup |
+| Dashboard real MoM | Stats API exposes yesterday's data; frontend computes genuine MoM trends | Replaces random-number trends with trustworthy data |
+| Admin build splitting | manualChunks + Element Plus on-demand imports (unplugin) | Main chunk 1.1MB → 35KB, white-screen fix (removed transition wrapper around lazy components) |
 
 ### Message Architecture (RabbitMQ - Three Scenarios)
 
@@ -115,6 +127,9 @@ flowchart LR
 | Online Payment | Alipay page redirect or QR code payment, payment status query, success redirect |
 | Order Management | Order list, order details, cancellation, refund requests, status tracking |
 | Favorites & Reviews | Add/remove favorites, post-order reviews, view my reviews |
+| Coupon Center | Claimable coupon list, my wallet, claim (anti-over-claim), order redemption |
+| Invite Rewards | Invite-code sharing, rewards for both referrer and referee on signup |
+| Identity Verification | Submit identity materials, track review status |
 | Notifications | Guest-host instant messaging, unread badges, system notifications (WebSocket real-time push) |
 
 ### Host App
@@ -127,6 +142,7 @@ flowchart LR
 | Listing Publishing | Step-by-step input: basic info, location, amenities, description, photos |
 | Order Processing | View orders, confirm/reject orders, refund review, dispute handling |
 | Check-in / Check-out | Generate check-in credentials, self-service codes, process check-in, checkout settlement, deposits and extra charges |
+| Host Calendar | Daily inventory/price overview, blocking, order schedule, per-date pricing |
 | Earnings Management | Total earnings, monthly earnings, unsettled balance, daily/monthly trend charts, data export |
 | Review Management | Rating distribution, review list, host replies, unreplied reminders |
 | Notifications | Conversation list, chat history, order and review notifications |
@@ -142,7 +158,8 @@ flowchart LR
 | Violation Management | Report list, process/dismiss reports, violation scanning, duplicate report stats |
 | Analytics | Orders, revenue, users, listings overview and trend analysis |
 | Pricing Rules | Global / city / host / property multi-level pricing rule configuration with priority management |
-| Coupon Management | Template creation, batch issuance, usage statistics, ROI analysis |
+| Coupon Management | Template creation, batch issuance (MQ-driven + retry queue), usage statistics, ROI analysis |
+| Marketing Campaigns | Campaign management, auto start/stop, A/B experiments (multi-variant comparison & data collection) |
 | System Config | Platform settings, policy configuration, fee configuration |
 | Announcements | Publish system notifications and event announcements |
 | Audit Logs | Admin operation logs, login logs |
@@ -156,7 +173,10 @@ flowchart LR
 | Data Access | Spring Data JPA with Repository and Specification for complex queries |
 | Database Migration | Flyway-managed schema evolution (V1 – V49, 41 scripts) |
 | Caching | Redis for hot data and recommendation caching; Spring Cache with Caffeine |
-| Distributed Locking | Redis + Lua script atomic unlock with fault-tolerant degradation |
+| Distributed Locking | Redis + Lua script atomic unlock with fault-tolerant degradation; `@RedisLock` annotation + aspect (SpEL key) ready to use |
+| Rate Limiting | `@RateLimit` annotation + aspect (Redis Lua fixed-window counter), 429 on overflow, degrades gracefully if Redis fails |
+| API Documentation | springdoc-openapi auto-generates OpenAPI 3 docs; Swagger UI out of the box |
+| Performance | Home stats parallelized with five `CompletableFuture` calls; API timing aspect (ApiTimingAspect) |
 | Real-time Communication | WebSocket (STOMP) for chat messages and notification push |
 | Search Service | Elasticsearch-based property search with incremental sync and full rebuild |
 | Recommendation Service | Multi-strategy engine + user profiling + behavior tracking, with caching and degradation |
@@ -164,7 +184,7 @@ flowchart LR
 | Payment Integration | Alipay sandbox: page redirect, QR code, async notifications, order queries, refunds |
 | Exception Handling | `@RestControllerAdvice` for unified business and system exception handling |
 | Object Mapping | MapStruct for Entity / DTO / Request / Response conversion |
-| Audit Logging | Async recording of admin operations, login events, and key business state changes |
+| Audit Logging | Async recording of admin operations (`@OperationLog` annotation), login events, and key business state changes |
 | Scheduled Tasks | Auto order state transitions, timeout handling, coupon cleanup, user profile aggregation |
 
 ## Core Business Flows
@@ -235,12 +255,16 @@ com.homestay3.homestaybackend
 ├── controller/              # REST API controllers
 ├── service/                 # Core business logic
 │   ├── search/              # Search & recommendation services
+│   ├── agent/               # AI support agent (tools, LLM client)
 │   └── gateway/             # Payment gateway
 ├── repository/              # JPA data access layer
 ├── entity/                  # Database entities
 ├── dto/                     # Data transfer objects
 ├── mapper/                  # MapStruct mappings
 ├── model/                   # Enums and constants
+├── annotation/              # Custom annotations (@RateLimit / @OperationLog / @RedisLock)
+├── aspect/                  # AOP aspects (rate limiting / operation log / distributed lock / API timing)
+├── mq/                      # RabbitMQ producers and consumers
 ├── exception/               # Global exception handling
 ├── security/                # JWT & auth
 ├── util/                    # Utility classes
@@ -259,7 +283,7 @@ com.homestay3.homestaybackend
 | Maven | 3.6+ | ✅ |
 | MySQL | 8.0+ | ✅ |
 | Redis | 6.0+ | ✅ |
-| Elasticsearch | 8.5+ | ❌ (optional, needed for search) |
+| Elasticsearch | 8.5+ | ✅ (backend requires an ES client connection at startup; container must be online even with `elasticsearch.enabled=false`) |
 | Node.js | 18+ | ✅ |
 | npm | 9+ | ✅ |
 | Docker + Docker Compose | Latest stable | ❌ (only for Elasticsearch) |
@@ -291,7 +315,7 @@ redis-server --daemonize yes
 docker-compose up -d elasticsearch
 ```
 
-> If you don't need search, set `elasticsearch.enabled=false` in `application.properties`. The backend will gracefully degrade to JPA database search.
+> Note: `elasticsearch.enabled=false` only disables index sync (search falls back to JPA), but ElasticsearchRepository still initializes — **the ES container must stay online**, otherwise the backend fails to start.
 
 ### 3. Configure the Backend
 
@@ -314,7 +338,7 @@ mvn clean compile
 mvn spring-boot:run
 ```
 
-The backend runs at `http://localhost:8080` by default. Flyway automatically runs all database migrations (V1 – V49, 41 scripts) on startup — no manual table creation needed.
+The backend runs at `http://localhost:8081` by default. Flyway automatically runs all database migrations (V1 – V49, 41 scripts) on startup — no manual table creation needed.
 
 ### 5. Start the Guest & Host App
 
@@ -325,7 +349,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. Vite proxies `/api` requests to `http://127.0.0.1:8080`.
+Open `http://localhost:5173`. Vite proxies `/api` requests to `http://127.0.0.1:8081`.
 
 ### 6. Start the Admin App
 
@@ -339,14 +363,10 @@ Open `http://localhost:5174`. Vite proxies `/api` requests to the backend.
 
 ### First-Time Setup
 
-The project does not ship with a pre-seeded admin account. On first backend startup, `DataInitializer` automatically seeds default amenity data.
+On first backend startup, `DataInitializer` automatically seeds default amenity data, and `AdminServiceImpl` creates the default admin account **admin / admin888** (`ROLE_ADMIN`, only if the `admin` user doesn't already exist).
 
-- **Guest / Host**: Register an account on the guest app (`localhost:5173`).
-- **Admin**: After registering, promote the user in the database:
-
-```sql
-UPDATE users SET role = 'ADMIN' WHERE email = 'your-email@example.com';
-```
+- **Admin**: log in directly with `admin / admin888` on the admin app (`localhost:5174`).
+- **Guest / Host**: register an account on the guest app (`localhost:5173`).
 
 ## Configuration
 
@@ -363,11 +383,14 @@ Key settings for local development:
 | `spring.datasource.*` | MySQL connection URL, username, password |
 | `spring.data.redis.*` | Redis host, port, password, database index |
 | `spring.elasticsearch.*` | Elasticsearch connection URI (optional) |
-| `elasticsearch.enabled` | Set to `false` to skip ES and fall back to JPA search |
+| `elasticsearch.enabled` | Set to `false` to disable ES sync and fall back to JPA search (ES container must still be online at startup) |
 | `jwt.secret` | JWT signing secret |
 | `spring.mail.*` | SMTP email service configuration |
 | `payment.alipay.*` | Alipay sandbox app ID, keys, gateway URL, callbacks |
 | `file.upload-dir` | Uploaded file storage directory |
+| `agent.llm.*` | AI support agent LLM config (enabled, model, timeout, API key) |
+| `*.mq-enabled` | Per-scenario MQ switches: `order.timeout` / `coupon.batch` / `notification.push`; set to `false` to use scheduled/degraded paths |
+| `springdoc.*` | API docs config (optional; defaults to `/swagger-ui.html` + `/v3/api-docs`) |
 
 Frontend environment variables:
 
@@ -384,6 +407,13 @@ cd homestay-backend
 mvn test
 mvn clean package
 ```
+
+Test suite (60 test classes, all on the H2 in-memory DB):
+- Unit tests: `src/test/java/.../mq/` (MQ consumers: order timeout / batch coupon / notification push), `service/impl/` (core rules for orders, payments, coupons, disputes, notifications, reviews), `service/agent/` (AI agent: tool registry / read-only write-tools / two-phase orchestration), `service/search/` (ES fallback, profile aggregation), `aspect/` (the three aspects: @RateLimit / @RedisLock / @OperationLog)
+- API automation tests: `src/test/java/.../api/` (AuthApiTest / OrderApiTest / CouponApiTest / NotificationApiTest — full chains for auth, booking, coupon issue and notifications, H2 + MQ-degraded paths)
+- Integration tests: `src/test/java/.../integration/` (BookingWorkflow, ConcurrentBooking anti-overselling, etc.)
+
+> ⚠️ Test safety rule: every test must use `application-test.properties` (H2 in-memory), never the real MySQL (there was a past incident where tests wiped production data).
 
 ### Guest App
 
@@ -413,8 +443,10 @@ npm run build
 
 ## Security Notes
 
-Sensitive values in `application.properties` (database password, JWT secret, Alipay private keys, etc.) are placeholders.
-Copy the file to `application-local.properties` and fill in your real local values (already excluded via `.gitignore`).
+This repository contains no real secrets: `application.properties` is excluded via `.gitignore`;
+only the `application.example.properties` template is committed (database password, JWT secret,
+Alipay private keys, LLM API key, etc. are all placeholders).
+Copy it to `application-local.properties` and fill in your real local values — never commit real keys.
 
 ## License
 
