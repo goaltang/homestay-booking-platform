@@ -48,6 +48,7 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregatio
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -90,6 +91,7 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
     private final SearchPersonalizationService searchPersonalizationService;
 
     @Override
+    @Transactional(readOnly = true)
     public List<HomestayDTO> searchHomestays(HomestaySearchRequest request) {
         boolean hasKeyword = StringUtils.hasText(request.getKeyword());
         boolean hasViewport = Stream.of(request.getNorthEastLat(), request.getNorthEastLng(),
@@ -252,6 +254,7 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<HomestaySearchResultDTO> searchHomestayPage(HomestaySearchRequest request) {
         int page = request.getPage() != null && request.getPage() >= 0 ? request.getPage() : 0;
         int size = request.getSize() != null && request.getSize() > 0 ? request.getSize() : 12;
