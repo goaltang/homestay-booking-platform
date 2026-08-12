@@ -11,6 +11,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -45,12 +47,15 @@ public class LlmClient {
 
     /**
      * 发起一轮 chat 调用，返回模型回复文本
+     * 网络/超时类失败自动重试：最多 3 次尝试（1 次初始 + 2 次重试），指数退避 1s → 2s
      *
      * @param messages OpenAI 格式消息列表，每条含 role / content
      * @return 模型回复内容（choices[0].message.content）
      * @throws IllegalStateException agent 未启用（enabled=false 或 apiKey 为空）
-     * @throws AgentLlmException     HTTP 调用失败或响应解析失败
+     * @throws AgentLlmException     HTTP 调用失败或响应解析失败（重试耗尽后）
      */
+    @Retryable(value = AgentLlmException.class, maxAttempts = 3,
+            backoff = @Backoff(delay = 1000, multiplier = 2))
     public String chat(List<Map<String, String>> messages) {
         if (!properties.isEnabled() || properties.getApiKey() == null || properties.getApiKey().isBlank()) {
             throw new IllegalStateException("agent 未启用");

@@ -1,6 +1,7 @@
 package com.homestay3.homestaybackend.controller;
 
 import com.homestay3.homestaybackend.annotation.OperationLog;
+import com.homestay3.homestaybackend.annotation.RateLimit;
 import com.homestay3.homestaybackend.entity.CouponTemplate;
 import com.homestay3.homestaybackend.entity.PromotionCampaign;
 import com.homestay3.homestaybackend.entity.PromotionUsage;
@@ -361,6 +362,7 @@ public class AdminPromotionController {
     // ========== 批量发券 ==========
 
     @PostMapping("/batch-tasks")
+    @RateLimit(limit = 5, windowSeconds = 60, key = "admin:coupon-batch")
     public ResponseEntity<?> createBatchTask(@RequestBody Map<String, Object> request) {
         try {
             Long templateId = Long.valueOf(request.get("templateId").toString());

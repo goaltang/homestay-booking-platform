@@ -27,6 +27,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<?>> handleRateLimitExceeded(RateLimitExceededException ex) {
+        ApiResponse<?> response = ApiResponse.error(429, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+    }
+
     @ExceptionHandler(PriceChangedException.class)
     public ResponseEntity<ApiResponse<?>> handlePriceChangedException(PriceChangedException ex) {
         java.util.Map<String, Object> data = new java.util.HashMap<>();

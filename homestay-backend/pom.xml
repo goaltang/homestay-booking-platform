@@ -41,6 +41,12 @@
             <version>2.2.0</version>
         </dependency>
 
+        <!-- spring-retry 重试（LlmClient 第三方调用重试） -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>

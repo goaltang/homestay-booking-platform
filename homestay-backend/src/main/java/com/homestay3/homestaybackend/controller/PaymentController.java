@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.controller;
 
+import com.homestay3.homestaybackend.annotation.RateLimit;
 import com.homestay3.homestaybackend.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class PaymentController {
      * 创建支付订单（生成二维码或支付页面）
      */
     @PostMapping("/{orderId}/create")
+    @RateLimit(limit = 30, windowSeconds = 60)
     public ResponseEntity<Map<String, Object>> createPayment(
             @PathVariable Long orderId,
             @RequestParam String method) {
