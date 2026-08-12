@@ -23,6 +23,9 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Build test ES image (with IK analyzer, needed by EsIntegrationTest)
+        run: docker build -t homestay-es-ik:test -f src/test/resources/testcontainers/Dockerfile.es-ik .
+
       - name: Run tests (H2 in-memory, no external services)
         run: mvn -B test
 

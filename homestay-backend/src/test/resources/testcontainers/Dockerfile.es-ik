@@ -1,0 +1,8 @@
+# 测试专用 ES 镜像：官方 8.5.0 + IK 中文分词插件
+# 用途：HomestaySearchServiceEsIntegrationTest 的 Testcontainers 容器
+# 与生产保持一致（生产 ES 同样安装 IK，见 docker-compose.yml + AGENTS.md）
+FROM docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+
+# 安装 IK 插件（与 ES 8.5.0 版本匹配）
+RUN /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch \
+    https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v8.5.0/elasticsearch-analysis-ik-8.5.0.zip

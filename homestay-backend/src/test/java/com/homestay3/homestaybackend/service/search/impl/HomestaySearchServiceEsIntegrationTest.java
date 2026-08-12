@@ -33,6 +33,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * 使用 Testcontainers 启动真实 ES 实例（@Container 静态字段在 Spring 上下文加载前启动，
  * 保证 HomestayDocumentRepository 初始化时 ES 已就绪）。
  * 当前环境无 Docker 时自动跳过（disabledWithoutDocker）。
+ *
+ * <p>镜像：homestay-es-ik:test 基于官方 8.5.0 + IK 中文分词插件
+ * （Dockerfile 见 src/test/resources/testcontainers/Dockerfile.es-ik，CI 预构建，
+ * 本地无 Docker 时本测试自动跳过）。生产 ES 同样安装 IK——房源索引使用 ik_max_word 分析器，
+ * 无 IK 插件会建索引失败。
  */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest
@@ -42,7 +47,7 @@ class HomestaySearchServiceEsIntegrationTest {
 
     @Container
     static ElasticsearchContainer elasticsearch = new ElasticsearchContainer(
-            DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.5.0"))
+            DockerImageName.parse("homestay-es-ik:test"))
             .withEnv("xpack.security.enabled", "false")
             .withEnv("discovery.type", "single-node");
 
