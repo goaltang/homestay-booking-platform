@@ -26,7 +26,7 @@ import lombok.extern.jackson.Jacksonized;
 public class Amenity {
     
     @Id
-    @Column(name = "value", nullable = false, length = 50)
+    @Column(name = "`value`", nullable = false, length = 50)
     private String value;
     
     @Column(name = "label", nullable = false, length = 100)
