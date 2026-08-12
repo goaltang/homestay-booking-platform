@@ -1,0 +1,12 @@
+# Grafana 自动加载 dashboard（免手动导入）
+apiVersion: 1
+
+providers:
+  - name: homestay
+    orgId: 1
+    folder: Homestay
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

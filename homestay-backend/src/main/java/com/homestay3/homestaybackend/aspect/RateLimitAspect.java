@@ -1,12 +1,15 @@
 package com.homestay3.homestaybackend.aspect;
 
 import com.homestay3.homestaybackend.annotation.RateLimit;
+import com.homestay3.homestaybackend.config.MetricsConfig;
 import com.homestay3.homestaybackend.exception.RateLimitExceededException;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
@@ -29,6 +32,13 @@ public class RateLimitAspect {
 
     private final StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 埋点用 registry。字段注入（非 final）：保持单参构造器不变，
+     * 纯 Mockito 单元测试直接 new 时该字段为 null，由 MetricsConfig 静默跳过。
+     */
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     private static final String LIMIT_PREFIX = "rate:limit:";
 
     /** Lua 脚本：INCR + 首次设置过期时间，原子完成固定窗口计数 */
@@ -39,12 +49,15 @@ public class RateLimitAspect {
 
     @Around("@annotation(rateLimit)")
     public Object around(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
-        String key = LIMIT_PREFIX + resolveKey(joinPoint, rateLimit);
+        // key 与 method 标签在 try 外计算：不向降级 catch 引入新的异常路径（埋点只加不改）
+        String method = methodLabel(joinPoint);
+        String key = LIMIT_PREFIX + resolveKey(joinPoint, rateLimit, method);
         try {
             DefaultRedisScript<Long> script = new DefaultRedisScript<>(INCR_SCRIPT, Long.class);
             Long count = stringRedisTemplate.execute(script, List.of(key), String.valueOf(rateLimit.windowSeconds()));
             if (count != null && count > rateLimit.limit()) {
                 log.warn("接口限流触发: key={}, count={}, limit={}", key, count, rateLimit.limit());
+                MetricsConfig.increment(meterRegistry, "homestay.ratelimit.blocked", "method", method);
                 throw new RateLimitExceededException("请求过于频繁，请稍后再试");
             }
         } catch (RateLimitExceededException e) {
@@ -59,7 +72,7 @@ public class RateLimitAspect {
     /**
      * 生成限流 key：注解显式 key 优先；为空时取 IP + 类名.方法名。
      */
-    private String resolveKey(ProceedingJoinPoint joinPoint, RateLimit rateLimit) {
+    private String resolveKey(ProceedingJoinPoint joinPoint, RateLimit rateLimit, String method) {
         if (rateLimit.key() != null && !rateLimit.key().isBlank()) {
             return rateLimit.key();
         }
@@ -70,7 +83,13 @@ public class RateLimitAspect {
                 ip = request.getRemoteAddr();
             }
         }
-        String methodName = joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName();
-        return ip + ":" + methodName;
+        return ip + ":" + method;
+    }
+
+    /**
+     * 类名.方法名，用于限流埋点的 method tag。
+     */
+    private String methodLabel(ProceedingJoinPoint joinPoint) {
+        return joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName();
     }
 }

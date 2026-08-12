@@ -1,5 +1,6 @@
 package com.homestay3.homestaybackend.mq;
 
+import com.homestay3.homestaybackend.config.MetricsConfig;
 import com.homestay3.homestaybackend.config.RabbitMQConfig;
 import com.homestay3.homestaybackend.dto.NotificationCreateCommand;
 import com.homestay3.homestaybackend.entity.Order;
@@ -9,10 +10,12 @@ import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.service.NotificationService;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.rabbitmq.client.Channel;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.handler.annotation.Header;
@@ -27,6 +30,13 @@ public class OrderTimeoutConsumer {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final NotificationService notificationService;
+
+    /**
+     * 埋点用 registry。字段注入（非 final）：保持现有构造器不变，
+     * 纯 Mockito 单元测试（@InjectMocks）不注入该字段，由 MetricsConfig 静默跳过。
+     */
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     @Value("${order.timeout.mq-enabled:true}")
     private boolean mqEnabled;
@@ -84,11 +94,13 @@ public class OrderTimeoutConsumer {
                     "您的订单 " + order.getOrderNumber() + " 因超时已被系统自动取消",
                     msg.getOrderId().toString());
 
+            MetricsConfig.increment(meterRegistry, "homestay.mq.consumed", "scenario", "order.timeout");
             channel.basicAck(deliveryTag, false);
 
         } catch (Exception e) {
             log.error("处理超时消息异常: orderId={}, error={}",
                     msg != null ? msg.getOrderId() : "null", e.getMessage(), e);
+            MetricsConfig.increment(meterRegistry, "homestay.mq.retried", "scenario", "order.timeout");
             try {
                 channel.basicNack(deliveryTag, false, false);
             } catch (Exception nackEx) {

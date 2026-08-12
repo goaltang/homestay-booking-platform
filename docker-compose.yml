@@ -20,5 +20,26 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: homestay-prometheus
+    volumes:
+      - ./tools/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: homestay-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ./tools/monitoring/grafana-provisioning/:/etc/grafana/provisioning/
+      - ./tools/monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/homestay-dashboard.json
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
 volumes:
   es-data:

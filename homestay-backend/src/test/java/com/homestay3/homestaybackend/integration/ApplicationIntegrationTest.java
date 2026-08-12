@@ -46,11 +46,13 @@ public class ApplicationIntegrationTest {
                 String.class);
         
         // 如果健康端点不存在，会返回404
-        // 如果存在，应该返回200
+        // 如果存在且全部组件UP，应该返回200
+        // 如果存在但依赖DOWN（如测试环境未起 ES），返回503 —— 也是健康端点的合法状态
         assertThat(response.getStatusCode()).isIn(
                 HttpStatus.OK,
                 HttpStatus.NOT_FOUND,
-                HttpStatus.FORBIDDEN
+                HttpStatus.FORBIDDEN,
+                HttpStatus.SERVICE_UNAVAILABLE
         );
     }
 

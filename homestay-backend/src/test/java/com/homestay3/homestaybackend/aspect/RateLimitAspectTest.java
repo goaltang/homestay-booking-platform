@@ -47,7 +47,11 @@ class RateLimitAspectTest {
     }
 
     private void stubJoinPoint() {
-        // 测试用显式 key，不经过 IP+方法名 的默认 key 分支，无需 stub signature
+        // 埋点（homestay.ratelimit.blocked 的 method tag）会读取 joinPoint.getSignature()，
+        // 即使显式 key 分支不经过 IP+方法名，也需要 stub signature 避免 NPE
+        when(joinPoint.getSignature()).thenReturn(methodSignature);
+        when(methodSignature.getDeclaringTypeName()).thenReturn("com.homestay3.homestaybackend.aspect.RateLimitAspectTest");
+        when(methodSignature.getName()).thenReturn("limitedMethod");
     }
 
     @Test

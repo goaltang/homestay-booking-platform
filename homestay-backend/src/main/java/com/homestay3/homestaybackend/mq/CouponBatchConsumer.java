@@ -1,13 +1,16 @@
 package com.homestay3.homestaybackend.mq;
 
 import com.homestay3.homestaybackend.config.CouponBatchMQConfig;
+import com.homestay3.homestaybackend.config.MetricsConfig;
 import com.homestay3.homestaybackend.service.CouponBatchIssueService;
 import com.rabbitmq.client.Channel;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.handler.annotation.Header;
@@ -25,6 +28,13 @@ public class CouponBatchConsumer {
     private final CouponBatchIssueService couponBatchIssueService;
     private final RabbitTemplate rabbitTemplate;
 
+    /**
+     * 埋点用 registry。字段注入（非 final）：保持现有构造器不变，
+     * 纯 Mockito 单元测试（@InjectMocks）不注入该字段，由 MetricsConfig 静默跳过。
+     */
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     @Value("${coupon.batch.mq-enabled:true}")
     private boolean mqEnabled;
 
@@ -33,6 +43,10 @@ public class CouponBatchConsumer {
                           @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag,
                           @Header(name = RETRY_COUNT_HEADER, required = false) String retryCountHeader) {
         int retryCount = parseRetryCount(retryCountHeader);
+        if (retryCount > 0) {
+            // 消息来自重试队列（x-retry-count >= 1），记录重试次数
+            MetricsConfig.increment(meterRegistry, "homestay.mq.retried", "scenario", "coupon.batch");
+        }
         try {
             if (!mqEnabled) {
                 log.debug("批量发券 MQ 消费已禁用，跳过消息: taskId={}", msg != null ? msg.getTaskId() : "null");
@@ -47,6 +61,7 @@ public class CouponBatchConsumer {
             }
 
             couponBatchIssueService.executeBatchTask(msg.getTaskId());
+            MetricsConfig.increment(meterRegistry, "homestay.mq.consumed", "scenario", "coupon.batch");
             channel.basicAck(deliveryTag, false);
 
         } catch (Exception e) {

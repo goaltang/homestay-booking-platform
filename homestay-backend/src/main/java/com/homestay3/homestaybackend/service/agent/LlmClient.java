@@ -3,6 +3,7 @@ package com.homestay3.homestaybackend.service.agent;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homestay3.homestaybackend.config.AgentProperties;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -34,10 +35,12 @@ public class LlmClient {
     private final AgentProperties properties;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
+    private final MeterRegistry meterRegistry;
 
-    public LlmClient(AgentProperties properties, ObjectMapper objectMapper) {
+    public LlmClient(AgentProperties properties, ObjectMapper objectMapper, MeterRegistry meterRegistry) {
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.meterRegistry = meterRegistry;
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         int timeoutMillis = (int) Duration.ofSeconds(Math.max(1, properties.getTimeoutSeconds())).toMillis();
         factory.setConnectTimeout(timeoutMillis);
@@ -80,10 +83,12 @@ public class LlmClient {
             responseBody = response.getBody();
         } catch (RestClientException e) {
             log.error("LLM 调用失败: {}", e.getMessage());
+            meterRegistry.counter("homestay.llm.requests", "result", "failure").increment();
             throw new AgentLlmException("LLM 调用失败: " + e.getMessage(), e);
         }
 
         if (responseBody == null || responseBody.isBlank()) {
+            meterRegistry.counter("homestay.llm.requests", "result", "failure").increment();
             throw new AgentLlmException("LLM 返回空响应");
         }
 
@@ -91,12 +96,15 @@ public class LlmClient {
             JsonNode root = objectMapper.readTree(responseBody);
             JsonNode content = root.path("choices").path(0).path("message").path("content");
             if (content.isMissingNode() || content.isNull()) {
+                meterRegistry.counter("homestay.llm.requests", "result", "failure").increment();
                 throw new AgentLlmException("LLM 响应缺少 choices[0].message.content");
             }
+            meterRegistry.counter("homestay.llm.requests", "result", "success").increment();
             return content.asText();
         } catch (AgentLlmException e) {
             throw e;
         } catch (Exception e) {
+            meterRegistry.counter("homestay.llm.requests", "result", "failure").increment();
             throw new AgentLlmException("LLM 响应解析失败: " + e.getMessage(), e);
         }
     }

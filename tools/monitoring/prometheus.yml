@@ -1,0 +1,14 @@
+# Prometheus 抓取配置：抓取宿主 WSL/宿主机上 8081 端口的后端 Actuator 指标
+# 注意：WSL2 / Docker Desktop 场景下容器通过 host.docker.internal 访问宿主机，
+# 后端必须在宿主机以 mvn spring-boot:run 启动（端口 8081）。
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: homestay-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["host.docker.internal:8081"]
+        labels:
+          app: homestay-backend

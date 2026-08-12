@@ -9,6 +9,8 @@ import com.homestay3.homestaybackend.repository.HomestayRepository;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.repository.ReviewRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.CacheEvict;
@@ -35,10 +37,21 @@ public class HomeService {
     private final BannerRepository bannerRepository;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final MeterRegistry meterRegistry;
     private final @Qualifier("taskExecutor") java.util.concurrent.Executor taskExecutor;
 
     @Cacheable("homeStats")
     public HomeStatsDTO getStats() {
+        // 方法级耗时埋点（Timer.Sample 手动计时，异常路径也由 finally 兜底记录）
+        Timer.Sample sample = Timer.start(meterRegistry);
+        try {
+            return doGetStats();
+        } finally {
+            sample.stop(meterRegistry.timer("homestay.home.stats.duration"));
+        }
+    }
+
+    private HomeStatsDTO doGetStats() {
         // 近30天订单数查询的时间范围
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         LocalDateTime now = LocalDateTime.now();

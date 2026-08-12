@@ -8,6 +8,7 @@ import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.service.IOrderTimeoutService;
 import com.homestay3.homestaybackend.service.NotificationService;
 import com.homestay3.homestaybackend.service.OrderService;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,6 +31,7 @@ public class OrderTimeoutService implements IOrderTimeoutService {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final NotificationService notificationService;
+    private final MeterRegistry meterRegistry;
 
     /**
      * 超时配置（单位：小时）
@@ -50,10 +52,11 @@ public class OrderTimeoutService implements IOrderTimeoutService {
     private int warningBeforeTimeoutMinutes;
 
     public OrderTimeoutService(OrderRepository orderRepository, OrderService orderService,
-                               NotificationService notificationService) {
+                               NotificationService notificationService, MeterRegistry meterRegistry) {
         this.orderRepository = orderRepository;
         this.orderService = orderService;
         this.notificationService = notificationService;
+        this.meterRegistry = meterRegistry;
     }
 
     /**
@@ -153,6 +156,7 @@ public class OrderTimeoutService implements IOrderTimeoutService {
                             OrderStatus.CANCELLED_SYSTEM.name(),
                             "系统自动取消：" + pendingTimeoutHours + "小时内未确认");
                     log.info("已自动取消超时待确认订单: {}", order.getOrderNumber());
+                    meterRegistry.counter("homestay.order.timeout.cancelled").increment();
 
                     sendOrderNotification(
                             order.getGuest().getId(),
@@ -187,6 +191,7 @@ public class OrderTimeoutService implements IOrderTimeoutService {
                             OrderStatus.CANCELLED_SYSTEM.name(),
                             "系统自动取消：" + confirmedTimeoutHours + "小时内未支付");
                     log.info("已自动取消超时未支付订单: {}", order.getOrderNumber());
+                    meterRegistry.counter("homestay.order.timeout.cancelled").increment();
 
                     sendOrderNotification(
                             order.getGuest().getId(),
@@ -221,6 +226,7 @@ public class OrderTimeoutService implements IOrderTimeoutService {
                             OrderStatus.CANCELLED_SYSTEM.name(),
                             "系统自动取消：支付超时");
                     log.info("已自动取消支付超时订单: {}", order.getOrderNumber());
+                    meterRegistry.counter("homestay.order.timeout.cancelled").increment();
 
                     sendOrderNotification(
                             order.getGuest().getId(),
