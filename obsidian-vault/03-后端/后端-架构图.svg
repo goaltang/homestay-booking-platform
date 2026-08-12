@@ -1,8 +1,7 @@
-<svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hs-arch-title hs-arch-desc">
+<svg viewBox="0 0 1000 560" width="1000" height="560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hs-arch-title hs-arch-desc">
       <title id="hs-arch-title">homestay 后端架构总览</title>
       <desc id="hs-arch-desc">Spring Boot 后端分层架构：接入层、业务层、数据层与基础设施，含 RabbitMQ 延迟/重试队列、Redis 缓存、ES 搜索。</desc>
-      <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap');</style>
-  <defs>
+      <defs>
         <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
         <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
       </defs>
