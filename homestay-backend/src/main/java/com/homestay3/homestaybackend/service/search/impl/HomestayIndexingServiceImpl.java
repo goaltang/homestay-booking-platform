@@ -7,6 +7,7 @@ import com.homestay3.homestaybackend.service.search.HomestayIndexingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 import org.springframework.data.elasticsearch.core.IndexOperations;
@@ -40,6 +41,7 @@ public class HomestayIndexingServiceImpl implements HomestayIndexingService {
     private static final long AVAILABILITY_CACHE_MS = 30_000;
 
     @Override
+    @Transactional(readOnly = true)
     public int rebuildIndex() {
         log.info("Starting full index rebuild for homestays...");
 
@@ -74,6 +76,7 @@ public class HomestayIndexingServiceImpl implements HomestayIndexingService {
 
     @Override
     @Async("taskExecutor")
+    @Transactional(readOnly = true)
     public void syncHomestay(Long homestayId) {
         try {
             Homestay homestay = homestayRepository.findById(homestayId).orElse(null);
@@ -92,6 +95,7 @@ public class HomestayIndexingServiceImpl implements HomestayIndexingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void syncHomestays(List<Long> homestayIds) {
         if (homestayIds == null || homestayIds.isEmpty()) {
             return;
