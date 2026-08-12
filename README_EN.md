@@ -65,6 +65,7 @@ This workflow lets a single engineer deliver all three frontends (guest / host /
 | API docs | springdoc-openapi 2.2.0 auto-generates OpenAPI 3 docs, Swagger UI out of the box | Visit `http://localhost:8081/swagger-ui.html` after startup |
 | Dashboard real MoM | Stats API exposes yesterday's data; frontend computes genuine MoM trends | Replaces random-number trends with trustworthy data |
 | Admin build splitting | manualChunks + Element Plus on-demand imports (unplugin) | Main chunk 1.1MB → 35KB, white-screen fix (removed transition wrapper around lazy components) |
+| Observability stack | Actuator + Micrometer + Prometheus + Grafana, 6 business metric types (rate limit / MQ / order timeout / LLM / home stats) | Rate-limit triggers, MQ retry backlog, API P95 all visible in Grafana — degradation/retry/parallelism effects are provable |
 
 ### Message Architecture (RabbitMQ - Three Scenarios)
 
@@ -94,8 +95,9 @@ flowchart LR
 | Admin Frontend | Vue 3, TypeScript, Vite, Vue Router, Pinia, Element Plus, Axios, ECharts |
 | Backend | Java 17, Spring Boot 3.0.2, Spring Web, Spring Security, Spring Data JPA, Spring Validation |
 | Data & Cache | MySQL 8.0, Redis, Redisson, Flyway, Elasticsearch |
-| Communication & Integration | JWT, WebSocket (STOMP), Alipay SDK, SMTP Email |
-| Build Tools | Maven, npm, MapStruct, Lombok, Docker Compose |
+| Communication & Integration | JWT, WebSocket (STOMP), RabbitMQ (AMQP), Alipay SDK, SMTP email |
+| Observability | Spring Boot Actuator, Micrometer, Prometheus, Grafana |
+| Engineering Tools | Maven, npm, MapStruct, Lombok, Docker Compose |
 
 ## Architecture
 
@@ -177,6 +179,7 @@ flowchart LR
 | Rate Limiting | `@RateLimit` annotation + aspect (Redis Lua fixed-window counter), 429 on overflow, degrades gracefully if Redis fails |
 | API Documentation | springdoc-openapi auto-generates OpenAPI 3 docs; Swagger UI out of the box |
 | Performance | Home stats parallelized with five `CompletableFuture` calls; API timing aspect (ApiTimingAspect) |
+| Observability | Actuator health/metrics endpoints + Micrometer business metrics (rate limit / MQ / order timeout / LLM / home stats), Prometheus scrape + Grafana dashboards |
 | Real-time Communication | WebSocket (STOMP) for chat messages and notification push |
 | Search Service | Elasticsearch-based property search with incremental sync and full rebuild |
 | Recommendation Service | Multi-strategy engine + user profiling + behavior tracking, with caching and degradation |
@@ -317,6 +320,14 @@ docker-compose up -d elasticsearch
 
 > Note: `elasticsearch.enabled=false` only disables index sync (search falls back to JPA), but ElasticsearchRepository still initializes — **the ES container must stay online**, otherwise the backend fails to start.
 
+**Monitoring (optional, Prometheus + Grafana)** — start via Docker Compose:
+
+```bash
+docker-compose up -d prometheus grafana
+```
+
+> Prometheus UI: `http://localhost:9090`; Grafana: `http://localhost:3000` (default `admin / admin123`, datasource and dashboard auto-provisioned). Prometheus scrapes the backend at `host.docker.internal:8081/actuator/prometheus`, so run the backend on the host with `mvn spring-boot:run`.
+
 ### 3. Configure the Backend
 
 Copy the config template and customize:
@@ -391,6 +402,7 @@ Key settings for local development:
 | `agent.llm.*` | AI support agent LLM config (enabled, model, timeout, API key) |
 | `*.mq-enabled` | Per-scenario MQ switches: `order.timeout` / `coupon.batch` / `notification.push`; set to `false` to use scheduled/degraded paths |
 | `springdoc.*` | API docs config (optional; defaults to `/swagger-ui.html` + `/v3/api-docs`) |
+| `management.*` | Actuator endpoint config (`/actuator/prometheus` exposes health/info/prometheus/metrics by default) |
 
 Frontend environment variables:
 

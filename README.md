@@ -65,6 +65,7 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 | API 接口文档 | springdoc-openapi 2.2.0 自动生成，Swagger UI 开箱即用 | 启动后访问 `http://localhost:8081/swagger-ui.html` |
 | 仪表盘真实环比 | 统计接口补充昨日数据，前端计算真实环比 | 取代随机数趋势，数据可信 |
 | 管理后台构建分包 | manualChunks 拆包 + Element Plus 按需引入（unplugin） | 主 chunk 1.1MB → 35KB，白屏修复（移除 transition 包裹懒加载组件） |
+| 可观测性三件套 | Actuator + Micrometer + Prometheus + Grafana，业务埋点 6 类（限流/MQ/订单超时/LLM/首页统计） | 限流触发、MQ 重试积压、接口 P95 在 Grafana 可视化，降级/重试/并行化效果可验证 |
 
 ### 消息架构（RabbitMQ 三场景）
 
@@ -95,6 +96,7 @@ flowchart LR
 | 后端 | Java 17、Spring Boot 3.0.2、Spring Web、Spring Security、Spring Data JPA、Spring Validation |
 | 数据与缓存 | MySQL 8.0、Redis、Redisson、Flyway、Elasticsearch |
 | 通信与集成 | JWT、WebSocket（STOMP）、RabbitMQ（AMQP）、支付宝 SDK、SMTP 邮件 |
+| 可观测性 | Spring Boot Actuator、Micrometer、Prometheus、Grafana |
 | 工程工具 | Maven、npm、MapStruct、Lombok、Docker Compose |
 
 ## 系统架构
@@ -177,6 +179,7 @@ flowchart LR
 | 接口限流 | `@RateLimit` 注解 + 切面（Redis Lua 固定窗口），超限 429，Redis 异常降级放行 |
 | 接口文档 | springdoc-openapi 自动生成 OpenAPI 3 文档，Swagger UI 开箱即用 |
 | 性能优化 | 首页统计五路 `CompletableFuture` 并行化、接口耗时统计切面（ApiTimingAspect） |
+| 可观测性 | Actuator 健康/指标端点 + Micrometer 业务埋点（限流/MQ/订单超时/LLM/首页统计），Prometheus 抓取 + Grafana 可视化 |
 | 实时通信 | 使用 WebSocket（STOMP 协议）支持聊天消息和通知的实时推送 |
 | 搜索服务 | 基于 Elasticsearch 构建房源搜索引擎，支持增量同步与全量重建 |
 | 推荐服务 | 多策略推荐引擎 + 用户画像服务 + 行为追踪，支持缓存与降级 |
@@ -337,6 +340,14 @@ docker-compose up -d rabbitmq
 
 > 管理台地址：`http://localhost:15672`（默认账号 `homestay / homestay123`，可在 compose 中修改）。订单超时采用「RabbitMQ 延迟队列为主 + 定时轮询兜底」双保险：MQ 不可用时，轮询任务仍会取消超时订单，因此不启动 RabbitMQ 也不影响系统正确性。
 
+**监控（可选，Prometheus + Grafana）** — 通过 Docker Compose 启动：
+
+```bash
+docker-compose up -d prometheus grafana
+```
+
+> Prometheus 抓取地址：`http://localhost:9090`；Grafana：`http://localhost:3000`（默认账号 `admin / admin123`，数据源与 Dashboard 已自动配置）。Prometheus 通过 `host.docker.internal:8081` 抓取后端 `/actuator/prometheus`，因此后端需在宿主机以 `mvn spring-boot:run` 启动。
+
 ### 3. 配置后端
 
 复制配置模板并修改：
@@ -414,6 +425,7 @@ homestay-backend/src/main/resources/application.properties
 | `agent.llm.*` | AI 客服 LLM 配置（开关、模型、超时、API Key） |
 | `*.mq-enabled` | 三个 MQ 场景开关：`order.timeout` / `coupon.batch` / `notification.push`，设为 `false` 走定时任务/降级路径 |
 | `springdoc.*` | 接口文档配置（可选，默认 `/swagger-ui.html` + `/v3/api-docs`） |
+| `management.*` | Actuator 指标端点配置（`/actuator/prometheus` 默认已暴露 health/info/prometheus/metrics） |
 
 前端环境变量：
 

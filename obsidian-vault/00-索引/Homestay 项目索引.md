@@ -95,6 +95,7 @@ homestay3/
 - [[后端-支付系统]] - 支付宝支付集成
 - [[后端-安全认证]] - Spring Security + JWT 认证
 - [[后端-横切能力]] - 注解化横切能力：@RateLimit / @OperationLog / @RedisLock / ApiTimingAspect / springdoc
+- [[后端-可观测性]] - Actuator + Micrometer + Prometheus + Grafana：6 类业务埋点、监控基建、排障记录
 
 ## 工程实践
 
