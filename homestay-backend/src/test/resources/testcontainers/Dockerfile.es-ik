@@ -3,6 +3,6 @@
 # 与生产保持一致（生产 ES 同样安装 IK，见 docker-compose.yml + AGENTS.md）
 FROM docker.elastic.co/elasticsearch/elasticsearch:8.5.0
 
-# 安装 IK 插件（与 ES 8.5.0 版本匹配）
+# 安装 IK 插件（与 ES 8.5.0 版本匹配；GitHub medcl 仓库已迁移 infinilabs 且 8.x release 资产丢失，改用 infini 官方 CDN）
 RUN /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch \
-    https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v8.5.0/elasticsearch-analysis-ik-8.5.0.zip
+    https://get.infini.cloud/elasticsearch/analysis-ik/8.5.0
