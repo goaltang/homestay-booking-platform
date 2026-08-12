@@ -1083,11 +1083,15 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
 
     private StringBuilder buildCommonElasticsearchFilters(HomestaySearchRequest request) {
         double minPrice = request.getMinPrice() != null ? request.getMinPrice().doubleValue() : 0.0;
-        double maxPrice = request.getMaxPrice() != null ? request.getMaxPrice().doubleValue() : Double.MAX_VALUE;
         int minGuests = request.getMinGuests() != null ? request.getMinGuests() : 1;
 
         StringBuilder filters = new StringBuilder();
-        filters.append(String.format("{\"range\":{\"price\":{\"gte\":%.2f,\"lte\":%.2f}}},", minPrice, maxPrice));
+        // 无上限时省略 lte：Double.MAX_VALUE 经 %.2f 序列化成 312 位数字，ES JSON 解析失败（all shards failed）
+        if (request.getMaxPrice() != null) {
+            filters.append(String.format("{\"range\":{\"price\":{\"gte\":%.2f,\"lte\":%.2f}}},", minPrice, request.getMaxPrice().doubleValue()));
+        } else {
+            filters.append(String.format("{\"range\":{\"price\":{\"gte\":%.2f}}},", minPrice));
+        }
         filters.append(String.format("{\"range\":{\"maxGuests\":{\"gte\":%d}}},", minGuests));
 
         if (StringUtils.hasText(request.getProvinceCode())) {
@@ -1163,7 +1167,7 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
         }
 
         return String.format(
-                "{\"function_score\":{\"query\":{\"bool\":{\"must\":[{\"match\":{\"status\":\"ACTIVE\"}},{\"multi_match\":{\"query\":\"%s\",\"fields\":[\"title^3\",\"description^2\",\"addressDetail^2\"],\"type\":\"best_fields\",\"fuzziness\":\"AUTO\"}}],\"filter\":[%s]}},\"functions\":[{\"field_value_factor\":{\"field\":\"rating\",\"factor\":0.20,\"modifier\":\"log1p\",\"missing\":0}},{\"field_value_factor\":{\"field\":\"bookingCount\",\"factor\":0.075,\"modifier\":\"log1p\",\"missing\":0}},{\"field_value_factor\":{\"field\":\"favoriteCount\",\"factor\":0.075,\"modifier\":\"log1p\",\"missing\":0}},{\"gauss\":{\"createdAt\":{\"origin\":\"now\",\"scale\":\"30d\",\"decay\":0.5}}}],\"score_mode\":\"sum\",\"boost_mode\":\"multiply\"}}",
+                "{\"function_score\":{\"query\":{\"bool\":{\"must\":[{\"match\":{\"status\":\"ACTIVE\"}},{\"multi_match\":{\"query\":\"%s\",\"fields\":[\"title^3\",\"description^2\",\"addressDetail^2\",\"amenities\"],\"type\":\"best_fields\",\"fuzziness\":\"AUTO\"}}],\"filter\":[%s]}},\"functions\":[{\"field_value_factor\":{\"field\":\"rating\",\"factor\":0.20,\"modifier\":\"log1p\",\"missing\":0}},{\"field_value_factor\":{\"field\":\"bookingCount\",\"factor\":0.075,\"modifier\":\"log1p\",\"missing\":0}},{\"field_value_factor\":{\"field\":\"favoriteCount\",\"factor\":0.075,\"modifier\":\"log1p\",\"missing\":0}},{\"gauss\":{\"createdAt\":{\"origin\":\"now\",\"scale\":\"30d\",\"decay\":0.5}}}],\"score_mode\":\"sum\",\"boost_mode\":\"multiply\"}}",
                 keyword, filterStr);
     }
 

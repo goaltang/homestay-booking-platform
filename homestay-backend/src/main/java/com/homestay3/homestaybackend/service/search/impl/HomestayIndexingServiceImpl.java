@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -234,8 +235,16 @@ public class HomestayIndexingServiceImpl implements HomestayIndexingService {
                 .favoriteCount(favoriteCount != null ? favoriteCount : 0)
                 .location(location)
                 .status(homestay.getStatus() != null ? homestay.getStatus().name() : null)
-                .createdAt(homestay.getCreatedAt())
-                .updatedAt(homestay.getUpdatedAt())
+                .createdAt(toSecondPrecision(homestay.getCreatedAt()))
+                .updatedAt(toSecondPrecision(homestay.getUpdatedAt()))
                 .build();
+    }
+
+    /**
+     * 截断到秒精度：ES mapping 用 date_hour_minute_second（yyyy-MM-dd'T'HH:mm:ss），
+     * 而 LocalDateTime.now() 带纳秒，直接 toString() 序列化会被 ES 拒收（文档写入失败）。
+     */
+    private LocalDateTime toSecondPrecision(LocalDateTime time) {
+        return time != null ? time.withNano(0) : null;
     }
 }
