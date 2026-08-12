@@ -71,6 +71,8 @@ public class HomestayIndexingServiceImpl implements HomestayIndexingService {
             homestayDocumentRepository.saveAll(documents);
             log.info("Indexed {} homestays into ES", documents.size());
         }
+        // 显式 refresh：默认 refresh_interval=1s，重建后立即搜索会查不到刚写入的文档
+        indexOps.refresh();
         return documents.size();
     }
 
@@ -87,6 +89,7 @@ public class HomestayIndexingServiceImpl implements HomestayIndexingService {
             HomestayDocument document = convertToDocument(homestay);
             if (document != null) {
                 homestayDocumentRepository.save(document);
+                elasticsearchOperations.indexOps(IndexCoordinates.of("homestay_index")).refresh();
                 log.debug("Synced homestay {} to ES", homestayId);
             }
         } catch (Exception e) {
@@ -107,6 +110,7 @@ public class HomestayIndexingServiceImpl implements HomestayIndexingService {
                 .collect(Collectors.toList());
         if (!documents.isEmpty()) {
             homestayDocumentRepository.saveAll(documents);
+            elasticsearchOperations.indexOps(IndexCoordinates.of("homestay_index")).refresh();
             log.info("Batch synced {} homestays to ES", documents.size());
         }
     }
