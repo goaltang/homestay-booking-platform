@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 使用 Testcontainers 启动真实 ES 实例。
  * 若当前环境无 Docker，则自动跳过全部测试。
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest
 @ActiveProfiles("test")
 class HomestaySearchServiceEsIntegrationTest {
 
