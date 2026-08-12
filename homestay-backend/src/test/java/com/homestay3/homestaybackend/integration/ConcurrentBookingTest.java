@@ -13,13 +13,8 @@ import com.homestay3.homestaybackend.repository.UserRepository;
 import com.homestay3.homestaybackend.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -39,8 +34,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * 订单并发超卖防护测试
@@ -55,34 +48,6 @@ import static org.mockito.Mockito.*;
 @ActiveProfiles("test")
 @TestPropertySource(properties = "elasticsearch.enabled=false")
 class ConcurrentBookingTest {
-
-    /**
-     * 手动提供 Mock RedissonClient，覆盖 Spring Boot 自动配置
-     */
-    @TestConfiguration
-    static class MockRedissonConfig {
-        @Bean
-        @Primary
-        public RedissonClient redissonClient() {
-            RLock mockLock = mock(RLock.class);
-            RLock mockMultiLock = mock(RLock.class);
-
-            try {
-                doReturn(true).when(mockLock).tryLock(anyLong(), anyLong(), any(TimeUnit.class));
-                doReturn(true).when(mockMultiLock).tryLock(anyLong(), anyLong(), any(TimeUnit.class));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            doNothing().when(mockMultiLock).unlock();
-
-            RedissonClient mockClient = mock(RedissonClient.class);
-            when(mockClient.getLock(anyString())).thenReturn(mockLock);
-            // varargs 方法用 any() 匹配整个数组参数
-            when(mockClient.getMultiLock(any())).thenReturn(mockMultiLock);
-
-            return mockClient;
-        }
-    }
 
     @Autowired
     private OrderService orderService;
