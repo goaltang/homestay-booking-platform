@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(properties = "elasticsearch.enabled=true")
+@TestPropertySource(properties = {"elasticsearch.enabled=true", "spring.data.elasticsearch.repositories.enabled=true"})
 class HomestaySearchServiceEsIntegrationTest {
 
     static ElasticsearchContainer elasticsearch;
