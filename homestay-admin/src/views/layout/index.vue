@@ -86,9 +86,8 @@
         </el-header>
         <el-main>
           <router-view v-slot="{ Component }">
-            <transition name="fade" mode="out-in">
-              <component :is="Component" />
-            </transition>
+            <!-- 不用 transition 包异步组件：mode="out-in" + 懒加载页面快速连续切换会卡死 router-view（旧组件退出后新组件不挂载，白屏）——切换反馈由顶部进度条承担 -->
+            <component :is="Component" />
           </router-view>
         </el-main>
       </el-container>
@@ -236,15 +235,5 @@ const handleLogout = () => {
 .el-main {
   background-color: #f0f2f5;
   padding: 20px;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>
