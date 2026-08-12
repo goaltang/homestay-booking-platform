@@ -450,6 +450,15 @@ mvn clean package
 
 > ⚠️ 测试安全红线：所有测试必须走 `application-test.properties`（H2 内存库），禁止连接真实 MySQL（历史曾发生测试清空生产数据事故）。
 
+### CI/CD（GitHub Actions）
+
+[![CI](https://github.com/goaltang/homestay-booking-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/goaltang/homestay-booking-platform/actions/workflows/ci.yml)
+
+- 后端：JDK17 + H2 零外部依赖测试，**429 个测试全绿**（含 2 个真实 ES 集成测试：Testcontainers 起 `homestay-es-ik` 镜像，验证 IK 分词索引 + 搜索全链路；本地无 Docker 自动跳过）
+- 前端：homestay-front / homestay-admin 双构建（vue-tsc 类型检查 + vite build）
+- 测试镜像 `Dockerfile.es-ik` 自建：官方 ES 8.5.0 + IK 插件（infini CDN 下载），与生产环境一致
+- 攻坚记录（16 commit / 12 个本地环境掩盖的真实缺陷）：`obsidian-vault/05-工程实践/CI-CD攻坚-从零到全绿.md`
+
 ### 用户端
 
 ```bash

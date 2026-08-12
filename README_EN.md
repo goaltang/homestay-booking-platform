@@ -427,6 +427,15 @@ Test suite (60 test classes, all on the H2 in-memory DB):
 
 > ⚠️ Test safety rule: every test must use `application-test.properties` (H2 in-memory), never the real MySQL (there was a past incident where tests wiped production data).
 
+### CI/CD (GitHub Actions)
+
+[![CI](https://github.com/goaltang/homestay-booking-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/goaltang/homestay-booking-platform/actions/workflows/ci.yml)
+
+- Backend: JDK17 + H2 zero-external-dependency tests — **429 tests all green**, including 2 real Elasticsearch integration tests (Testcontainers starts a `homestay-es-ik` image, verifying the full IK-tokenizer indexing + search chain; auto-skipped when Docker is unavailable)
+- Frontend: both homestay-front and homestay-admin builds (vue-tsc type check + vite build)
+- Test image `Dockerfile.es-ik` is self-built: official ES 8.5.0 + IK plugin (downloaded from the infini CDN), matching production
+- Battle log (16 commits / 12 real defects hidden by the local environment): `obsidian-vault/05-工程实践/CI-CD攻坚-从零到全绿.md`
+
 ### Guest App
 
 ```bash
