@@ -75,7 +75,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/system/**").permitAll()
                         .requestMatchers("/api/tracking/**").permitAll()
                         .requestMatchers("/api/payment/*/notify").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/payment/*/status").permitAll()
                         .requestMatchers("/api/payment/**").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

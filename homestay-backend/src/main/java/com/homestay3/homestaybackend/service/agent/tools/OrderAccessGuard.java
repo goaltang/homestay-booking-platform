@@ -15,9 +15,9 @@ public final class OrderAccessGuard {
     }
 
     /**
-     * 按 orderId 加载订单并校验访问权限
+     * 按 orderId 加载订单并校验访问权限（客人或房东）
      */
-    static Order requireAccessibleOrder(OrderRepository orderRepository, Long orderId, String username) {
+    public static Order requireAccessibleOrder(OrderRepository orderRepository, Long orderId, String username) {
         if (orderId == null) {
             throw new IllegalArgumentException("缺少参数 orderId");
         }
