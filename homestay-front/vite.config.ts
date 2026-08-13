@@ -60,6 +60,11 @@ export default defineConfig(({ mode }) => {
           target: "http://127.0.0.1:8081",
           changeOrigin: true,
         },
+        "/ws": {
+          target: "ws://127.0.0.1:8081",
+          ws: true,
+          changeOrigin: true,
+        },
       },
     },
     define: {

@@ -51,7 +51,7 @@ export function getHomestayAllImages(homestay: Homestay): string[] {
  */
 export function ensureImageUrl(
   imagePath: string | null | undefined,
-  baseUrl: string = "http://localhost:8080"
+  baseUrl: string = "http://localhost:8081"
 ): string {
   if (!imagePath || !imagePath.trim()) {
     return "/placeholder-image.jpg";

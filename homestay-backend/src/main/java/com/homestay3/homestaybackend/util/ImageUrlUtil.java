@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @Component
 public class ImageUrlUtil {
 
-    @Value("${app.server.url:http://localhost:8080}")
+    @Value("${app.server.url:http://localhost:8081}")
     private String serverUrl;
 
     /**

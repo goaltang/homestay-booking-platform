@@ -420,7 +420,7 @@ const hostSince = ref('')
 const activeTab = ref('basic')
 
 // 获取API服务器基础URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
 
 // 统计数据
 const statistics = reactive({

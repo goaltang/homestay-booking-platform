@@ -18,7 +18,7 @@ interface UnwrappedRequest extends Omit<AxiosInstance, "request" | "get" | "dele
 
 // 创建一个带类型的request实例
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8081",
   timeout: 10000,
 }) as UnwrappedRequest;
 
