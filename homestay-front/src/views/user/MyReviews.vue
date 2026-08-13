@@ -33,12 +33,12 @@
                     <!-- 细分评分 -->
                     <div class="detailed-ratings" v-if="review.cleanlinessRating || review.accuracyRating">
                         <el-row :gutter="10">
-                            <el-col :span="8" v-if="review.cleanlinessRating"><span class="det-label">清洁度</span><el-rate :model-value="review.cleanlinessRating" disabled size="small" /></el-col>
-                            <el-col :span="8" v-if="review.accuracyRating"><span class="det-label">准确性</span><el-rate :model-value="review.accuracyRating" disabled size="small" /></el-col>
-                            <el-col :span="8" v-if="review.communicationRating"><span class="det-label">沟通</span><el-rate :model-value="review.communicationRating" disabled size="small" /></el-col>
-                            <el-col :span="8" v-if="review.locationRating"><span class="det-label">位置</span><el-rate :model-value="review.locationRating" disabled size="small" /></el-col>
-                            <el-col :span="8" v-if="review.checkInRating"><span class="det-label">入住</span><el-rate :model-value="review.checkInRating" disabled size="small" /></el-col>
-                            <el-col :span="8" v-if="review.valueRating"><span class="det-label">性价比</span><el-rate :model-value="review.valueRating" disabled size="small" /></el-col>
+                            <el-col :xs="24" :sm="8" v-if="review.cleanlinessRating"><span class="det-label">清洁度</span><el-rate :model-value="review.cleanlinessRating" disabled size="small" /></el-col>
+                            <el-col :xs="24" :sm="8" v-if="review.accuracyRating"><span class="det-label">准确性</span><el-rate :model-value="review.accuracyRating" disabled size="small" /></el-col>
+                            <el-col :xs="24" :sm="8" v-if="review.communicationRating"><span class="det-label">沟通</span><el-rate :model-value="review.communicationRating" disabled size="small" /></el-col>
+                            <el-col :xs="24" :sm="8" v-if="review.locationRating"><span class="det-label">位置</span><el-rate :model-value="review.locationRating" disabled size="small" /></el-col>
+                            <el-col :xs="24" :sm="8" v-if="review.checkInRating"><span class="det-label">入住</span><el-rate :model-value="review.checkInRating" disabled size="small" /></el-col>
+                            <el-col :xs="24" :sm="8" v-if="review.valueRating"><span class="det-label">性价比</span><el-rate :model-value="review.valueRating" disabled size="small" /></el-col>
                         </el-row>
                     </div>
                     <!-- 评价图片 -->

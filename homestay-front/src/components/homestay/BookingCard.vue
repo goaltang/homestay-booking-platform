@@ -1136,6 +1136,35 @@ watch(localGuests, (newGuests) => {
         transform: translateY(0);
     }
 }
+
+/* ================= 移动端适配 ================= */
+@media (max-width: 768px) {
+    /* 详情页移动端为单列流式布局，取消桌面侧栏的 sticky 定位 */
+    .booking-card {
+        position: static;
+        top: auto;
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    /* 触屏无 hover，去掉位移效果避免残留 */
+    .booking-card:hover {
+        transform: none;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .booking-card-header {
+        margin-bottom: 16px;
+    }
+
+    .price {
+        font-size: 24px;
+    }
+
+    .booking-button {
+        height: 44px;
+    }
+}
 </style>
 
 <!-- 全局样式：覆盖 teleported 到 body 的 DatePicker popper -->

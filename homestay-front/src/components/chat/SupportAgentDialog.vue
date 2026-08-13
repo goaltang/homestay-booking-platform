@@ -2,7 +2,7 @@
   <el-dialog
     v-model="agentStore.dialogVisible"
     title="AI 智能客服"
-    width="480px"
+    width="min(480px, calc(100vw - 32px))"
     :before-close="handleClose"
     :close-on-click-modal="false"
     @open="handleOpen"
@@ -347,5 +347,16 @@ watch(
 
 .message-input .el-textarea {
   flex: 1;
+}
+
+/* 移动端：限制聊天容器高度，避免撑出屏幕 */
+@media (max-width: 768px) {
+  .chat-container {
+    height: min(500px, 60vh);
+  }
+
+  .message-list {
+    max-height: none;
+  }
 }
 </style>

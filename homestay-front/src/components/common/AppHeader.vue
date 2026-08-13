@@ -6,6 +6,11 @@
                 <span class="logo-text">民宿预订</span>
             </div>
 
+            <!-- 移动端搜索按钮（桌面隐藏） -->
+            <button class="mobile-search-btn" @click="isSearchExpanded = true" aria-label="搜索">
+                <el-icon :size="20"><Search /></el-icon>
+            </button>
+
             <!-- 中间迷你搜索滑块 (仅页面滚动后或非首页显示) -->
             <transition name="el-fade-in">
                 <div class="mini-search-bar" v-show="showMiniSearch && !isSearchExpanded" @click="handleMiniSearchClick">
@@ -371,6 +376,27 @@ const handleAvatarError = (e: Event) => {
     box-shadow: 0 2px 4px rgba(0,0,0,0.18);
 }
 
+/* 移动端搜索按钮：默认隐藏，仅小屏显示 */
+.mobile-search-btn {
+    display: none;
+    grid-column: 2;
+    justify-self: center;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color, #dcdfe6);
+    background-color: #fff;
+    color: var(--text-primary, #303133);
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+}
+
+.mobile-search-btn:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
 .host-link {
     font-size: 14px;
     font-weight: 500;
@@ -460,5 +486,46 @@ const handleAvatarError = (e: Event) => {
 .fade-slide-leave-to {
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
+}
+
+/* ================= 移动端适配 ================= */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 12px 0;
+    }
+
+    .header-content {
+        padding: 0 16px;
+        grid-template-columns: auto 1fr auto;
+    }
+
+    /* 移动端隐藏中间迷你搜索、搜索 tab 和文字链接，改用搜索按钮 */
+    .mini-search-bar,
+    .search-tabs,
+    .map-search-link,
+    .host-link {
+        display: none;
+    }
+
+    .mobile-search-btn {
+        display: inline-flex;
+    }
+
+    .logo-image {
+        height: 28px;
+    }
+
+    .logo-text {
+        font-size: 17px;
+    }
+
+    .user-avatar {
+        padding: 6px;
+    }
+
+    /* 展开的搜索面板贴住 header 底部 */
+    .expanded-search-container {
+        top: 100%;
+    }
 }
 </style>
