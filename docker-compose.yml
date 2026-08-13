@@ -1,7 +1,44 @@
-﻿version: '3.8'
+﻿# ============================================
+# homestay3 全套部署（生产形态）
+# 用法：cp .env.example .env（填真实值）→ docker compose up -d --build
+# 端口：后端 8081 ｜ 前端 8088 ｜ 管理端 8089 ｜ ES 9200 ｜ MQ 5672/15672 ｜ 监控 9090/3000
+# 说明：8080 常被本机 Dify 占用，前端/管理端避免使用
+# ============================================
+
 services:
+  # ---------- 基础设施 ----------
+  mysql:
+    image: mysql:8.0
+    container_name: homestay-mysql
+    environment:
+      MYSQL_DATABASE: homestay_db
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 空库首次初始化：导入全量表结构（幂等 IF NOT EXISTS），Flyway 启动时 baseline 到 V49 跳过迁移链
+      - ./homestay-backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: homestay-redis
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-}"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
   elasticsearch:
-    image: elasticsearch:8.5.3
+    image: homestay-es-ik:test   # 带 IK 分词插件（本地构建；生产可替换为自建带 IK 的镜像）
     container_name: homestay-es
     environment:
       - discovery.type=single-node
@@ -11,15 +48,61 @@ services:
       - "9200:9200"
     volumes:
       - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: homestay-rabbitmq
     environment:
-      - RABBITMQ_DEFAULT_USER=homestay
-      - RABBITMQ_DEFAULT_PASS=homestay123
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-homestay}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-homestay123}
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  # ---------- 应用 ----------
+  backend:
+    build: ./homestay-backend
+    container_name: homestay-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+
+  front:
+    build: ./homestay-front
+    container_name: homestay-front
+    ports:
+      - "8088:80"
+    depends_on:
+      - backend
+
+  admin:
+    build: ./homestay-admin
+    container_name: homestay-admin
+    ports:
+      - "8089:80"
+    depends_on:
+      - backend
+
+  # ---------- 监控（可选） ----------
   prometheus:
     image: prom/prometheus:v2.45.0
     container_name: homestay-prometheus
@@ -27,6 +110,7 @@ services:
       - ./tools/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+
   grafana:
     image: grafana/grafana:10.1.0
     container_name: homestay-grafana
@@ -41,5 +125,8 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+
 volumes:
   es-data:
+  mysql-data:
+  redis-data:
