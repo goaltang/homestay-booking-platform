@@ -10,6 +10,13 @@
 - 前端：`cd homestay-front && npm run dev`（5173）｜ `cd homestay-admin && npm run dev`（5174）｜ `npm run build`（vue-tsc 类型检查 + vite build）
 - 一键：根目录 `npm run dev` / `npm run dev:admin` / `npm run dev:all`
 
+## 支付与网络环境坑（2026-08 实测踩坑）
+
+- **WSL 直连支付宝沙箱网关超时**（Clash fake-ip 问题）：后端必须带 JVM 参数 `-Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7897` 才能调通支付；curl 同理走 `HTTPS_PROXY` 环境变量
+- **支付宝 4 密钥体系**：应用私钥+应用公钥（自己生成的一对，工具目录 `密钥*` 文件夹）｜支付宝私钥（平台持有，不可见）｜支付宝公钥（平台固定派发，**不随应用公钥更换而变化**）
+- **沙箱应用 ≠ 正式应用**：代码请求的是沙箱 APPID `9021000149671635`；密钥必须配在 open.alipay.com「沙箱环境」下的沙箱应用里，正式应用（如 2021005162691079）配了无效
+- **验签排障**：`tools/alipay-sign-diagnose.py`（自动读密钥工具最新目录，直连网关判定是请求签名错还是响应验签错）
+
 ## 架构概览
 
 - homestay-front/ — C 端用户（Vue3 + TS + Element Plus + Vite + Pinia），5173
