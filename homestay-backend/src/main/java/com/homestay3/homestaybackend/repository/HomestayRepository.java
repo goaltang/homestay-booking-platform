@@ -16,6 +16,7 @@ import jakarta.persistence.LockModeType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -87,6 +88,12 @@ public interface HomestayRepository extends JpaRepository<Homestay, Long>, JpaSp
      * @return 房源列表
      */
     List<Homestay> findByStatus(HomestayStatus status);
+
+    /**
+     * 按 ID 批量查询并预加载房东/设施/图片（解决 ES 搜索结果组装 DTO 的 N+1）
+     */
+    @EntityGraph(value = "Homestay.withDetails", type = EntityGraph.EntityGraphType.LOAD)
+    List<Homestay> findAllByIdIn(Collection<Long> ids);
     
     /**
      * 根据状态查找房源并按创建时间倒序排列

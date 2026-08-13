@@ -110,7 +110,7 @@ public class UserFavoriteServiceImpl implements UserFavoriteService {
             return new ArrayList<>();
         }
         
-        List<Homestay> homestays = homestayRepository.findAllById(homestayIds);
+        List<Homestay> homestays = homestayRepository.findAllByIdIn(homestayIds);
         
         // 保持收藏的顺序
         List<HomestayDTO> result = new ArrayList<>();

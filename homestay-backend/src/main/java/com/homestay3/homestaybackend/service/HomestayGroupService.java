@@ -156,7 +156,7 @@ public class HomestayGroupService {
         HomestayGroup group = groupRepository.findByOwnerIdAndId(user.getId(), groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("分组不存在: " + groupId));
 
-        List<Homestay> homestays = homestayRepository.findAllById(homestayIds);
+        List<Homestay> homestays = homestayRepository.findAllByIdIn(homestayIds);
         for (Homestay homestay : homestays) {
             if (!homestay.getOwner().getId().equals(user.getId())) {
                 throw new IllegalArgumentException("房源不属于当前房东: " + homestay.getId());
@@ -173,7 +173,7 @@ public class HomestayGroupService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("用户不存在: " + username));
 
-        List<Homestay> homestays = homestayRepository.findAllById(homestayIds);
+        List<Homestay> homestays = homestayRepository.findAllByIdIn(homestayIds);
         for (Homestay homestay : homestays) {
             if (!homestay.getOwner().getId().equals(user.getId())) {
                 throw new IllegalArgumentException("房源不属于当前房东: " + homestay.getId());

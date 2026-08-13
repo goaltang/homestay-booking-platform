@@ -928,7 +928,7 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
                 return Collections.emptyList();
             }
 
-            List<Homestay> homestays = homestayRepository.findAllById(homestayIds);
+            List<Homestay> homestays = homestayRepository.findAllByIdIn(homestayIds);
             Map<Long, Homestay> homestayMap = homestays.stream()
                     .collect(Collectors.toMap(Homestay::getId, h -> h, (a, b) -> a));
             List<Homestay> orderedHomestays = homestayIds.stream()
@@ -997,7 +997,7 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
                 return Collections.emptyList();
             }
 
-            List<Homestay> homestays = homestayRepository.findAllById(homestayIds);
+            List<Homestay> homestays = homestayRepository.findAllByIdIn(homestayIds);
             Map<Long, Homestay> homestayMap = homestays.stream()
                     .collect(Collectors.toMap(Homestay::getId, h -> h, (a, b) -> a));
             List<Homestay> orderedHomestays = homestayIds.stream()
@@ -1055,7 +1055,7 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
             }
 
             // 用 ID 列表去 JPA 查询完整实体，保留原有 DTO 组装逻辑
-            List<Homestay> homestays = homestayRepository.findAllById(homestayIds);
+            List<Homestay> homestays = homestayRepository.findAllByIdIn(homestayIds);
 
             // 保持 ES 返回的顺序
             Map<Long, Homestay> homestayMap = homestays.stream()
