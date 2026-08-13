@@ -21,14 +21,19 @@ public class JwtTokenProvider {
 
     private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
-    @Value("${jwt.secret:q8hVpEO8CXfjJ5P6YMcVWeRfQlL1Zn4wdAFZu2xKi7gUsTrm3NbH}")
+    @Value("${jwt.secret:}")
     private String jwtSecret;
 
     @Value("${jwt.expiration:86400000}")
     private long jwtExpirationInMs;
 
     private Key getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes();
+        if (jwtSecret == null || jwtSecret.isBlank() || jwtSecret.length() < 32) {
+            throw new IllegalStateException(
+                    "JWT 密钥未配置或长度不足（HS256 要求至少 32 字符）。请通过环境变量 JWT_SECRET 注入，"
+                    + "或在 application-prod.properties 中配置 jwt.secret=${JWT_SECRET}");
+        }
+        byte[] keyBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 

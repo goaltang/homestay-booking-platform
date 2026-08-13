@@ -1,8 +1,10 @@
 package com.homestay3.homestaybackend.exception;
 
 import com.homestay3.homestaybackend.dto.ApiResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,13 +15,26 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final Environment environment;
+
+    /**
+     * 生产环境判定：只有显式激活 prod profile 才隐藏内部错误详情。
+     * 注意不能用 System.getProperty("spring.profiles.active")——Spring 启动时
+     * 不会设置该 JVM 系统属性，恒为 null，导致生产环境误判为 dev 而泄露信息。
+     */
+    private boolean isProd() {
+        return Arrays.asList(environment.getActiveProfiles()).contains("prod");
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleResourceNotFoundException(ResourceNotFoundException ex) {
@@ -91,9 +106,8 @@ public class GlobalExceptionHandler {
             data.put("list", new ArrayList<>());
         }
         
-        // 开发环境下返回详细错误信息
-        String activeProfile = System.getProperty("spring.profiles.active", "dev");
-        if ("dev".equals(activeProfile) || "development".equals(activeProfile)) {
+        // 开发环境下返回详细错误信息，生产环境隐藏
+        if (!isProd()) {
             data.put("error", ex.getMessage());
             data.put("errorType", ex.getClass().getSimpleName());
         }
@@ -160,8 +174,7 @@ public class GlobalExceptionHandler {
         }
         
         // 开发环境下返回详细错误信息，生产环境下隐藏
-        String activeProfile = System.getProperty("spring.profiles.active", "dev");
-        if ("dev".equals(activeProfile) || "development".equals(activeProfile)) {
+        if (!isProd()) {
             data.put("error", ex.getMessage());
             data.put("type", ex.getClass().getSimpleName());
         }

@@ -58,10 +58,10 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Bean
-    @org.springframework.context.annotation.Profile("!test")
+    @org.springframework.context.annotation.Profile("!test & !prod")
     public CommandLineRunner initializeAdminAndUser() {
         return args -> {
-            // 创建默认管理员（仅在不存在时创建，不重置密码）
+            // 创建默认管理员（仅在不存在时创建，不重置密码）——仅开发环境
             if (!userRepository.existsByUsername("admin")) {
                 createDefaultAdminIfNotExists();
             }
@@ -104,6 +104,36 @@ public class AdminServiceImpl implements AdminService {
                 userRepository.save(hostUser);
                 log.info("已创建默认房东测试用户 host，密码为 111111");
             }
+        };
+    }
+
+    /**
+     * 生产环境：不自动创建任何演示账号。
+     * 管理员通过首次启动引导创建——部署时设置环境变量 ADMIN_INIT_PASSWORD，
+     * 且 admin 不存在时，用该密码初始化唯一管理员；登录后应立即修改密码。
+     */
+    @Bean
+    @org.springframework.context.annotation.Profile("prod")
+    public CommandLineRunner initializeProdAdmin() {
+        return args -> {
+            String initPassword = System.getenv("ADMIN_INIT_PASSWORD");
+            if (initPassword == null || initPassword.isBlank()) {
+                log.warn("生产环境未设置 ADMIN_INIT_PASSWORD，跳过初始管理员创建。"
+                        + "如需初始化管理员，请设置该环境变量后重启。");
+                return;
+            }
+            if (userRepository.existsByUsername("admin")) {
+                log.info("管理员 admin 已存在，跳过初始管理员创建");
+                return;
+            }
+            User adminUser = new User();
+            adminUser.setUsername("admin");
+            adminUser.setPassword(passwordEncoder.encode(initPassword));
+            adminUser.setRole("ROLE_ADMIN");
+            adminUser.setEmail("admin@homestay.local");
+            adminUser.setEnabled(true);
+            userRepository.save(adminUser);
+            log.info("已创建初始管理员 admin（密码来自环境变量 ADMIN_INIT_PASSWORD，登录后请立即修改）");
         };
     }
 }
