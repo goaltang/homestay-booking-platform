@@ -282,161 +282,7 @@
                 @current-change="handleCurrentChange" />
         </div>
 
-        <!-- 审核记录对话框 -->
-        <el-dialog v-model="auditHistoryDialogVisible" title="房源审核记录" width="70%" top="5vh"
-            :close-on-click-modal="false">
-            <div v-if="currentAuditHomestayId" class="audit-history-content">
-                <!-- 房源基本信息 -->
-                <el-card class="homestay-info-card" shadow="never" style="margin-bottom: 20px;">
-                    <template #header>
-                        <div class="card-header">
-                            <el-icon>
-                                <House />
-                            </el-icon>
-                            <span>房源信息</span>
-                        </div>
-                    </template>
-                    <el-descriptions :column="3" border v-if="currentAuditHomestay">
-                        <el-descriptions-item label="房源ID">{{ currentAuditHomestayId }}</el-descriptions-item>
-                        <el-descriptions-item label="房源名称">
-                            <strong>{{ currentAuditHomestay.title }}</strong>
-                        </el-descriptions-item>
-                        <el-descriptions-item label="当前状态">
-                            <el-tag :type="getStatusType(currentAuditHomestay.status)">
-                                {{ getStatusText(currentAuditHomestay.status) }}
-                            </el-tag>
-                        </el-descriptions-item>
-                        <el-descriptions-item label="房源类型">{{ getHomestayTypeLabel(currentAuditHomestay.type)
-                        }}</el-descriptions-item>
-                        <el-descriptions-item label="价格">¥{{ currentAuditHomestay.price }}/晚</el-descriptions-item>
-                        <el-descriptions-item label="最大入住">{{ currentAuditHomestay.maxGuests }}人</el-descriptions-item>
-                    </el-descriptions>
-                </el-card>
-
-                <!-- 审核记录 -->
-                <el-card shadow="never">
-                    <template #header>
-                        <div class="card-header">
-                            <el-icon>
-                                <Document />
-                            </el-icon>
-                            <span>审核历史记录</span>
-                            <div style="margin-left: auto; display: flex; gap: 8px;">
-                                <el-button type="text" size="small" @click="refreshCurrentAuditHistory">
-                                    <el-icon>
-                                        <Refresh />
-                                    </el-icon>
-                                    刷新
-                                </el-button>
-                                <el-button type="text" size="small" @click="showDataQualityInfo = !showDataQualityInfo">
-                                    <el-icon>
-                                        <InfoFilled />
-                                    </el-icon>
-                                    数据说明
-                                </el-button>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- 数据质量说明 -->
-                    <el-alert v-if="showDataQualityInfo" title="数据说明" type="info" :closable="false"
-                        style="margin-bottom: 16px;">
-                        <template #default>
-                            <p>系统已自动过滤以下类型的记录：</p>
-                            <ul style="margin: 8px 0; padding-left: 20px;">
-                                <li>✅ 系统数据迁移记录</li>
-                                <li>✅ 测试账户的操作记录</li>
-                                <li>✅ 无效的历史数据</li>
-                            </ul>
-                            <p style="color: #909399; font-size: 12px;">只显示真实有效的审核操作记录。</p>
-                        </template>
-                    </el-alert>
-
-                    <!-- 审核记录列表 -->
-                    <div v-loading="loadingAuditHistory">
-                        <div v-if="auditRecords.length > 0" class="audit-timeline">
-                            <el-timeline>
-                                <el-timeline-item v-for="record in auditRecords" :key="record.id"
-                                    :type="getTimelineType(record.actionType)"
-                                    :timestamp="formatDateTime(record.createdAt)" placement="top">
-                                    <div class="timeline-item">
-                                        <div class="timeline-header">
-                                            <div class="action-info">
-                                                <strong>{{ getActionText(record.actionType) }}</strong>
-                                                <el-tag v-if="record.actionType === 'APPROVE'" type="success"
-                                                    size="small">
-                                                    已通过
-                                                </el-tag>
-                                                <el-tag v-else-if="record.actionType === 'REJECT'" type="danger"
-                                                    size="small">
-                                                    已拒绝
-                                                </el-tag>
-                                                <el-tag v-else-if="record.actionType === 'SUBMIT'" type="primary"
-                                                    size="small">
-                                                    已提交
-                                                </el-tag>
-                                                <el-tag v-else-if="record.actionType === 'RESUBMIT'" type="primary"
-                                                    size="small">
-                                                    重新提交
-                                                </el-tag>
-                                                <el-tag v-else-if="record.actionType === 'WITHDRAW'" type="warning"
-                                                    size="small">
-                                                    已撤回
-                                                </el-tag>
-                                                <el-tag v-else type="info" size="small">
-                                                    {{ record.actionType }}
-                                                </el-tag>
-                                            </div>
-                                        </div>
-                                        <div class="timeline-content">
-                                            <div class="reviewer-info" v-if="record.reviewerName">
-                                                <el-icon>
-                                                    <User />
-                                                </el-icon>
-                                                <span><strong>操作人：</strong>{{ record.reviewerName }}</span>
-                                                <span v-if="record.reviewerId" class="reviewer-id">
-                                                    (ID: {{ record.reviewerId }})
-                                                </span>
-                                            </div>
-                                            <div v-if="record.reviewReason" class="reason-info">
-                                                <el-icon>
-                                                    <InfoFilled />
-                                                </el-icon>
-                                                <span><strong>原因：</strong>{{ record.reviewReason }}</span>
-                                            </div>
-                                            <div v-if="record.reviewNotes" class="notes-info">
-                                                <el-icon>
-                                                    <Document />
-                                                </el-icon>
-                                                <span><strong>备注：</strong>{{ record.reviewNotes }}</span>
-                                            </div>
-                                            <div v-if="record.oldStatus && record.newStatus" class="status-change">
-                                                <el-icon>
-                                                    <TrendCharts />
-                                                </el-icon>
-                                                <span><strong>状态变化：</strong>{{ formatStatus(record.oldStatus) }} → {{
-                                                    formatStatus(record.newStatus) }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </el-timeline-item>
-                            </el-timeline>
-                        </div>
-                        <div v-else class="no-audit-history">
-                            <div class="empty-state">
-                                <el-icon size="48" color="#c0c4cc">
-                                    <Document />
-                                </el-icon>
-                                <p style="margin: 12px 0 4px;">暂无审核记录</p>
-                                <p style="color: #909399; font-size: 12px;">
-                                    该房源尚未进行过审核，或审核记录已被系统清理
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </el-card>
-            </div>
-        </el-dialog>
+        <AuditHistoryDialog v-model="auditHistoryDialogVisible" :homestay="currentAuditHomestay" :type-label="currentAuditHomestay ? getHomestayTypeLabel(currentAuditHomestay.type) : ''" />
 
         <GroupManageDialog ref="groupManageDialogRef" v-model="groupManageDialogVisible" :selected-rows="selectedRows" @groups-changed="handleGroupsChanged" />
 
@@ -459,13 +305,14 @@ import {
     submitHomestayForReview,
     withdrawHomestayReview,
     requestReactivation,
-    getHomestayAuditHistory,
     getHomestayGroups
 } from '@/api/homestay';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { HomestayStatus, HomestayGroup } from '@/types';
-import { ArrowDown, Document, Delete, Upload, Edit, RefreshRight, House, User, InfoFilled, TrendCharts, Refresh, Warning, Folder } from '@element-plus/icons-vue';
+import { ArrowDown, Document, Delete, Upload, Edit, RefreshRight, Warning, Folder } from '@element-plus/icons-vue';
 import GroupManageDialog from '@/components/host/GroupManageDialog.vue';
+import AuditHistoryDialog from '@/components/host/AuditHistoryDialog.vue';
+import { getStatusType, getStatusText } from '@/utils/homestayStatus';
 
 interface Homestay {
     id: number;
@@ -734,29 +581,15 @@ const handleRequestReactivation = async (id: number) => {
     }
 };
 
-// 查看审核历史
-const handleViewAuditHistory = async (id: number) => {
-    try {
-        // 找到对应的房源信息
-        const homestay = homestays.value.find(h => h.id === id);
-        if (!homestay) {
-            ElMessage.error('房源信息不存在');
-            return;
-        }
-
-        // 设置当前房源信息
-        currentAuditHomestayId.value = id;
-        currentAuditHomestay.value = homestay;
-        showDataQualityInfo.value = false;
-
-        // 显示对话框
-        auditHistoryDialogVisible.value = true;
-
-        // 加载审核历史
-        await refreshCurrentAuditHistory();
-    } catch (error: any) {
-        console.error('查看审核历史失败', error);
+// 查看审核历史（记录由 AuditHistoryDialog 自行加载）
+const handleViewAuditHistory = (id: number) => {
+    const homestay = homestays.value.find((h) => h.id === id);
+    if (!homestay) {
+        ElMessage.error('房源信息不存在');
+        return;
     }
+    currentAuditHomestay.value = homestay;
+    auditHistoryDialogVisible.value = true;
 };
 
 // 删除房源
@@ -819,31 +652,6 @@ const handleDelete = async (id: number) => {
 };
 
 // 房源状态对应的标签类型
-const getStatusType = (status: HomestayStatus): string => {
-    const types: Record<HomestayStatus, string> = {
-        DRAFT: 'info',
-        PENDING: 'warning',
-        ACTIVE: 'success',
-        INACTIVE: 'info',
-        REJECTED: 'danger',
-        SUSPENDED: 'danger'
-    };
-    return types[status] || 'info';
-};
-
-// 房源状态对应的文本
-const getStatusText = (status: HomestayStatus): string => {
-    const texts: Record<HomestayStatus, string> = {
-        DRAFT: '草稿',
-        PENDING: '待审核',
-        ACTIVE: '已上线',
-        INACTIVE: '已下架',
-        REJECTED: '已拒绝',
-        SUSPENDED: '已暂停'
-    };
-    return texts[status] || '未知状态';
-};
-
 // 处理表格选择变化
 const handleSelectionChange = (selection: Homestay[]) => {
     selectedRows.value = selection;
@@ -1063,84 +871,7 @@ const getHomestayTypeLabel = (typeCode: string): string => {
 
 // 审核记录对话框
 const auditHistoryDialogVisible = ref(false);
-const currentAuditHomestayId = ref<number | null>(null);
 const currentAuditHomestay = ref<Homestay | null>(null);
-const auditRecords = ref<any[]>([]);
-const loadingAuditHistory = ref(false);
-const showDataQualityInfo = ref(false);
-
-const getTimelineType = (actionType: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' => {
-    const types: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
-        APPROVE: 'success',
-        REJECT: 'danger',
-        SUBMIT: 'primary',
-        RESUBMIT: 'primary',
-        WITHDRAW: 'warning',
-        REVIEW: 'warning'
-    };
-    return types[actionType] || 'info';
-};
-
-const getActionText = (actionType: string): string => {
-    const texts: Record<string, string> = {
-        APPROVE: '通过审核',
-        REJECT: '拒绝审核',
-        SUBMIT: '提交审核',
-        RESUBMIT: '重新提交',
-        WITHDRAW: '撤回审核',
-        REVIEW: '开始审核'
-    };
-    return texts[actionType] || actionType;
-};
-
-const formatDateTime = (timestamp: string): string => {
-    if (!timestamp) return '未知时间';
-    try {
-        const date = new Date(timestamp);
-        return date.toLocaleString('zh-CN', {
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (error) {
-        return '时间格式错误';
-    }
-};
-
-const formatStatus = (status: HomestayStatus): string => {
-    const texts: Record<HomestayStatus, string> = {
-        DRAFT: '草稿',
-        PENDING: '待审核',
-        ACTIVE: '已上线',
-        INACTIVE: '已下架',
-        REJECTED: '已拒绝',
-        SUSPENDED: '已暂停'
-    };
-    return texts[status] || '未知状态';
-};
-
-const refreshCurrentAuditHistory = async () => {
-    if (currentAuditHomestayId.value) {
-        try {
-            loadingAuditHistory.value = true;
-            const response = await getHomestayAuditHistory(currentAuditHomestayId.value, 0, 10);
-
-            if (response.data && response.data.content) {
-                auditRecords.value = response.data.content;
-                console.log('审核历史已加载，条目数:', response.data.content.length);
-            } else {
-                auditRecords.value = [];
-            }
-        } catch (error: any) {
-            console.error('刷新审核历史失败', error);
-
-            auditRecords.value = [];
-        } finally {
-            loadingAuditHistory.value = false;
-        }
-    }
-};
 
 // 检查房源信息是否完整
 const isHomestayComplete = (homestay: Homestay): boolean => {

@@ -13,6 +13,7 @@ declare module 'vue' {
     AnnouncementBar: typeof import('./src/components/home/AnnouncementBar.vue')['default']
     AppFooter: typeof import('./src/components/common/AppFooter.vue')['default']
     AppHeader: typeof import('./src/components/common/AppHeader.vue')['default']
+    AuditHistoryDialog: typeof import('./src/components/host/AuditHistoryDialog.vue')['default']
     AuthGuard: typeof import('./src/components/common/AuthGuard.vue')['default']
     AutoStatusConfigDialog: typeof import('./src/components/host/order/AutoStatusConfigDialog.vue')['default']
     AvatarUpload: typeof import('./src/components/AvatarUpload.vue')['default']
