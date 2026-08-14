@@ -55,11 +55,6 @@ const router = createRouter({
       component: () => import("../views/HomestayDetail.vue"),
     },
     {
-      path: "/test-public-access",
-      name: "test-public-access",
-      component: () => import("../views/TestPublicAccess.vue"),
-    },
-    {
       path: "/profile",
       name: "profile",
       component: () => import("../views/user/Profile.vue"),

@@ -1,4 +1,3 @@
-import { ElMessage } from "element-plus";
 import type { AxiosError } from "axios";
 
 // 错误码映射表
@@ -45,31 +44,25 @@ interface ApiErrorData {
 }
 
 /**
- * 统一处理API错误
+ * 将 Axios 错误格式化为可展示的错误消息（纯函数，不产生副作用）
  * @param error Axios错误对象
  * @param defaultMsg 默认错误消息
  * @returns 格式化后的错误消息
  */
-export function handleApiError(
+export function formatApiErrorMessage(
   error: AxiosError,
   defaultMsg = "操作失败，请稍后再试"
 ): string {
-  console.error("API错误:", error);
-
-  // 网络错误
+  // 网络错误（无响应）
   if (!error.response) {
-    ElMessage.error("网络连接失败，请检查网络设置");
-    return "网络连接失败";
+    return "网络连接失败，请检查网络设置";
   }
 
-  // 服务器返回的错误
   const { status, data } = error.response;
 
-  // 处理401未授权错误
+  // 401 未授权
   if (status === 401) {
-    ElMessage.error("登录已过期，请重新登录");
-    // 可以在这里触发退出登录操作
-    return "登录已过期";
+    return "登录已过期，请重新登录";
   }
 
   // 提取错误信息
@@ -97,15 +90,40 @@ export function handleApiError(
     }
   }
 
-  // 使用预定义的错误消息
+  // 使用预定义的错误码消息
   if (errorCode && errorCodeMessages[errorCode]) {
     errorMessage = errorCodeMessages[errorCode];
   }
 
-  // 显示错误消息
-  ElMessage.error(errorMessage);
+  // 无错误码时按 HTTP 状态码兜底，避免笼统的"操作失败"
+  if (!errorCode) {
+    const statusMessages: Record<number, string> = {
+      400: "请求参数错误",
+      403: "没有权限访问该资源",
+      404: "请求的资源不存在",
+      500: "服务器错误，请稍后再试",
+    };
+    if (statusMessages[status]) {
+      errorMessage = statusMessages[status];
+    }
+  }
 
   return errorMessage;
+}
+
+/**
+ * 处理API错误并返回格式化后的错误消息。
+ * 注意：错误提示（ElMessage）由 request.ts 响应拦截器统一弹出，
+ * 本函数只负责格式化消息，避免同一错误被重复弹出。
+ * @param error Axios错误对象
+ * @param defaultMsg 默认错误消息
+ * @returns 格式化后的错误消息
+ */
+export function handleApiError(
+  error: AxiosError,
+  defaultMsg = "操作失败，请稍后再试"
+): string {
+  return formatApiErrorMessage(error, defaultMsg);
 }
 
 /**

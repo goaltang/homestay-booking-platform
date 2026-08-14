@@ -725,7 +725,11 @@ export const useUserStore = defineStore("user", () => {
 
   const forgotPassword = async (email: string) => {
     try {
-      log("模拟发送重置密码邮件到:", email);
+      // 后端接口为 @RequestParam String email，需以 query 参数传递
+      const response = await api.post("/api/auth/forgot-password", null, {
+        params: { email },
+      });
+      log("密码重置邮件已发送:", response.data);
       return true;
     } catch (error) {
       console.error("发送重置密码邮件失败:", error);
