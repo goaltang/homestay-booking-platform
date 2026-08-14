@@ -417,7 +417,6 @@ import {
 import {
     getHomestayById,
     getHomestayTypes, // 这个API可能不再需要，或者需要调整用途
-    uploadHomestayImage,
     updateHomestay as updateHomestayApi,
     createHomestay as createHomestayApi,
     saveHomestayDraft,
@@ -428,6 +427,7 @@ import {
     getAmenitiesByCategoryApi
 } from '@/api/amenities'
 import AmenitySelector from '@/components/AmenitySelector.vue'
+import { useHomestayImageUpload } from '@/composables/useHomestayImageUpload'
 import type { Homestay } from '@/types/homestay'
 import PropertyTypeSelector from '@/components/PropertyTypeSelector.vue'
 import { checkAuthentication as checkAuthAPI, ensureUserLoggedIn } from "@/utils/auth"
@@ -470,13 +470,6 @@ const lastSaved = ref<Date | null>(null)
 const autoSaveInterval = ref<number | null>(null)
 
 // 添加上传错误处理相关状态
-const uploadError = ref(false)
-const uploadErrorTitle = ref('')
-const uploadErrorMessage = ref('')
-const uploadErrorDetails = ref(null)
-const showDebugInfo = ref(false)
-const lastUploadType = ref<'cover' | 'gallery' | null>(null)
-const lastUploadFile = ref<File | null>(null)
 
 // 级联选择器状态
 const selectedAreaCodes = ref<string[]>([])
@@ -534,6 +527,23 @@ const homestayForm = reactive<Partial<Homestay> & { // 使用 Partial 允许部�
     houseRules: '',
     groupId: undefined,
 })
+
+// 图片上传逻辑（封面 + 图库）
+const {
+    uploadingCover,
+    uploadingGallery,
+    uploadError,
+    uploadErrorTitle,
+    uploadErrorMessage,
+    uploadErrorDetails,
+    showDebugInfo,
+    handleCustomUpload,
+    retryLastUpload,
+    clearUploadError,
+    toggleDebugInfo,
+    removeGalleryImage,
+    removeCoverImage,
+} = useHomestayImageUpload(homestayForm, homestayId)
 
 // 更新表单验证规则
 const rules = {
@@ -944,138 +954,6 @@ const fetchOptions = async () => {
 
 
 
-// 添加引用和状态
-const uploadingCover = ref(false)
-const uploadingGallery = ref(false)
-
-// 自定义处理上传函数
-const handleCustomUpload = (type: 'cover' | 'gallery') => {
-    return (options: any) => {
-        const { file, onSuccess, onError } = options;
-
-        // 设置加载状态
-        if (type === 'cover') {
-            uploadingCover.value = true;
-        } else {
-            uploadingGallery.value = true;
-        }
-
-        // 保存最后上传的文件信息用于重试
-        lastUploadType.value = type;
-        lastUploadFile.value = file;
-
-        // 验证文件
-        if (!beforeUpload(file)) {
-            resetUploadState(type);
-            return;
-        }
-
-        // 显示加载状态
-        ElMessage.info(`正在上传${type === 'cover' ? '封面' : '图片集'}图片，请稍候...`);
-
-        // 使用API函数上传图片
-        let uploadPromise;
-
-        // 如果有房源ID，使用新的上传API
-        if (homestayId.value) {
-            uploadPromise = uploadHomestayImage(file, type, Number(homestayId.value));
-        } else {
-            uploadPromise = uploadHomestayImage(file, type);
-        }
-
-        uploadPromise
-            .then(response => {
-                console.log('图片上传成功:', response);
-
-                // 根据响应结构处理成功情况
-                if (response.data && (response.data.status === 'success' || response.data.success)) {
-                    let imageUrl = '';
-
-                    // 处理不同的响应格式
-                    if (response.data.data) {
-                        if (typeof response.data.data === 'object') {
-                            imageUrl = response.data.data.url || response.data.data.imageUrl || response.data.data.downloadUrl;
-                        } else if (typeof response.data.data === 'string') {
-                            imageUrl = response.data.data;
-                        }
-                    } else if (response.data.downloadUrl) {
-                        imageUrl = response.data.downloadUrl;
-                    }
-
-                    if (!imageUrl) {
-                        console.error('无法获取上传图片URL:', response.data);
-                        ElMessage.error('图片上传成功，但无法获取URL');
-                        resetUploadState(type);
-                        if (onError) onError(new Error('无法获取上传图片URL'));
-                        return;
-                    }
-
-                    // 保存图片URL
-                    if (type === 'cover') {
-                        homestayForm.coverImage = imageUrl;
-                        ElMessage.success('封面图片上传成功');
-                    } else {
-                        if (!homestayForm.images) {
-                            homestayForm.images = [];
-                        }
-                        homestayForm.images.push(imageUrl);
-                        ElMessage.success('图片上传成功');
-                    }
-
-                    if (onSuccess) onSuccess(response);
-                } else {
-                    console.error('图片上传失败:', response);
-                    ElMessage.error('图片上传失败: ' + (response.data?.message || '未知错误'));
-                    if (onError) onError(new Error('上传失败'));
-                }
-            })
-            .catch(error => {
-                console.error('图片上传异常:', error);
-                if (onError) onError(error);
-            })
-            .finally(() => {
-                resetUploadState(type);
-            });
-    };
-};
-
-// 重置上传状态
-const resetUploadState = (type: 'cover' | 'gallery', fileInput?: HTMLInputElement) => {
-    if (type === 'cover') {
-        uploadingCover.value = false;
-    } else {
-        uploadingGallery.value = false;
-    }
-
-    // 清除文件选择
-    if (fileInput) {
-        fileInput.value = '';
-    }
-};
-
-// 重试上传函数
-const retryLastUpload = async () => {
-    if (lastUploadType.value && lastUploadFile.value) {
-        // 清除错误状态
-        clearUploadError();
-
-        // 直接调用handleCustomUpload处理上传
-        const uploadHandler = handleCustomUpload(lastUploadType.value);
-        uploadHandler({
-            file: lastUploadFile.value,
-            onSuccess: () => {
-                // 重置最后上传信息
-                lastUploadType.value = null;
-                lastUploadFile.value = null;
-            },
-            onError: (error: any) => {
-                console.error('重试上传失败:', error);
-            }
-        });
-    } else {
-        ElMessage.warning('没有可重试的上传任务');
-    }
-};
 
 // 在组件挂载时设置自动保存定时器
 onMounted(async () => {
@@ -1195,27 +1073,6 @@ const lastSavedText = computed(() => {
     // 否则显示具体时间
     return `${lastSaved.value.toLocaleTimeString()}保存`;
 });
-
-// 清除上传错误
-const clearUploadError = () => {
-    uploadError.value = false
-    uploadErrorTitle.value = ''
-    uploadErrorMessage.value = ''
-    uploadErrorDetails.value = null
-}
-
-// 显示/隐藏调试信息
-const toggleDebugInfo = () => {
-    showDebugInfo.value = !showDebugInfo.value
-}
-
-// 移除图库图片
-const removeGalleryImage = (index: number) => {
-    if (homestayForm.images && index >= 0 && index < homestayForm.images.length) {
-        homestayForm.images.splice(index, 1);
-        ElMessage.success('已移除图片');
-    }
-}
 
 // 自动保存草稿
 const autoSaveDraft = () => {
@@ -1488,12 +1345,6 @@ const processAmenities = (amenitiesData: any[]): { value: string, label?: string
     return result;
 };
 
-// 移除封面图片
-const removeCoverImage = () => {
-    homestayForm.coverImage = '';
-    ElMessage.success('已移除封面图片');
-};
-
 // 计算表单完成度百分比
 const formCompletionPercentage = computed(() => {
     let completedFields = 0;
@@ -1528,34 +1379,6 @@ const formCompletionPercentage = computed(() => {
 });
 
 // 添加验证上传文件的函数
-const beforeUpload = (file: File) => {
-    // 检查文件类型
-    const isImage = file.type.startsWith('image/');
-    if (!isImage) {
-        ElMessage.error('只能上传图片文件!');
-        return false;
-    }
-
-    // 检查文件大小
-    const isLt5M = file.size / 1024 / 1024 < 5;
-    if (!isLt5M) {
-        ElMessage.error('图片大小不能超过5MB!');
-        return false;
-    }
-
-    // 获取图片扩展名
-    const extension = file.name.substring(file.name.lastIndexOf('.') + 1).toLowerCase();
-    const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-
-    // 验证扩展名
-    if (!validExtensions.includes(extension)) {
-        ElMessage.error(`仅支持以下格式: ${validExtensions.join(', ')}`);
-        return false;
-    }
-
-    return true;
-};
-
 // 添加这个函数到onMounted之前的位置
 // 检查当前用户是否有权限编辑此房源
 const checkEditPermission = async (homestayId: number) => {
