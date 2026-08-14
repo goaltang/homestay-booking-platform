@@ -105,6 +105,7 @@ declare module 'vue' {
     ReasonDialog: typeof import('./src/components/host/order/ReasonDialog.vue')['default']
     RecentViewed: typeof import('./src/components/home/RecentViewed.vue')['default']
     RecommendedHomestays: typeof import('./src/components/homestay/RecommendedHomestays.vue')['default']
+    RefundDialog: typeof import('./src/components/host/order/RefundDialog.vue')['default']
     ReviewEditModal: typeof import('./src/components/ReviewEditModal.vue')['default']
     ReviewForm: typeof import('./src/components/ReviewForm.vue')['default']
     ReviewsSection: typeof import('./src/components/homestay/ReviewsSection.vue')['default']

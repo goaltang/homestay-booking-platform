@@ -492,46 +492,7 @@
             confirm-text="确认拒绝订单" :on-submit="submitReject" />
 
         <!-- 退款确认对话框 -->
-        <el-dialog v-model="refundDialogVisible" title="发起退款" width="45%">
-            <div v-if="currentOrder" class="refund-dialog-content">
-                <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 20px;">
-                    <template #title>
-                        <span>确认对订单 <strong>#{{ currentOrder.id }}</strong> 发起退款？退款将原路退回给客户。</span>
-                    </template>
-                </el-alert>
-
-                <el-descriptions :column="1" border size="small" class="refund-order-info">
-                    <el-descriptions-item label="房源名称">{{ currentOrder.homestayTitle || currentOrder.homestayName }}</el-descriptions-item>
-                    <el-descriptions-item label="预订客户">{{ currentOrder.guestName }}</el-descriptions-item>
-                    <el-descriptions-item label="入住日期">{{ currentOrder.checkInDate }} 至 {{ currentOrder.checkOutDate }}</el-descriptions-item>
-                    <el-descriptions-item label="退款金额">
-                        <span v-if="refundPreview && refundPreview.estimatedRefundAmount !== undefined" class="refund-amount-highlight">
-                            ¥{{ formatAmount(refundPreview.estimatedRefundAmount) }}
-                        </span>
-                        <span v-else class="refund-amount-highlight">计算中...</span>
-                        <el-tag v-if="refundPreview && refundPreview.policyDescription" size="small" type="warning" effect="plain" style="margin-left: 8px;">
-                            {{ refundPreview.policyDescription }}
-                        </el-tag>
-                    </el-descriptions-item>
-                </el-descriptions>
-
-                <el-form :model="refundForm" ref="refundFormRef" style="margin-top: 20px;">
-                    <el-form-item label="退款原因" prop="reason"
-                        :rules="[{ required: true, message: '请输入退款原因', trigger: 'blur' }]">
-                        <el-input v-model="refundForm.reason" type="textarea" :rows="3"
-                            placeholder="请输入退款原因，例如：客户要求取消订单、房源临时不可用等" maxlength="200" show-word-limit />
-                    </el-form-item>
-                </el-form>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="refundDialogVisible = false">取消</el-button>
-                    <el-button type="danger" @click="confirmRefund" :loading="refundSubmitting">
-                        确认发起退款
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
+        <RefundDialog v-model="refundDialogVisible" :order="currentOrder" @confirmed="handleRefundConfirmed" />
 
         <!-- 退款审核对话框 -->
         <el-dialog v-model="reviewRefundDialogVisible" title="审核退款申请" width="45%">
@@ -810,7 +771,6 @@ import {
     confirmOrder,
     rejectOrder,
     getHostOrderStats,
-    hostInitiateRefund,
     hostApproveRefund,
     hostRejectRefund,
     hostRaiseDispute,
@@ -821,8 +781,7 @@ import {
     performCheckOut,
     getCheckOutRecord,
     processDeposit,
-    confirmSettlement,
-    getRefundPreview
+    confirmSettlement
 } from '@/api/hostOrder'
 import { getHostHomestayOptions } from '@/api/host'
 import { canPerformActionOnStatus, OrderAction } from '@/utils/orderPermission'
@@ -833,6 +792,7 @@ import {
     formatDateString, formatDateTime
 } from '@/utils/orderDisplay'
 import ReasonDialog from '@/components/host/order/ReasonDialog.vue'
+import RefundDialog from '@/components/host/order/RefundDialog.vue'
 
 
 // 新增：定义房源选项接口
@@ -908,14 +868,8 @@ const currentOrder = ref<HostOrderItem | null>(null)
 const cancelDialogVisible = ref(false)
 const rejectDialogVisible = ref(false)
 
-// 退款对话框相关
+// 退款对话框相关（RefundDialog 内部管理 form/preview/submitting）
 const refundDialogVisible = ref(false)
-const refundFormRef = ref<FormInstance>()
-const refundSubmitting = ref(false)
-const refundForm = reactive({
-    reason: ''
-})
-const refundPreview = ref<any>(null)
 
 // 审核退款相关
 const reviewRefundDialogVisible = ref(false)
@@ -1378,58 +1332,23 @@ const submitReject = async (reason: string) => {
 }
 
 // 发起退款
-const handleRefund = async (order: HostOrderItem) => {
+const handleRefund = (order: HostOrderItem) => {
     if (!order || !order.id) {
         ElMessage.error('无效的订单数据')
         return
     }
 
     currentOrder.value = order
-    refundForm.reason = ''
-    refundPreview.value = null
-
-    try {
-        const res = await getRefundPreview(order.id)
-        refundPreview.value = res.data || res
-    } catch (err: any) {
-        console.warn('获取退款预览失败:', err)
-        // 不影响弹窗打开，仅提示
-    }
-
     refundDialogVisible.value = true
 }
 
-// 确认发起退款
-const confirmRefund = async () => {
-    if (!refundFormRef.value) return
-    if (!currentOrder.value) {
-        ElMessage.error('当前没有选中的订单')
-        return
+// 退款成功回调（RefundDialog 触发）
+const handleRefundConfirmed = async () => {
+    if (detailsDialogVisible.value) {
+        detailsDialogVisible.value = false
     }
 
-    await refundFormRef.value.validate(async (valid: boolean) => {
-        if (valid) {
-            refundSubmitting.value = true
-
-            try {
-                console.log('发起退款，订单ID:', currentOrder.value!.id, '原因:', refundForm.reason)
-                await hostInitiateRefund(currentOrder.value!.id, refundForm.reason)
-
-                ElMessage.success('退款申请已提交，等待处理')
-                refundDialogVisible.value = false
-
-                if (detailsDialogVisible.value) {
-                    detailsDialogVisible.value = false
-                }
-
-                await refreshOrdersAndStats()
-            } catch (error: any) {
-                console.error('发起退款失败:', error)
-            } finally {
-                refundSubmitting.value = false
-            }
-        }
-    })
+    await refreshOrdersAndStats()
 }
 
 // 审核退款
