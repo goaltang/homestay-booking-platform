@@ -11,44 +11,10 @@
 import { ref } from 'vue';
 import { useMapSearchState } from './useMapSearchState';
 import { ensureAMapLoaded } from '@/utils/amapLoader';
+import { getCityCenter, toOptionalNumber, isValidImageUrl, getImageUrl } from './mapSearchUtils';
 
 import { mapSearchHomestays, searchHomestays, getMapClusters, getNearbyHomestays, landmarkSearchHomestays } from '@/api/homestay/search';
 
-// 共享高德地图配置
-// 默认城市中心坐标（用于失败降级）
-const DEFAULT_CITY_CENTERS: Record<string, { lat: number; lng: number }> = {
-  '1101': { lat: 39.9042, lng: 116.4074 }, // 北京
-  '3101': { lat: 31.2304, lng: 121.4737 }, // 上海
-  '4403': { lat: 22.5431, lng: 114.0579 }, // 深圳
-  '4401': { lat: 23.1291, lng: 113.2644 }, // 广州
-  '4602': { lat: 20.0444, lng: 110.1989 }, // 三亚
-  '5101': { lat: 30.5728, lng: 104.0668 }, // 成都
-  '3301': { lat: 30.2741, lng: 120.1551 }, // 杭州
-  '3201': { lat: 32.0603, lng: 118.7969 }, // 南京
-  '5001': { lat: 29.5630, lng: 106.5516 }, // 重庆
-  '4406': { lat: 22.5311, lng: 113.1248 }, // 珠海
-  '6101': { lat: 34.3416, lng: 108.9398 }, // 西安
-  '4201': { lat: 30.5928, lng: 114.3055 }, // 武汉
-  '3205': { lat: 31.2989, lng: 120.5853 }, // 苏州
-  '1201': { lat: 39.0842, lng: 117.2009 }, // 天津
-  '3502': { lat: 24.4798, lng: 118.0894 }, // 厦门
-  '3702': { lat: 36.0671, lng: 120.3826 }, // 青岛
-  '4301': { lat: 28.2282, lng: 112.9388 }, // 长沙
-  '5301': { lat: 25.0389, lng: 102.7183 }, // 昆明
-  '2102': { lat: 38.9140, lng: 121.6147 }, // 大连
-  '3302': { lat: 29.8683, lng: 121.5440 }, // 宁波
-};
-
-const getCityCenter = (cityCode?: string) => {
-  if (!cityCode) return undefined;
-
-  return DEFAULT_CITY_CENTERS[cityCode]
-    ?? (
-      cityCode.length === 6 && cityCode.endsWith('00')
-        ? DEFAULT_CITY_CENTERS[cityCode.slice(0, 4)]
-        : undefined
-    );
-};
 
 export interface MapHomestay {
   id: number;
@@ -504,15 +470,6 @@ export function useMapSearch() {
     syncMapViewState();
   };
 
-  const toOptionalNumber = (value: unknown): number | undefined => {
-    if (value === null || value === undefined || value === '') {
-      return undefined;
-    }
-
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  };
-
   const normalizeHomestay = (item: any): MapHomestay => ({
     id: item.id,
     title: item.title,
@@ -859,33 +816,6 @@ export function useMapSearch() {
   /**
    * 验证图片URL是否安全
    */
-  const isValidImageUrl = (url: string): boolean => {
-    if (!url) return false;
-    // 只允许 http/https 协议，且必须是图片域名或localhost
-    try {
-      const parsed = new URL(url);
-      if (!['http:', 'https:'].includes(parsed.protocol)) return false;
-      const trustedHosts = new Set(['localhost', '127.0.0.1', window.location.hostname]);
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-      if (apiBaseUrl) {
-        try {
-          trustedHosts.add(new URL(apiBaseUrl, window.location.origin).hostname);
-        } catch {
-          // ignore invalid configured base url
-        }
-      }
-
-      // 如果是完整URL，必须是可信域名或localhost
-      if (!trustedHosts.has(parsed.hostname) && !url.startsWith('https://picsum.photos')) {
-        return false;
-      }
-      return true;
-    } catch {
-      // 相对路径认为是安全的（会被加上base URL）
-      return true;
-    }
-  };
-
   /**
    * 创建单个标记
    */
@@ -1127,13 +1057,6 @@ export function useMapSearch() {
   /**
    * 获取图片URL
    */
-  const getImageUrl = (imageUrl: string): string => {
-    if (!imageUrl) return 'https://picsum.photos/300/200';
-    if (imageUrl.startsWith('http')) return imageUrl;
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
-    return `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
-  };
-
   /**
    * 更新筛选条件并重新搜索
    */
