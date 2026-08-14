@@ -177,9 +177,10 @@ const connect = (userId: number | null) => {
   }
 
   const token = getStoredToken();
+  // token 可为空：刷新后内存 token 丢失，但 SockJS 握手（withCredentials）会携带 httpOnly cookie，
+  // 由后端 WebSocketCookieHandshakeInterceptor 完成认证
   if (!token) {
-    console.warn("缺少 WebSocket token，跳过连接");
-    return;
+    console.warn("无内存 token，依赖 httpOnly cookie 认证 WebSocket");
   }
 
   if (
@@ -199,12 +200,17 @@ const connect = (userId: number | null) => {
     return;
   }
 
-  const socket = new SockJS(`${getApiBaseUrl()}/ws`);
+  const socket = new SockJS(`${getApiBaseUrl()}/ws`, null, { withCredentials: true });
   stompClient = Stomp.over(socket);
   stompClient.debug = () => undefined;
 
+  const connectHeaders: Record<string, string> = {};
+  if (token) {
+    connectHeaders.Authorization = `Bearer ${token}`;
+  }
+
   stompClient.connect(
-    { Authorization: `Bearer ${token}` },
+    connectHeaders,
     () => {
       isConnected.value = true;
       reconnectAttempts = 0;

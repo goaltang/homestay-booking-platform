@@ -119,7 +119,8 @@ export const useUserStore = defineStore("user", () => {
     userInfo.value = user;
     // 保存用户信息到 localStorage
     localStorage.setItem(USER_KEY, JSON.stringify(user));
-    if (token.value && user.id) {
+    // 刷新后内存 token 可能为 null，但 WebSocket 握手支持 httpOnly cookie 认证
+    if (user.id) {
       initWebSocket(user.id);
     }
     // 输出调试信息

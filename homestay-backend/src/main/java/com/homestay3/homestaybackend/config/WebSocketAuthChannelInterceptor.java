@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,6 +52,24 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
     }
 
     private void authenticateConnect(StompHeaderAccessor accessor) {
+        // 1. 优先使用握手阶段（httpOnly Cookie）认证结果 —— 刷新页面后无内存 token 也能重连
+        Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+        Object handshakeUserId = sessionAttributes != null
+                ? sessionAttributes.get(WebSocketCookieHandshakeInterceptor.ATTR_USER_ID)
+                : null;
+
+        if (handshakeUserId instanceof Number number) {
+            Collection<? extends GrantedAuthority> authorities = parseAuthorities(
+                    String.valueOf(sessionAttributes.getOrDefault(
+                            WebSocketCookieHandshakeInterceptor.ATTR_AUTHORITIES, "")));
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(String.valueOf(number.longValue()), null, authorities);
+            accessor.setUser(authentication);
+            log.debug("Authenticated WebSocket connection via cookie handshake: userId={}", number.longValue());
+            return;
+        }
+
+        // 2. 兜底：STOMP CONNECT header 中的 token（旧客户端 / 非 cookie 环境）
         String token = resolveToken(accessor);
         if (token == null || !jwtTokenProvider.validateToken(token)) {
             throw new AccessDeniedException("Invalid WebSocket token");
