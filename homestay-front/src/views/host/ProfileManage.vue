@@ -407,6 +407,7 @@ import { Upload, House, Calendar, Document, ChatDotRound, Star, Delete, Plus, Vi
 import { getHostProfile, updateHostProfile, uploadHostAvatar } from '@/api/host'
 import { useUserStore } from '@/stores/user'
 import { getAvatarUrl } from '@/utils/image'
+import { useIdCardUpload } from '@/composables/useIdCardUpload'
 
 const userStore = useUserStore()
 const formRef = ref<FormInstance>()
@@ -420,7 +421,6 @@ const hostSince = ref('')
 const activeTab = ref('basic')
 
 // 获取API服务器基础URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
 
 // 统计数据
 const statistics = reactive({
@@ -463,6 +463,13 @@ const verifyForm = reactive({
 // 上传文件列表
 const idCardFrontFileList = ref<any[]>([]);
 const idCardBackFileList = ref<any[]>([]);
+
+// 身份证照片上传逻辑
+const { handleCustomUpload } = useIdCardUpload(
+    verifyForm,
+    idCardFrontFileList,
+    idCardBackFileList
+);
 
 // 验证身份是否需要补录
 const needVerification = computed(() => {
@@ -963,130 +970,6 @@ const beforeAvatarUpload = (file: File) => {
     return false;
 }
 
-// 验证身份证照片上传前的检查
-const beforeIdCardUpload = (file: File) => {
-    const isJPG = file.type === 'image/jpeg';
-    const isPNG = file.type === 'image/png';
-    const isLt10M = file.size / 1024 / 1024 < 10;
-
-    if (!isJPG && !isPNG) {
-        ElMessage.error('上传身份证照片只能是 JPG 或 PNG 格式!');
-        return false;
-    }
-    if (!isLt10M) {
-        ElMessage.error('上传身份证照片大小不能超过 10MB!');
-        return false;
-    }
-    return true;
-};
-
-// 自定义处理上传，以支持中文文件名并确保传递type参数
-const handleCustomUpload = (type: 'idCardFront' | 'idCardBack') => {
-    return (options: any) => {
-        const { file, onSuccess, onError } = options;
-
-        // 验证文件
-        if (!beforeIdCardUpload(file)) {
-            return;
-        }
-
-        console.log(`开始上传${type === 'idCardFront' ? '身份证正面' : '身份证背面'}图片:`, {
-            文件名: file.name,
-            大小: (file.size / 1024).toFixed(2) + 'KB',
-            类型: file.type
-        });
-
-        // 创建FormData
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', type);
-
-        // 显示加载状态
-        ElMessage.info(`正在上传${type === 'idCardFront' ? '身份证正面' : '身份证背面'}图片，请稍候...`);
-
-        // 使用完整URL
-        const fullUrl = `${API_BASE_URL}/api/host/upload-document`;
-
-        // 发送请求
-        fetch(fullUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('homestay_token') || localStorage.getItem('token')}`
-            },
-            body: formData
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`上传失败: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(result => {
-                console.log('上传成功，原始响应:', result); // 增加日志，看原始响应
-
-                let photoUrl = '';
-
-                // 优先检查 result.url 是否存在且为非空字符串 (根据用户提供的响应)
-                if (result && typeof result.url === 'string' && result.url.trim() !== '') {
-                    photoUrl = result.url;
-                    console.log('成功提取 URL (方式1: result.url):', photoUrl);
-                }
-                // 可选：添加一个备用检查，以防万一后端有时会嵌套在 data 里
-                else if (result && result.data && typeof result.data.url === 'string' && result.data.url.trim() !== '') {
-                    photoUrl = result.data.url;
-                    console.log('成功提取 URL (方式2: result.data.url):', photoUrl);
-                }
-                // 可以移除对 fileName 和直接字符串的检查，因为响应格式已知
-                // else if (result.data && result.data.fileName) { ... }
-                // else if (typeof result === 'string') { ... }
-
-                if (photoUrl) {
-                    console.log('最终解析到的照片URL:', photoUrl);
-                    ElMessage.success(`${type === 'idCardFront' ? '身份证正面' : '身份证背面'}上传成功`);
-
-                    // 创建符合 el-upload 要求的 file 对象
-                    const fileData = {
-                        name: `${type === 'idCardFront' ? '身份证正面' : '身份证背面'}.jpg`, // 可以设置一个默认名字
-                        url: photoUrl,
-                        status: 'success', // 添加 status
-                        uid: Date.now() // 添加一个简单的唯一 ID
-                    };
-
-                    // 更新表单数据和 fileList
-                    if (type === 'idCardFront') {
-                        verifyForm.idCardFront = photoUrl;
-                        idCardFrontFileList.value = [fileData]; // 使用新的 fileData 更新
-                    } else {
-                        verifyForm.idCardBack = photoUrl;
-                        idCardBackFileList.value = [fileData]; // 使用新的 fileData 更新
-                    }
-
-                    // 可以在这里尝试不调用 onSuccess(result) 看是否解决问题
-                    // 如果 el-upload 在 :http-request 模式下不需要这个回调来更新UI
-                    // onSuccess(result); 
-
-                    // 或者确保 onSuccess 被调用，让 el-upload 内部处理
-                    onSuccess(fileData); // 尝试传递我们构造的 fileData 给 onSuccess
-
-                } else {
-                    console.error('无法从响应中获取照片URL，检查上面的原始响应日志。响应:', result);
-                    // 抛出更具体的错误，或者只显示消息
-                    ElMessage.error('上传失败: 无法从服务器响应中解析图片地址');
-                    // onError(new Error('无法从响应中获取照片URL')); // 或者调用 onError
-                    // throw new Error('无法从响应中获取照片URL'); // 或者不抛出错误，避免未捕获
-                }
-            })
-            .catch(error => {
-                console.error('上传失败:', error);
-
-                // 调用el-upload的onError回调
-                onError(error);
-            });
-
-        // 阻止el-upload默认上传
-        return false;
-    };
-};
 
 // 修改预览身份证照片的函数，添加加载状态和水印
 const previewIdCard = (type: 'front' | 'back') => {
