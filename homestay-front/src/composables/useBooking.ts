@@ -2,6 +2,7 @@ import { ref, reactive, computed, type Ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/user";
+import { useBookingStore } from "@/stores/booking";
 import {
   formatDateString,
   calculateNights,
@@ -17,6 +18,7 @@ export function useBooking(
   const router = useRouter();
   const route = useRoute();
   const userStore = useUserStore();
+  const bookingStore = useBookingStore();
 
   // sessionStorage key for preserving booking dates across login redirect
   const PENDING_BOOKING_KEY = 'pending-booking-dates';
@@ -212,10 +214,8 @@ export function useBooking(
       availableCoupons: priceDetails.value?.availableCoupons || [],
     };
 
-    console.log("准备跳转到订单确认页，传递数据:", bookingDetails);
-
-    // 将详细数据存储到session storage，避免URL过长
-    sessionStorage.setItem("booking-details", JSON.stringify(bookingDetails));
+    // 将详细数据存入 booking store（sessionStorage 持久化），URL 只携带核心参数
+    bookingStore.setBookingDetails(bookingDetails);
 
     // 跳转到订单确认页，只传递必要的核心参数
     router.push({

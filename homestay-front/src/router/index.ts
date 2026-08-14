@@ -53,6 +53,7 @@ const router = createRouter({
       path: "/homestays/:id",
       name: "homestay-detail",
       component: () => import("../views/HomestayDetail.vue"),
+      meta: { title: "房源详情" },
     },
     {
       path: "/profile",
@@ -232,12 +233,6 @@ const router = createRouter({
         title: "房东信息完善",
         requiresAuth: true
       },
-    },
-    {
-      path: "/homestay/:id",
-      name: "HomestayDetail",
-      component: () => import("../views/HomestayDetail.vue"),
-      meta: { title: "房源详情" },
     },
     {
       path: "/order/confirm",

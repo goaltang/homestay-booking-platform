@@ -289,6 +289,7 @@ import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import { createOrder } from '../../api/order'
 import { getHomestayUnavailableDates } from '@/api/homestay'
 import { useUserStore } from '../../stores/user'
+import { useBookingStore } from '../../stores/booking'
 import { getUserInfo } from '../../api/user'
 import { getHomestayById } from '@/api/homestay'
 import { codeToText } from 'element-china-area-data'
@@ -342,6 +343,7 @@ interface HostInfo {
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const bookingStore = useBookingStore()
 
 const loading = ref(true)
 const submitting = ref(false)
@@ -722,7 +724,7 @@ const goBackToSelectDates = () => {
     if (orderData.value?.homestayId) {
         // 携带日期冲突标记返回，让 BookingCard 知道要恢复旅客信息
         router.push({
-            path: `/homestay/${orderData.value.homestayId}`,
+            path: `/homestays/${orderData.value.homestayId}`,
             query: { dateConflict: 'true' }
         })
     } else {
@@ -820,14 +822,11 @@ const fetchHostInfo = async () => {
     }
 }
 
-// 修改initOrderData函数，优先从session storage读取数据
+// 从 booking store 读取完整订单数据（sessionStorage 持久化）
 const initOrderData = () => {
-    // 优先从session storage获取完整数据
-    const storedData = sessionStorage.getItem('booking-details');
-    if (storedData) {
+    const bookingDetails = bookingStore.bookingDetails;
+    if (bookingDetails) {
         try {
-            const bookingDetails = JSON.parse(storedData);
-            console.log('从session storage加载订单数据:', bookingDetails);
 
             // 构建订单数据对象（优先使用后端报价结果）
             const baseAmount = bookingDetails.homestayData.price * bookingDetails.nights;
@@ -863,9 +862,9 @@ const initOrderData = () => {
                 dailyPrices: bookingDetails.dailyPrices
             } as OrderData;
         } catch (error) {
-            console.error('解析session storage数据失败:', error);
+            console.error('解析订单数据失败:', error);
             // 清除损坏的数据
-            sessionStorage.removeItem('booking-details');
+            bookingStore.clearBookingDetails();
         }
     }
 
@@ -993,9 +992,9 @@ onMounted(async () => {
     }
 })
 
-// 页面卸载时清理session storage
+// 页面卸载时清理预订数据
 onUnmounted(() => {
-    sessionStorage.removeItem('booking-details');
+    bookingStore.clearBookingDetails();
 })
 </script>
 
