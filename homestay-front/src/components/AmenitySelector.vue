@@ -227,7 +227,7 @@ const toggleAmenity = (amenity: Amenity) => {
 
 // 移除设施
 const removeAmenity = (amenity: Amenity | string) => {
-    let amenityValue = typeof amenity === 'object' && amenity !== null ? amenity.value : amenity
+    const amenityValue = typeof amenity === 'object' && amenity !== null ? amenity.value : amenity
 
     const newValues = normalizedModelValue.value.filter(item => {
         const itemValue = typeof item === 'object' && item !== null ? item.value : item
@@ -299,7 +299,7 @@ const clearAll = () => {
 // 一键添加设施
 const handleQuickAddAmenities = (command: string) => {
     try {
-        let newAmenities: Amenity[] = [];
+        const newAmenities: Amenity[] = [];
 
         if (command === 'all') {
             // 添加所有设施

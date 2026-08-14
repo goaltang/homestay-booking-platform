@@ -161,7 +161,7 @@ export const useOrderStore = defineStore("order", () => {
     totalElements: number;
     totalPages: number;
   } {
-    let orderData = res.data;
+    const orderData = res.data;
     if (orderData?.data?.content) {
       return {
         content: orderData.data.content,

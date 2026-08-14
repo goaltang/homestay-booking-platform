@@ -356,7 +356,7 @@ watch(chartType, () => {
 
 // 窗口大小变化时调整图表大小
 const handleResize = () => {
-    chart && chart.resize();
+    chart?.resize();
 };
 
 // 去提现管理页面
@@ -413,7 +413,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('resize', handleResize);
-    chart && chart.dispose();
+    chart?.dispose();
     chart = null;
 });
 </script>

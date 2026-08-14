@@ -641,7 +641,7 @@ const fetchEarningsData = async () => {
 
 // 窗口大小变化时调整图表大小
 const handleResize = () => {
-    chart && chart.resize();
+    chart?.resize();
 };
 
 // 检查和测试API连接

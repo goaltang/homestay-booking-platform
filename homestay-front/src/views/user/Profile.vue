@@ -339,7 +339,7 @@ const passwordRules = {
     confirmPassword: [
         { required: true, message: '请确认新密码', trigger: 'blur' },
         {
-            validator: (_rule: any, value: string, callback: Function) => {
+            validator: (_rule: any, value: string, callback: (error?: Error) => void) => {
                 if (value !== passwordForm.value.newPassword) {
                     callback(new Error('两次输入的密码不一致'));
                 } else {

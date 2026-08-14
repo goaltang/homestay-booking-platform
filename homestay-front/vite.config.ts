@@ -10,6 +10,7 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const isTest = mode === "test";
+  const isProd = mode === "production";
 
   return {
     plugins: [
@@ -45,6 +46,12 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    // 生产构建移除所有 console/debugger：避免调试日志与敏感信息泄露到生产控制台
+    esbuild: isProd
+      ? {
+          drop: ["console", "debugger"],
+        }
+      : undefined,
     server: {
       host: true,
       port: 5173,

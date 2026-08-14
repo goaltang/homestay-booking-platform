@@ -328,7 +328,7 @@ const fetchUnavailableDates = async () => {
 
         // 适配新的后端响应格式
         const responseData = response.data || {}
-        let dates = responseData.data || []
+        const dates = responseData.data || []
 
         // 确保日期格式为字符串数组 (YYYY-MM-DD)
         if (Array.isArray(dates)) {

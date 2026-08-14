@@ -16,16 +16,18 @@
             </el-empty>
         </div>
 
-        <div v-else class="favorites-toolbar">
-            <el-button type="danger" plain size="small" @click="favoritesStore.clearFavorites">
-                <el-icon><Delete /></el-icon>
-                清空收藏
-            </el-button>
-        </div>
+        <div v-else>
+            <div class="favorites-toolbar">
+                <el-button type="danger" plain size="small" @click="favoritesStore.clearFavorites">
+                    <el-icon><Delete /></el-icon>
+                    清空收藏
+                </el-button>
+            </div>
 
-        <div v-else class="homestay-grid">
-            <HomestayCard v-for="homestay in favorites" :key="homestay.id" :homestay="homestay" :homestay-types="[]"
-                @card-click="viewHomestayDetails" />
+            <div class="homestay-grid">
+                <HomestayCard v-for="homestay in favorites" :key="homestay.id" :homestay="homestay" :homestay-types="[]"
+                    @card-click="viewHomestayDetails" />
+            </div>
         </div>
     </div>
 </template>

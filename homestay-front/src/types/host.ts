@@ -132,7 +132,7 @@ export interface HostDTO {
 
 // 为了向后兼容，保留原有接口但标记为已废弃
 /** @deprecated 请使用 HostDTO */
-export interface HostDetailInfoData extends HostDTO {}
+export type HostDetailInfoData = HostDTO;
 
 // 房东展示信息计算属性接口
 export interface HostDisplayInfo {

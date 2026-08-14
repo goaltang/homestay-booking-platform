@@ -335,7 +335,7 @@ const queryEmailSearch = (queryString: string, cb: (suggestions: EmailSuggestion
 };
 
 // 检查用户名是否存在的函数
-const checkUsernameExists = debounce(async (username: string, callback: Function) => {
+const checkUsernameExists = debounce(async (username: string, callback: (error?: Error) => void) => {
   if (!username || username.length < 3) {
     callback();
     return;
@@ -361,7 +361,7 @@ const checkUsernameExists = debounce(async (username: string, callback: Function
 }, 500);
 
 // 检查邮箱是否存在的函数
-const checkEmailExists = debounce(async (email: string, callback: Function) => {
+const checkEmailExists = debounce(async (email: string, callback: (error?: Error) => void) => {
   if (!email || !isValidEmail(email)) {
     callback();
     return;

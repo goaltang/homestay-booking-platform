@@ -15,7 +15,7 @@
         </div>
 
         <div v-else class="review-list">
-            <el-card v-for="(review, _index) in reviews" :key="review.id" class="review-card">
+            <el-card v-for="review in reviews" :key="review.id" class="review-card">
                 <div class="review-card-header">
                     <div class="homestay-info">
                         <span class="homestay-title">{{ review.homestayTitle || '民宿信息加载中...' }}</span>

@@ -321,7 +321,7 @@ const todoList = computed<TodoItem[]>(() => [
 // ========== 图表 ==========
 const orderChartRef = ref<HTMLElement | null>(null)
 let orderChart: echarts.ECharts | null = null
-let animationFrames: number[] = []
+const animationFrames: number[] = []
 
 // ========== 格式化函数 ==========
 const formatStatValue = (value: number): string => {
