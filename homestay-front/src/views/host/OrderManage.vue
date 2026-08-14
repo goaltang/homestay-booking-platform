@@ -854,48 +854,13 @@ import {
 } from '@/api/hostOrder'
 import { getHostHomestayOptions } from '@/api/host'
 import { canPerformActionOnStatus, OrderAction } from '@/utils/orderPermission'
+import type { HostOrderItem } from '@/types/hostOrder'
+import {
+    getStatusText, getStatusType, canInitiateRefund, getPaymentStatusText, getPaymentStatusType,
+    getRefundTypeText, hasRefundInfo, formatAmount, getDepositStatusText, getDepositStatusType,
+    formatDateString, formatDateTime
+} from '@/utils/orderDisplay'
 
-// 定义订单项接口
-interface HostOrderItem {
-    id: number;
-    orderNumber?: string;
-    status: string; // 考虑使用导入的 OrderStatus 类型
-    paymentStatus: string | null; // 支付状态，可能为 null
-    homestayTitle?: string;
-    homestayName?: string; // 兼容不同字段名
-    guestName?: string;
-    guestPhone?: string;
-    totalPrice?: number;
-    totalAmount?: number; // 兼容不同字段名
-    checkInDate?: string;
-    checkOutDate?: string;
-    nights?: number;
-    guestCount?: number;
-    createTime?: string;
-    createdTime?: string; // 兼容不同字段名
-    checkedInAt?: string;
-    remark?: string;
-    remarks?: string; // 兼容不同字段名
-    // 退款相关字段
-    refundType?: string;
-    refundReason?: string;
-    refundAmount?: number;
-    depositAmount?: number;
-    refundInitiatedBy?: number;
-    refundInitiatedByName?: string;
-    refundInitiatedAt?: string;
-    refundProcessedBy?: number;
-    refundProcessedByName?: string;
-    refundProcessedAt?: string;
-    refundTransactionId?: string;
-    // 争议相关字段
-    disputeReason?: string;
-    disputeRaisedBy?: number;
-    disputeRaisedAt?: string;
-    disputeResolvedAt?: string;
-    disputeResolution?: string;
-    disputeResolutionNote?: string;
-}
 
 // 新增：定义房源选项接口
 interface HomestayOption {
@@ -1053,154 +1018,14 @@ const resetFilter = () => {
 }
 
 // 获取状态文本（包含退款类型信息）
-const getStatusText = (order: HostOrderItem | string) => {
-    let status: string;
-    let refundType: string | undefined;
-
-    if (typeof order === 'string') {
-        status = order;
-        refundType = undefined;
-    } else {
-        status = order.status;
-        refundType = order.refundType;
-    }
-
-    // 处理退款状态，显示退款类型
-    if (status === 'REFUNDED') {
-        if (refundType) {
-            const refundTypeMap: Record<string, string> = {
-                'USER_REQUESTED': '已退款（用户申请）',
-                'HOST_CANCELLED': '已退款（房东取消）',
-                'ADMIN_INITIATED': '已退款（管理员发起）',
-                'SYSTEM_AUTOMATIC': '已退款（系统自动）'
-            };
-            return refundTypeMap[refundType] || '已退款';
-        }
-        return '已退款';
-    }
-
-    if (status === 'REFUND_PENDING') {
-        if (refundType) {
-            const refundTypeMap: Record<string, string> = {
-                'USER_REQUESTED': '退款中（用户申请）',
-                'HOST_CANCELLED': '退款中（房东取消）',
-                'ADMIN_INITIATED': '退款中（管理员发起）',
-                'SYSTEM_AUTOMATIC': '退款中（系统自动）'
-            };
-            return refundTypeMap[refundType] || '退款中';
-        }
-        return '退款中';
-    }
-
-    const statusMap: Record<string, string> = {
-        'PENDING': '待确认',
-        'CONFIRMED': '已确认',
-        'PAYMENT_PENDING': '待支付',
-        'PAID': '已支付',
-        'READY_FOR_CHECKIN': '待入住',
-        'CHECKED_IN': '已入住',
-        'CHECKED_OUT': '已退房',
-        'COMPLETED': '已完成',
-        'CANCELLED': '已取消',
-        'CANCELLED_SYSTEM': '系统取消',
-        'CANCELLED_BY_USER': '用户取消',
-        'CANCELLED_BY_HOST': '房东取消',
-        'REJECTED': '已拒绝',
-        'REFUND_FAILED': '退款失败',
-        'DISPUTE_PENDING': '争议待处理',
-        'DISPUTED': '争议中'
-    }
-    return statusMap[status] || status
-}
-
 // 获取状态类型
-const getStatusType = (status: string) => {
-    const statusMap: Record<string, string> = {
-        'PENDING': 'warning',
-        'CONFIRMED': 'primary',
-        'PAYMENT_PENDING': 'warning',
-        'PAID': 'success',
-        'READY_FOR_CHECKIN': 'primary',
-        'CHECKED_IN': 'primary',
-        'CHECKED_OUT': 'warning',
-        'COMPLETED': 'info',
-        'CANCELLED': 'danger',
-        'CANCELLED_SYSTEM': 'danger',
-        'CANCELLED_BY_USER': 'danger',
-        'CANCELLED_BY_HOST': 'danger',
-        'REJECTED': 'danger',
-        'REFUND_PENDING': 'warning',
-        'REFUNDED': 'info',
-        'REFUND_FAILED': 'danger',
-        'DISPUTE_PENDING': 'warning',
-        'DISPUTED': 'warning'
-    }
-    return statusMap[status] || ''
-}
-
 // 判断是否可以发起退款
-const canInitiateRefund = (order: HostOrderItem) => {
-    // 已支付或已入住状态 + 支付状态为已支付（非退款中/已退款）
-    const refundableStatus = ['PAID', 'CHECKED_IN', 'CONFIRMED']
-    const isPaid = order.paymentStatus === 'PAID'
-    const isRefundableStatus = refundableStatus.includes(order.status)
-    return isRefundableStatus && isPaid
-}
-
 // 获取支付状态文本
-const getPaymentStatusText = (paymentStatus: string | null | undefined) => {
-    const map: Record<string, string> = {
-        'UNPAID': '未支付',
-        'PAID': '已支付',
-        'REFUND_PENDING': '退款处理中',
-        'REFUNDED': '已退款',
-        'REFUND_FAILED': '退款失败'
-    }
-    return map[paymentStatus || ''] || paymentStatus || '未知'
-}
-
 // 获取支付状态标签类型
-const getPaymentStatusType = (paymentStatus: string | null | undefined) => {
-    const map: Record<string, string> = {
-        'UNPAID': 'info',
-        'PAID': 'success',
-        'REFUND_PENDING': 'warning',
-        'REFUNDED': 'info',
-        'REFUND_FAILED': 'danger'
-    }
-    return map[paymentStatus || ''] || ''
-}
-
 // 获取退款类型文本
-const getRefundTypeText = (refundType: string | undefined) => {
-    const map: Record<string, string> = {
-        'USER_REQUESTED': '用户申请',
-        'HOST_CANCELLED': '房东取消',
-        'ADMIN_INITIATED': '管理员发起',
-        'SYSTEM_AUTOMATIC': '系统自动'
-    }
-    return map[refundType || ''] || refundType || '未知'
-}
-
 // 判断是否有退款信息
-const hasRefundInfo = (order: HostOrderItem | null) => {
-    if (!order) return false
-    return order.refundType ||
-        order.refundReason ||
-        order.refundAmount ||
-        order.refundInitiatedByName ||
-        order.refundProcessedByName ||
-        ['REFUND_PENDING', 'REFUNDED', 'REFUND_FAILED'].includes(order.paymentStatus || '')
-}
-
 // 判断是否有”更多”下拉菜单的操作（始终显示，因为详情已移入下拉菜单）
 // 安全金额格式化
-const formatAmount = (value: any) => {
-    const num = Number(value)
-    if (isNaN(num)) return '0.00'
-    return num.toFixed(2)
-}
-
 // 判断是否有"更多"下拉菜单的操作（除详情外是否还有其他可操作项）
 const hasMoreActions = (order: HostOrderItem) => {
     if (!order || !currentUserIdentity.value) return false
@@ -1531,31 +1356,7 @@ const handleConfirmSettlement = async (order: HostOrderItem) => {
 }
 
 // 获取押金状态文本
-const getDepositStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-        'PENDING': '待处理',
-        'PAID': '已收取',
-        'REFUNDED': '已退还',
-        'RETAINED': '已扣押',
-        'WAIVED': '已免除',
-        'WAITED': '待处理'
-    }
-    return statusMap[status] || status
-}
-
 // 获取押金状态类型
-const getDepositStatusType = (status: string) => {
-    const typeMap: Record<string, string> = {
-        'PENDING': 'warning',
-        'PAID': 'success',
-        'REFUNDED': 'info',
-        'RETAINED': 'danger',
-        'WAIVED': 'info',
-        'WAITED': 'warning'
-    }
-    return typeMap[status] || 'info'
-}
-
 // 取消订单
 const handleCancel = (order: HostOrderItem) => {
     if (!order || !order.id) {
@@ -1938,28 +1739,7 @@ const fetchOrders = async () => {
 }
 
 // 格式化日期字符串为 (MM-DD) 格式
-const formatDateString = (dateString: string) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return ''
-    const month = date.getMonth() + 1
-    const day = date.getDate()
-    return `${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
-}
-
 // 格式化日期时间字符串
-const formatDateTime = (dateTimeString: string) => {
-    if (!dateTimeString) return ''
-    const date = new Date(dateTimeString)
-    if (isNaN(date.getTime())) return ''
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    const day = date.getDate()
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-}
-
 // 获取自动状态统计
 const fetchAutoStatusStats = async () => {
     try {
