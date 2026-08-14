@@ -80,24 +80,6 @@ const isPublicPath = (url: string, method: string): boolean => {
   return false;
 };
 
-const getStoredToken = () => {
-  let token = localStorage.getItem("homestay_token") || localStorage.getItem("token");
-  if (token) return token;
-
-  token = sessionStorage.getItem("homestay_token") || sessionStorage.getItem("token");
-  if (token) return token;
-
-  try {
-    const userInfo = localStorage.getItem("homestay_user") || localStorage.getItem("userInfo");
-    if (!userInfo) return null;
-    const parsed = JSON.parse(userInfo);
-    return typeof parsed?.token === "string" ? parsed.token : null;
-  } catch (error) {
-    console.error("Failed to parse stored user info:", error);
-    return null;
-  }
-};
-
 request.interceptors.request.use(
   (config) => {
     const method = config.method?.toUpperCase() || "GET";
@@ -105,15 +87,6 @@ request.interceptors.request.use(
     const isPublic = isPublicPath(url, method);
 
     config.headers = config.headers || {};
-
-    if (!isPublic) {
-      const token = getStoredToken();
-      if (token) {
-        config.headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
-      } else {
-        requestWarn(`Request ${method} ${url} has no auth token.`);
-      }
-    }
 
     if (config.data instanceof FormData) {
       delete config.headers["Content-Type"];
@@ -123,7 +96,6 @@ request.interceptors.request.use(
       method,
       url,
       public: isPublic,
-      hasAuthHeader: Boolean(config.headers.Authorization),
     });
 
     return config;

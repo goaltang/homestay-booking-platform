@@ -71,7 +71,7 @@
                         </el-form-item>
 
                         <el-form-item label="身份证正面照片" prop="idCardFront">
-                            <el-upload action="/api/files/upload" :headers="uploadHeaders"
+                            <el-upload action="/api/files/upload" with-credentials
                                 :on-success="(res: any) => handleIdCardFrontSuccess(res)" :before-upload="beforeIdCardUpload"
                                 :file-list="idCardFrontFileList" list-type="picture-card" :limit="1">
                                 <el-icon>
@@ -82,7 +82,7 @@
                         </el-form-item>
 
                         <el-form-item label="身份证背面照片" prop="idCardBack">
-                            <el-upload action="/api/files/upload" :headers="uploadHeaders"
+                            <el-upload action="/api/files/upload" with-credentials
                                 :on-success="(res: any) => handleIdCardBackSuccess(res)" :before-upload="beforeIdCardUpload"
                                 :file-list="idCardBackFileList" list-type="picture-card" :limit="1">
                                 <el-icon>
@@ -137,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
@@ -209,13 +209,6 @@ const verifyRules = {
     ]
 };
 
-// 上传相关
-const uploadHeaders = computed(() => {
-    return {
-        Authorization: `Bearer ${localStorage.getItem('homestay_token') || localStorage.getItem('token')}`
-    };
-});
-
 const handleIdCardFrontSuccess = (res: any) => {
     verifyForm.idCardFront = res.url;
     ElMessage.success('身份证正面照片上传成功');
@@ -250,13 +243,9 @@ const validateAndNext = async (step: number) => {
             if (valid) {
                 try {
                     // 先调用 becomeHost 将用户角色转换为房东（此时用户已填写完个人介绍）
-                    const becomeHostResponse = await becomeHost();
-                    
-                    // 如果返回了新 token，更新前端状态
-                    if (becomeHostResponse && becomeHostResponse.data && becomeHostResponse.data.token) {
-                        // 更新 localStorage 中的 token
-                        localStorage.setItem('homestay_token', becomeHostResponse.data.token);
-                    }
+                    await becomeHost();
+
+                    // 新 token 已由后端写入 httpOnly cookie，无需前端存储
 
                     // 刷新用户信息以同步角色变更
                     await userStore.fetchUserInfo();

@@ -15,7 +15,8 @@ export const useChatStore = defineStore("chat", () => {
   const targetHomestayId = ref<number | null>(null);
 
   const isLoggedIn = computed(() => {
-    return !!(localStorage.getItem("homestay_token") || localStorage.getItem("token"));
+    // token 已迁移 httpOnly cookie，登录态以 userInfo 为准
+    return !!(localStorage.getItem("homestay_user") || localStorage.getItem("userInfo"));
   });
 
   const currentUserId = computed(() => {

@@ -23,8 +23,8 @@ app.use(router);
 const initializeApp = async () => {
   const userStore = useUserStore();
 
-  // 如果有token，尝试获取用户信息
-  if (userStore.token) {
+  // 如果有用户信息（登录态，token 在 httpOnly cookie），尝试刷新用户信息
+  if (userStore.userInfo) {
     try {
       console.log("应用启动时获取用户信息");
       await userStore.fetchUserInfo();

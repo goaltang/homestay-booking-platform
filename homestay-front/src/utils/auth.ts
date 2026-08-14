@@ -118,14 +118,14 @@ export const testRequestWithToken = async (url: string, token: string) => {
   }
 };
 
-// 获取当前token
+// token 已迁移到 httpOnly cookie（JS 不可读），登录态以 userInfo 为准
 export function getToken(): string | null {
-  return localStorage.getItem("homestay_token") || localStorage.getItem("token");
+  return null;
 }
 
-// 设置token到localStorage
-export function setToken(token: string): void {
-  localStorage.setItem("homestay_token", token);
+// token 已迁移 httpOnly cookie，不再写入 localStorage（保留函数签名兼容旧调用）
+export function setToken(_token: string): void {
+  // no-op
 }
 
 // 移除token
@@ -147,40 +147,32 @@ export function getCurrentUser(): any {
   }
 }
 
-// 检查是否登录
+// 检查是否登录（token 在 httpOnly cookie，登录态以 userInfo 为准）
 export function isLoggedIn(): boolean {
-  return !!getToken() && !!getCurrentUser();
+  return !!getCurrentUser();
 }
 
-// 检查认证状态
+// 检查认证状态（认证请求依赖 httpOnly cookie）
 export function checkAuthentication(): Promise<boolean> {
-  const token = getToken();
   const user = getCurrentUser();
 
   console.log("检查认证状态:");
-  console.log(`- Token存在: ${!!token}`);
-  if (token) {
-    console.log(`- Token预览: ${token.substring(0, 15)}...`);
-  }
   console.log(`- 用户信息存在: ${!!user}`);
   if (user) {
     console.log(`- 用户信息:`, user);
   }
 
-  // 如果没有token，直接返回未认证
-  if (!token) {
-    console.error("认证检查失败: 没有找到token");
-    ElMessage.error("认证检查失败: 没有找到token，请先登录");
+  // 如果没有用户信息，直接返回未认证
+  if (!user) {
+    console.error("认证检查失败: 没有找到用户信息");
+    ElMessage.error("请先登录");
     return Promise.resolve(false);
   }
 
-  // 发送测试请求到用户API
+  // 发送测试请求到用户API（cookie 自动携带）
   return request({
     url: "/api/auth/current",
     method: "get",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   })
     .then((response) => {
       console.log("认证检查成功:", response.data);
@@ -196,8 +188,6 @@ export function checkAuthentication(): Promise<boolean> {
 
         if (error.response.status === 401 || error.response.status === 403) {
           ElMessage.error("认证已过期或无效，请重新登录");
-          // 清除无效token
-          removeToken();
         } else {
           ElMessage.error(`认证检查失败: ${error.message || "未知错误"}`);
         }
@@ -238,11 +228,11 @@ export async function ensureUserLoggedIn(
 ): Promise<boolean> {
   console.log("执行登录检查，要求角色:", requiredRoles);
 
-  // 获取令牌
-  const token = getToken();
+  // 获取用户信息（token 在 httpOnly cookie）
+  const user = getCurrentUser();
 
-  if (!token) {
-    console.log("未找到有效令牌，需要登录");
+  if (!user) {
+    console.log("未找到用户信息，需要登录");
     alertLogin(redirectPath);
     return false;
   }
@@ -287,7 +277,7 @@ export async function ensureUserLoggedIn(
     currentPath.includes("/host/homestay/edit/") ||
     currentPath.includes("/host/homestay/create");
 
-  if (isHomestayEditPage && token) {
+  if (isHomestayEditPage && user) {
     console.log("检测到用户在房源编辑页面，临时授予ROLE_HOST权限");
 
     // 只在开发环境强制授予权限
@@ -350,9 +340,6 @@ export async function ensureUserLoggedIn(
   return request({
     url: "/api/auth/current",
     method: "get",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   })
     .then((response) => {
       if (!response || !response.data) {
@@ -399,7 +386,7 @@ export async function ensureUserLoggedIn(
       );
 
       // 特殊处理：房源编辑页面总是允许通过
-      if (isHomestayEditPage && token && import.meta.env.DEV) {
+      if (isHomestayEditPage && user && import.meta.env.DEV) {
         console.log("房源编辑页面特殊处理：强制授予访问权限");
         return true;
       }
@@ -455,7 +442,7 @@ export async function ensureUserLoggedIn(
       console.error("认证检查失败:", error);
 
       // 特殊处理：房源编辑页面在开发环境中总是允许通过
-      if (isHomestayEditPage && token && import.meta.env.DEV) {
+      if (isHomestayEditPage && user && import.meta.env.DEV) {
         console.log("房源编辑页面特殊处理：尽管API失败，仍强制授予访问权限");
         return true;
       }
@@ -521,8 +508,8 @@ export class AuthManager {
    * 检查用户是否已登录
    */
   isAuthenticated(): boolean {
-    const token = localStorage.getItem("homestay_token") || localStorage.getItem("token");
-    return !!token;
+    // token 已迁移 httpOnly cookie，登录态以 userInfo 为准
+    return !!this.getUserRole() || !!getCurrentUser();
   }
 
   /**

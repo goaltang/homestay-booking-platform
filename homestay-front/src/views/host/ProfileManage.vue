@@ -21,7 +21,7 @@
                                 @error="handleAvatarError" />
                             <div class="avatar-overlay">
                                 <el-upload class="avatar-uploader" :action="'/api/files/upload'"
-                                    :headers="uploadHeaders" :data="{ type: 'avatar' }"
+                                    with-credentials :data="{ type: 'avatar' }"
                                     :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload"
                                     :show-file-list="false">
                                     <el-button class="upload-btn" type="primary" circle>
@@ -564,13 +564,6 @@ const maskedIdCard = computed(() => {
     const idCard = verifyForm.idCard;
     if (!idCard) return '';
     return idCard.substring(0, 6) + '*'.repeat(8) + idCard.substring(14);
-});
-
-// 上传头像相关header
-const uploadHeaders = computed(() => {
-    return {
-        Authorization: `Bearer ${localStorage.getItem('homestay_token') || localStorage.getItem('token')}`
-    };
 });
 
 // 表单验证规则

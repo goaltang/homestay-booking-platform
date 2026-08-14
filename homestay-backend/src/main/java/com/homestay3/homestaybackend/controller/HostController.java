@@ -13,6 +13,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 
 import java.util.Map;
 import java.util.List;
@@ -137,7 +140,7 @@ public class HostController {
      * @return 转换结果
      */
     @PostMapping("/register")
-    public ResponseEntity<?> becomeHost() {
+    public ResponseEntity<?> becomeHost(HttpServletResponse servletResponse) {
         logger.info("成为房东请求");
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -147,12 +150,30 @@ public class HostController {
 
             String username = auth.getName();
             Map<String, Object> result = hostService.becomeHost(username);
+
+            // 角色变更后，下发包含新角色的 token 到 httpOnly cookie
+            Object newToken = result.get("token");
+            if (newToken instanceof String token && !token.isBlank()) {
+                setAuthCookie(servletResponse, token);
+            }
+
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             logger.error("成为房东失败: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "成为房东失败: " + e.getMessage()));
         }
+    }
+
+    /** 设置 httpOnly 认证 Cookie（与登录一致） */
+    private void setAuthCookie(HttpServletResponse response, String token) {
+        ResponseCookie cookie = ResponseCookie.from("homestay_token", token)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(86400)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     /**

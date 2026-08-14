@@ -393,19 +393,7 @@ const submitPasswordChange = async () => {
 
 // 检查用户信息是否完整，如果不完整则自动获取
 const checkUserInfo = async () => {
-    if (userStore.token && !userStore.userInfo) {
-        try {
-            console.log("用户已登录但缺少用户信息，尝试获取用户信息");
-            await userStore.fetchUserInfo();
-            console.log("用户信息获取成功:", userStore.userInfo);
-        } catch (error: any) {
-            console.error("获取用户信息失败:", error);
-            if (error.response && error.response.status === 401) {
-                userStore.logout();
-                router.push("/login");
-            }
-        }
-    }
+    // token 迁移后：userInfo 持久化在 localStorage，登录态以 userInfo 为准，无需再补拉
 };
 
 // 监听用户信息变化，自动同步表单和看板
@@ -418,14 +406,6 @@ watch(() => userStore.userInfo, (info) => {
 
 // 初始化
 onMounted(async () => {
-    if (userStore.token && !userStore.userInfo) {
-        try {
-            await userStore.fetchUserInfo();
-        } catch (error) {
-            console.error("获取用户信息失败:", error);
-        }
-    }
-
     console.log("个人中心初始化信息:", {
         开发模式: isDev.value
     });

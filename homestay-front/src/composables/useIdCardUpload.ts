@@ -55,9 +55,7 @@ export function useIdCardUpload(
 
       fetch(fullUrl, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("homestay_token") || localStorage.getItem("token")}`,
-        },
+        credentials: "include",
         body: formData,
       })
         .then((response) => {

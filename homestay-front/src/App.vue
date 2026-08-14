@@ -38,7 +38,7 @@ const favoritesStore = useFavoritesStore()
 
 // onMounted 获取用户信息的逻辑可以保留在 App.vue，因为它关系到整个应用的状态
 onMounted(async () => {
-  if (userStore.token && (!userStore.userInfo || !userStore.userInfo.avatar)) {
+  if (userStore.isAuthenticated && (!userStore.userInfo || !userStore.userInfo.avatar)) {
     console.log('App.vue: 已登录但信息不完整，尝试获取完整用户信息');
     try {
       await userStore.fetchUserInfo();

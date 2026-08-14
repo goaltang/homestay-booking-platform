@@ -8,7 +8,7 @@
             <div v-if="!disabled" class="upload-overlay">
                 <el-upload class="avatar-uploader"
                     :action="apiBaseUrl ? `${apiBaseUrl}/api/files/upload` : '/api/files/upload'"
-                    :headers="uploadHeaders" :data="{ type: 'avatar' }" :on-success="handleAvatarSuccess"
+                    with-credentials :data="{ type: 'avatar' }" :on-success="handleAvatarSuccess"
                     :before-upload="beforeAvatarUpload" :on-error="handleAvatarError" :show-file-list="false"
                     :multiple="false" accept="image/*" name="file">
                     <el-button v-if="buttonMode" :size="buttonSize" type="primary">
@@ -94,12 +94,6 @@ const avatarUrl = computed(() => {
     }
 
     return avatar || props.defaultAvatar;
-});
-
-// 上传请求头
-const uploadHeaders = computed(() => {
-    const token = localStorage.getItem('homestay_token') || localStorage.getItem('token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
 });
 
 // 头像加载错误处理

@@ -20,7 +20,19 @@ const getApiBaseUrl = () =>
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:8081";
 
+// token 迁移后，JWT 只存内存（供 WebSocket 握手用），httpOnly cookie 用于 HTTP API
+let memoryToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+  memoryToken = token;
+};
+
 const getStoredToken = () => {
+  if (memoryToken) {
+    return memoryToken.startsWith("Bearer ") ? memoryToken.slice(7) : memoryToken;
+  }
+
+  // 兼容旧会话（迁移前的 localStorage token）
   const token =
     localStorage.getItem("homestay_token") ||
     sessionStorage.getItem("homestay_token") ||
@@ -223,6 +235,7 @@ export const disconnectWebSocket = () => {
   manuallyDisconnected = true;
   activeUserId = null;
   activeToken = null;
+  memoryToken = null;
   reconnectAttempts = 0;
   clearReconnectTimer();
   closeCurrentClient();

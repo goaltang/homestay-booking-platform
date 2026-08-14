@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 import api from "@/api";
 import { RegisterRequest } from "@/types/auth";
 import { ElMessage } from "element-plus";
-import { initWebSocket, disconnectWebSocket } from "@/services/websocketService";
+import { initWebSocket, disconnectWebSocket, setAuthToken } from "@/services/websocketService";
 import { useNotificationStore } from "@/stores/notification";
 import { extractErrorMessage, ApiRequestError } from "@/types/error";
 import { extractRole, normalizeAvatarUrl } from "@/utils/userHelpers";
@@ -50,15 +50,10 @@ interface PasswordChangeRequest {
   newPassword: string;
 }
 
-const TOKEN_KEY = "homestay_token";
 const USER_KEY = "homestay_user";
 
 function migrateOldKeys() {
-  const oldToken = localStorage.getItem("token");
   const oldUserInfo = localStorage.getItem("userInfo");
-  if (oldToken && !localStorage.getItem(TOKEN_KEY)) {
-    localStorage.setItem(TOKEN_KEY, oldToken);
-  }
   if (oldUserInfo && !localStorage.getItem(USER_KEY)) {
     localStorage.setItem(USER_KEY, oldUserInfo);
   }
@@ -74,12 +69,14 @@ const warn = (...args: unknown[]) => {
 };
 
 export const useUserStore = defineStore("user", () => {
-  const token = ref<string | null>(localStorage.getItem(TOKEN_KEY));
+  // token 迁移后，JWT 存 httpOnly cookie + 内存（供 WebSocket），不落 localStorage
+  const token = ref<string | null>(null);
   const userInfo = ref<UserInfo | null>(
     JSON.parse(localStorage.getItem(USER_KEY) || "null")
   );
 
-  const isAuthenticated = computed(() => !!token.value);
+  // 登录态以 userInfo 为准（token 在 httpOnly cookie，JS 不可读）
+  const isAuthenticated = computed(() => !!userInfo.value);
   const normalizedRole = computed(() => userInfo.value?.role?.toUpperCase() || "");
 
   /** @deprecated 请直接使用 userInfo */
@@ -113,11 +110,8 @@ export const useUserStore = defineStore("user", () => {
 
   const setToken = (newToken: string | null) => {
     token.value = newToken;
-    if (newToken) {
-      localStorage.setItem(TOKEN_KEY, newToken);
-    } else {
-      localStorage.removeItem(TOKEN_KEY);
-    }
+    // 同步内存 token 到 WebSocket 服务（供 STOMP 握手用）
+    setAuthToken(newToken);
   };
 
   const setUser = (user: UserInfo) => {
@@ -143,9 +137,11 @@ export const useUserStore = defineStore("user", () => {
 
       log("登录响应:", response.data);
 
-      if (response.data && response.data.token) {
-        // 设置token
-        setToken(response.data.token);
+      if (response.data) {
+        // token 由后端写入 httpOnly cookie；这里仅记录到内存供 WebSocket 使用
+        if (response.data.token) {
+          setToken(response.data.token);
+        }
 
         // 统一提取角色（嵌套 user 对象 > 顶层 role > authorities）
         const role = extractRole(response.data);
@@ -233,9 +229,11 @@ export const useUserStore = defineStore("user", () => {
 
       log("注册响应:", response.data);
 
-      if (response.data && response.data.token) {
-        // 设置token
-        setToken(response.data.token);
+      if (response.data) {
+        // token 由后端写入 httpOnly cookie；这里仅记录到内存供 WebSocket 使用
+        if (response.data.token) {
+          setToken(response.data.token);
+        }
 
         // 统一提取角色（顶层 role > authorities，回退到注册时选择的角色）
         const role = extractRole(response.data, registerData.role || "ROLE_USER");
@@ -324,28 +322,33 @@ export const useUserStore = defineStore("user", () => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     disconnectWebSocket();
-    // 清除token和用户信息
+    // 清除内存 token 和用户信息
     setToken(null);
     userInfo.value = null;
 
-    // 清除localStorage中的所有用户相关数据
-    localStorage.removeItem(TOKEN_KEY);
+    // 清除 localStorage 中的用户数据（含迁移前的旧 token）
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem("token");
     localStorage.removeItem("userInfo");
     localStorage.removeItem("user");
+    localStorage.removeItem("homestay_token");
     localStorage.removeItem("favorites");
 
-    // 清除API请求头中的Authorization
-    delete api.defaults.headers.common["Authorization"];
-
-    // 导航到登录页
-    window.location.href = "/login";
+    // 调用后端清 httpOnly cookie（不阻塞跳转）
+    try {
+      await api.post("/api/auth/logout");
+    } catch (error) {
+      // 即使后端失败也继续本地登出
+      console.warn("调用登出接口失败:", error);
+    }
 
     unreadNotificationCount.value = 0;
     useNotificationStore().setUnreadCount(0);
+
+    // 导航到登录页
+    window.location.href = "/login";
   };
 
   const updateProfile = async (data: ProfileUpdateRequest) => {
@@ -379,9 +382,9 @@ export const useUserStore = defineStore("user", () => {
     try {
       log("开始获取用户信息");
 
-      // 如果没有token，不执行请求
-      if (!token.value) {
-        warn("没有token，无法获取用户信息");
+      // 如果没有用户信息（登录态），不执行请求
+      if (!userInfo.value) {
+        warn("没有用户信息，无法获取用户信息");
         return null;
       }
 
