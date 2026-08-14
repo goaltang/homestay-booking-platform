@@ -355,109 +355,11 @@
 
         </div>
 
-        <!-- 支付对话框 -->
-        <el-dialog v-model="paymentDialogVisible" title="订单支付" width="400px" :close-on-click-modal="false"
-            @close="handlePaymentDialogClose">
-            <div class="payment-dialog-content">
-                <template v-if="qrCodeLoading">
-                    <div class="qr-loading" v-loading="true" element-loading-text="正在生成支付二维码..."></div>
-                </template>
-                <template v-else-if="paymentQrCode">
-                    <div class="payment-qr-info">
-                        <p class="payment-amount">支付金额: <span>¥{{ orderData?.totalAmount }}</span></p>
-                        <div class="qr-code-wrapper">
-                            <!-- 动态渲染：支持图片URL和原始数据 -->
-                            <img v-if="paymentQrCode.startsWith('http')" :src="paymentQrCode" alt="支付二维码" class="qr-image" />
-                            <qrcode-vue v-else :value="paymentQrCode" :size="200" level="H" />
-                        </div>
-                        <p class="payment-tip">请使用支付宝扫描二维码完成支付</p>
+        <PaymentDialog v-model="paymentDialogVisible" :order-id="orderData?.id" :total-amount="orderData?.totalAmount" :is-dev="isDev" @paid="handlePaymentPaid" />
 
-                        <!-- 模拟支付入口（仅开发环境显示） -->
-                        <div class="mock-pay-section" v-if="isDev">
-                            <el-divider>测试专用</el-divider>
-                            <el-button type="success" @click="handleManualPay" :loading="payLoading" icon="CircleCheck">
-                                模拟直接支付 (调用 payOrder API)
-                            </el-button>
-                            <p class="mock-tip">提示：此按钮将显式触发后端支付确认逻辑</p>
-                        </div>
+        <CheckInCredentialDialog v-model="checkInCredentialDialogVisible" :order-id="orderData?.id" />
 
-                        <el-divider />
-                        <div class="payment-status-info">
-                            <el-icon class="is-loading" v-if="isPolling">
-                                <Loading />
-                            </el-icon>
-                            <span>{{ pollingStatusText }}</span>
-                        </div>
-                    </div>
-                </template>
-                <template v-else>
-                    <el-empty description="二维码生成失败">
-                        <el-button type="primary" @click="generateQrCode">重试</el-button>
-                    </el-empty>
-                </template>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="paymentDialogVisible = false">取消支付</el-button>
-                    <el-button type="success" @click="checkPaymentStatus" :loading="checkingStatus">已完成支付</el-button>
-                </span>
-            </template>
-        </el-dialog>
-
-        <!-- 入住凭证查看对话框 -->
-        <el-dialog v-model="checkInCredentialDialogVisible" title="入住凭证" width="450px">
-            <div v-if="checkInCredential" class="credential-content">
-                <el-descriptions :column="1" border>
-                    <el-descriptions-item label="入住方式">
-                        {{ checkInCredential.checkInMethod === 'MANUAL' ? '人工办理' : '自助入住' }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="入住码">
-                        <span style="font-weight: bold; font-size: 20px; color: var(--el-color-primary);">
-                            {{ checkInCredential.checkInCode }}
-                        </span>
-                    </el-descriptions-item>
-                    <el-descriptions-item label="门锁密码" v-if="checkInCredential.doorPassword">
-                        {{ checkInCredential.doorPassword }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="密钥箱密码" v-if="checkInCredential.lockboxCode">
-                        {{ checkInCredential.lockboxCode }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="位置描述" :span="2" v-if="checkInCredential.locationDescription">
-                        {{ checkInCredential.locationDescription }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="有效时间" v-if="checkInCredential.validFrom || checkInCredential.validUntil">
-                        {{ checkInCredential.validFrom }} ~ {{ checkInCredential.validUntil }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="备注" :span="2" v-if="checkInCredential.remark">
-                        {{ checkInCredential.remark }}
-                    </el-descriptions-item>
-                </el-descriptions>
-                <el-alert type="info" :closable="false" style="margin-top: 15px;">
-                    请保管好您的入住码，到达后可用于自助办理入住。
-                </el-alert>
-            </div>
-            <template #footer>
-                <el-button @click="checkInCredentialDialogVisible = false">关闭</el-button>
-            </template>
-        </el-dialog>
-
-        <!-- 自助入住对话框 -->
-        <el-dialog v-model="selfCheckInDialogVisible" title="自助入住" width="400px">
-            <div class="self-checkin-content">
-                <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px;">
-                    请输入房东提供的6位入住码完成入住。
-                </el-alert>
-                <el-form>
-                    <el-form-item label="入住码">
-                        <el-input v-model="selfCheckInCode" placeholder="请输入6位入住码" maxlength="6" />
-                    </el-form-item>
-                </el-form>
-            </div>
-            <template #footer>
-                <el-button @click="selfCheckInDialogVisible = false">取消</el-button>
-                <el-button type="primary" @click="submitSelfCheckIn" :loading="selfCheckInLoading">确认入住</el-button>
-            </template>
-        </el-dialog>
+        <SelfCheckInDialog v-model="selfCheckInDialogVisible" @confirmed="handleSelfCheckInConfirmed" />
 
         <!-- Add Edit Modal -->
         <ReviewEditModal v-model:visible="isEditModalVisible" :review-data="currentEditingReview"
@@ -471,12 +373,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, Clock, CircleCheck, CircleClose, Location, Calendar, User, UserFilled, PhoneFilled, EditPen, ChatDotRound } from '@element-plus/icons-vue'
-import QrcodeVue from 'qrcode.vue'
-import { cancelOrder, generatePaymentQRCode, checkPayment, payOrder, getCheckInCredential, selfCheckIn, confirmArrival } from '../../api/order'
+import { Clock, CircleCheck, CircleClose, Location, Calendar, User, UserFilled, PhoneFilled, EditPen, ChatDotRound } from '@element-plus/icons-vue'
+import { cancelOrder, confirmArrival } from '../../api/order'
 import { getHomestayById } from '../../api/homestay'
 import { getHomestayImageUrl, handleImageError } from '../../utils/image'
 import dayjs from 'dayjs'
@@ -488,7 +389,11 @@ import { useOrderStore, type ReviewItem, type OrderItem } from '@/stores/order'
 import ReviewEditModal from '@/components/ReviewEditModal.vue'
 import ReviewForm from '@/components/ReviewForm.vue'
 import OrderTimeoutIndicator from '@/components/order/OrderTimeoutIndicator.vue'
+import PaymentDialog from '@/components/order/PaymentDialog.vue'
+import CheckInCredentialDialog from '@/components/order/CheckInCredentialDialog.vue'
+import SelfCheckInDialog from '@/components/order/SelfCheckInDialog.vue'
 import { OrderStatus } from '@/types/order'
+import { getStatusStep, getStatusType, getStatusText, getRefundTypeText, formatDateRange, extractRejectReason } from '@/utils/orderDetail'
 
 // --- Add type for editable data ---
 interface EditableReviewData {
@@ -517,13 +422,6 @@ const isDeletingReview = ref(false)
 
 // --- Add state for payment dialog ---
 const paymentDialogVisible = ref(false)
-const qrCodeLoading = ref(false)
-const paymentQrCode = ref('')
-const isPolling = ref(false)
-const pollingTimer = ref<number | null>(null)
-const pollingStatusText = ref('等待支付...')
-const checkingStatus = ref(false)
-const payLoading = ref(false)
 // --- End state ---
 
 // --- Add state for edit modal ---
@@ -551,40 +449,18 @@ const handleSubmitReview = async (reviewData: any) => {
 // --- Check-in related state ---
 const checkInCredentialDialogVisible = ref(false)
 const selfCheckInDialogVisible = ref(false)
-const checkInCredential = ref<any>(null)
-const selfCheckInCode = ref('')
-const selfCheckInLoading = ref(false)
 const confirmArrivalLoading = ref(false)
 
-// 获取入住凭证
-const openCheckInCredential = async () => {
-    if (!orderData.value?.id) return
-    try {
-        const res = await getCheckInCredential(orderData.value.id)
-        checkInCredential.value = res.data || res
-        checkInCredentialDialogVisible.value = true
-    } catch (error: any) {
-    }
+// 打开入住凭证（凭证由 CheckInCredentialDialog 自行加载）
+const openCheckInCredential = () => {
+    checkInCredentialDialogVisible.value = true
 }
 
-// 自助入住
-const submitSelfCheckIn = async () => {
-    if (!selfCheckInCode.value) {
-        ElMessage.warning('请输入入住码')
-        return
-    }
-    selfCheckInLoading.value = true
-    try {
-        await selfCheckIn(selfCheckInCode.value)
-        ElMessage.success('自助入住成功')
-        selfCheckInDialogVisible.value = false
-        fetchOrderDetail()
-        store.fetchOrders()
-        store.fetchStatsOrders()
-    } catch (error: any) {
-    } finally {
-        selfCheckInLoading.value = false
-    }
+// 自助入住成功回调（SelfCheckInDialog 触发）
+const handleSelfCheckInConfirmed = () => {
+    fetchOrderDetail()
+    store.fetchOrders()
+    store.fetchStatsOrders()
 }
 
 // 确认到达
@@ -754,131 +630,6 @@ const getRefundStatusDesc = computed(() => {
     }
 })
 
-// 获取订单状态的步骤
-const getStatusStep = (status: string) => {
-    const statusSteps: Record<string, number> = {
-        'PENDING': 1,       // 预订申请(步骤1)
-        'CONFIRMED': 2,     // 房东确认(步骤2)
-        'PAYMENT_PENDING': 2, // 待支付(在确认后)
-        'REJECTED': 1,      // 被拒绝(保持在步骤1)
-        'CANCELLED': 1,     // 已取消(保持在步骤1)
-        'CANCELLED_SYSTEM': 1, // 系统取消(保持在步骤1)
-        'PAID': 3,          // 已支付(步骤3)
-        'CHECKED_IN': 4,    // 已入住(步骤4)
-        'COMPLETED': 5      // 已完成(步骤5)
-    }
-    return statusSteps[status] || 0
-}
-
-// 获取状态显示的类型
-const getStatusType = (status: string, paymentStatus?: string, refundRejectionReason?: string) => {
-    if (paymentStatus === 'PAID' && refundRejectionReason) {
-        return 'danger'
-    }
-
-    const statusTypes: Record<string, string> = {
-        'PENDING': 'warning',
-        'CONFIRMED': 'success',
-        'PAYMENT_PENDING': 'warning',
-        'REJECTED': 'danger',
-        'CANCELLED': 'info',
-        'CANCELLED_SYSTEM': 'info',
-        'CANCELLED_BY_USER': 'info',
-        'CANCELLED_BY_HOST': 'info',
-        'PAID': 'success',
-        'CHECKED_IN': 'success',
-        'COMPLETED': 'success'
-    }
-    return statusTypes[status] || 'info'
-}
-
-// 获取状态显示文本
-const getStatusText = (status: string, paymentStatus?: string, refundType?: string, refundRejectionReason?: string, disputeResolution?: string) => {
-    // 优先处理退款相关状态
-    if (paymentStatus === 'PAID' && refundRejectionReason) {
-        return '退款被拒绝';
-    }
-
-    // 争议状态
-    if (status === 'DISPUTE_PENDING') return '争议待处理';
-    if (status === 'DISPUTED') return '争议处理中';
-
-    // 争议解决结果
-    if (disputeResolution === 'APPROVED') return '争议已解决（退款）';
-    if (disputeResolution === 'REJECTED') return '争议已解决（拒绝退款）';
-
-    if (paymentStatus === 'REFUND_PENDING') {
-        const refundTypeText = getRefundTypeText(refundType);
-        return `退款中${refundTypeText}`;
-    }
-    if (paymentStatus === 'REFUNDED') {
-        const refundTypeText = getRefundTypeText(refundType);
-        return `已退款${refundTypeText}`;
-    }
-    if (paymentStatus === 'REFUND_FAILED') {
-        const refundTypeText = getRefundTypeText(refundType);
-        return `退款失败${refundTypeText}`;
-    }
-
-    const statusTexts: Record<string, string> = {
-        'PENDING': '待确认',
-        'CONFIRMED': '已确认',
-        'PAYMENT_PENDING': '待支付',
-        'REJECTED': '已拒绝',
-        'CANCELLED': '已取消',
-        'CANCELLED_SYSTEM': '系统已取消',
-        'CANCELLED_BY_USER': '已取消',
-        'CANCELLED_BY_HOST': '已取消',
-        'PAID': '已支付',
-        'CHECKED_IN': '已入住',
-        'COMPLETED': '已完成',
-        'PAYMENT_FAILED': '支付失败',
-        'REFUND_PENDING': '退款中',
-        'REFUNDED': '已退款',
-        'REFUND_FAILED': '退款失败',
-        'DISPUTE_PENDING': '争议待处理',
-        'DISPUTED': '争议处理中'
-    }
-
-    return statusTexts[status] || status
-}
-
-// 获取退款类型文本
-const getRefundTypeText = (refundType?: string): string => {
-    if (!refundType) return '';
-
-    switch (refundType) {
-        case 'USER_REQUESTED':
-            return '（用户申请）';
-        case 'HOST_CANCELLED':
-            return '（房东取消）';
-        case 'ADMIN_INITIATED':
-            return '（管理员发起）';
-        case 'SYSTEM_AUTOMATIC':
-            return '（系统自动）';
-        default:
-            return '';
-    }
-}
-
-// 格式化日期范围
-const formatDateRange = (checkIn: string, checkOut: string) => {
-    if (!checkIn || !checkOut) return ''
-
-    const checkInDate = new Date(checkIn)
-    const checkOutDate = new Date(checkOut)
-
-    return `${checkInDate.getMonth() + 1}月${checkInDate.getDate()}日 - ${checkOutDate.getMonth() + 1}月${checkOutDate.getDate()}日`
-}
-
-// 提取拒绝原因
-const extractRejectReason = (remark: string) => {
-    if (!remark) return ''
-
-    const reasonMatch = remark.match(/拒绝原因: (.+)/)
-    return reasonMatch ? reasonMatch[1] : remark
-}
-
 // 确认取消订单
 const confirmCancel = async () => {
     try {
@@ -961,177 +712,16 @@ const confirmCancel = async () => {
 }
 
 // 展示支付弹窗
+// 打开支付对话框（二维码与轮询由 PaymentDialog 内部管理）
 const showPaymentDialog = () => {
     paymentDialogVisible.value = true
-    generateQrCode()
 }
 
-// 生成二维码
-const generateQrCode = async () => {
-    if (!orderData.value) return
-
-    qrCodeLoading.value = true
-    paymentQrCode.value = ''
-
-    try {
-        const response = await generatePaymentQRCode({
-            orderId: orderData.value.id,
-            method: 'alipay'
-        })
-
-        if (response.data.success) {
-            const data = response.data
-            // 检查是否为 HTML 表单跳转支付
-            if (data.paymentUrl && data.paymentUrl.includes('<form')) {
-                logInfo('检测到支付宝跳转表单，正在准备跳转...')
-                // 创建一个隐藏的 div 来存放表单
-                const div = document.createElement('div')
-                div.id = 'alipay-form-container'
-                div.style.display = 'none'
-                div.innerHTML = data.paymentUrl
-                document.body.appendChild(div)
-                
-                // 提交表单
-                const form = div.querySelector('form')
-                if (form) {
-                    form.submit()
-                    ElMessage.success('正在跳转至支付宝支付页面...')
-                } else {
-                    ElMessage.error('支付表单生成失败，请重试')
-                }
-                return
-            }
-
-            // 如果是二维码扫码支付
-            if (data.qrCode) {
-                paymentQrCode.value = data.qrCode
-                startPolling()
-            } else if (data.paymentUrl) {
-                // 如果是单纯的 URL 链接
-                window.location.href = data.paymentUrl
-            } else {
-                ElMessage.error('获取支付信息失败：返回结果异常')
-            }
-        } else {
-            ElMessage.error(response.data.message || '生成支付信息失败')
-        }
-    } catch (error) {
-        console.error('生成支付信息异常:', error)
-    } finally {
-        qrCodeLoading.value = false
-    }
-}
-
-// 帮助函数：替代直接使用 console.log (可选，为了代码一致性)
-const logInfo = (msg: string) => {
-    console.log(`[支付系统] ${msg}`)
-}
-
-// 开始轮询支付状态
-const startPolling = () => {
-    stopPolling() // 先停止旧的
-    isPolling.value = true
-    pollingStatusText.value = '支付确认中...'
-
-    let errorCount = 0;
-    pollingTimer.value = window.setInterval(async () => {
-        if (!orderData.value) return
-
-        try {
-            const response = await checkPayment(orderData.value.id)
-            if (response.data.success && response.data.isPaid) {
-                stopPolling()
-                ElMessage.success('支付成功！')
-                paymentDialogVisible.value = false
-                fetchOrderDetail() // 刷新订单详情
-            } else {
-                errorCount = 0; // 重置错误计数
-                pollingStatusText.value = '正在核对支付结果...'
-            }
-        } catch (error) {
-            console.error('轮询支付状态异常:', error)
-            errorCount++;
-            // 连续多次错误才提示
-            if (errorCount > 3) {
-                pollingStatusText.value = '支付确认延迟，请勿关闭页面...'
-            }
-        }
-    }, 4000) // 每4秒查一次，避免过于频繁触碰限流
-}
-
-// 停止轮询
-const stopPolling = () => {
-    isPolling.value = false
-    if (pollingTimer.value) {
-        clearInterval(pollingTimer.value)
-        pollingTimer.value = null
-    }
-}
-
-// 手动检查支付状态
-const checkPaymentStatus = async () => {
-    if (!orderData.value) return
-
-    checkingStatus.value = true
-    try {
-        const response = await checkPayment(orderData.value.id)
-        if (response.data.success && response.data.isPaid) {
-            ElMessage.success('支付已成功确认')
-            paymentDialogVisible.value = false
-            fetchOrderDetail()
-        } else {
-            ElMessage.warning('尚未检测到支付成功，请扫码支付')
-        }
-    } catch (error) {
-    } finally {
-        checkingStatus.value = false
-    }
-}
-
-// 处理手动直接支付（模拟）
-const handleManualPay = async () => {
-    if (!orderData.value) return
-
-    try {
-        await ElMessageBox.confirm(
-            '这将跳过实际支付流程，直接调用后端接口模拟支付成功。是否继续？',
-            '手动支付确认',
-            {
-                confirmButtonText: '确定支付',
-                cancelButtonText: '取消',
-                type: 'warning'
-            }
-        )
-
-        payLoading.value = true
-        // 显式调用之前未被调用的 payOrder API
-        const response = await payOrder(orderData.value.id, 'ALIPAY')
-        
-        if (response.data.success) {
-            ElMessage.success('模拟支付操作成功！')
-            paymentDialogVisible.value = false
-            stopPolling()
-            // 延迟刷新以确保后端数据已同步更新
-            setTimeout(() => {
-                fetchOrderDetail()
-                store.fetchOrders()
-                store.fetchStatsOrders()
-            }, 500)
-        } else {
-            ElMessage.error(response.data.message || '操作失败')
-        }
-    } catch (error: any) {
-        if (error !== 'cancel') {
-            console.error('手动支付异常:', error)
-        }
-    } finally {
-        payLoading.value = false
-    }
-}
-
-// 支付弹窗关闭逻辑
-const handlePaymentDialogClose = () => {
-    stopPolling()
+// 支付成功回调（PaymentDialog 触发）
+const handlePaymentPaid = () => {
+    fetchOrderDetail()
+    store.fetchOrders()
+    store.fetchStatsOrders()
 }
 
 // 前往订单列表
@@ -1408,9 +998,6 @@ onMounted(() => {
     fetchOrderDetail()
 })
 
-onUnmounted(() => {
-    stopPolling()
-})
 </script>
 
 <style scoped>
