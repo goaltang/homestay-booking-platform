@@ -494,241 +494,27 @@
         <!-- 退款确认对话框 -->
         <RefundDialog v-model="refundDialogVisible" :order="currentOrder" @confirmed="handleRefundConfirmed" />
 
-        <!-- 退款审核对话框 -->
-        <el-dialog v-model="reviewRefundDialogVisible" title="审核退款申请" width="45%">
-            <div v-if="currentOrder" class="refund-dialog-content">
-                <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 20px;">
-                    <template #title>
-                        <span>请审核对订单 <strong>#{{ currentOrder.id }}</strong> 发起的退款申请。</span>
-                    </template>
-                </el-alert>
-
-                <el-descriptions :column="1" border size="small" class="refund-order-info">
-                    <el-descriptions-item label="退款原因">{{ currentOrder.refundReason || '无' }}</el-descriptions-item>
-                    <el-descriptions-item label="退款金额">
-                        <span class="refund-amount-highlight">¥{{ formatAmount(currentOrder.refundAmount || currentOrder.totalAmount) }}</span>
-                    </el-descriptions-item>
-                </el-descriptions>
-
-                <el-form :model="reviewRefundForm" ref="reviewRefundFormRef" style="margin-top: 20px;">
-                    <el-form-item label="审核结果" required>
-                        <el-radio-group v-model="reviewRefundForm.action">
-                            <el-radio label="approve" value="approve">同意退款</el-radio>
-                            <el-radio label="reject" value="reject">拒绝退款</el-radio>
-                        </el-radio-group>
-                    </el-form-item>
-                    <el-form-item :label="reviewRefundForm.action === 'approve' ? '同意备注' : '拒绝原因'" prop="reason"
-                        :rules="[{ required: reviewRefundForm.action === 'reject', message: '请输入拒绝原因', trigger: 'blur' }]">
-                        <el-input v-model="reviewRefundForm.reason" type="textarea" :rows="3"
-                            :placeholder="reviewRefundForm.action === 'approve' ? '选填：同意退款备注' : '必填：请输入拒绝退款的原因'" maxlength="200" show-word-limit />
-                    </el-form-item>
-                </el-form>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="reviewRefundDialogVisible = false">取消</el-button>
-                    <el-button :type="reviewRefundForm.action === 'approve' ? 'success' : 'danger'" @click="confirmReviewRefund" :loading="reviewRefundSubmitting">
-                        确认提交
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
+        <ReviewRefundDialog v-model="reviewRefundDialogVisible" :order="currentOrder" @confirmed="handleReviewRefundConfirmed" />
 
         <!-- 发起争议对话框 -->
         <DisputeDialog v-model="disputeDialogVisible" :order="currentOrder" @confirmed="handleDisputeConfirmed" />
 
-        <!-- 自动状态配置对话框 -->
-        <el-dialog v-model="autoStatusConfigVisible" title="自动状态流转配置" width="60%">
-            <div v-if="autoStatusConfig" class="auto-config-content">
-                <el-descriptions title="配置信息" :column="2" border>
-                    <el-descriptions-item label="自动入住时间">{{ autoStatusConfig.autoCheckInTime }}</el-descriptions-item>
-                    <el-descriptions-item label="自动完成时间">{{ autoStatusConfig.autoCheckOutTime }}</el-descriptions-item>
-                    <el-descriptions-item label="错过入住处理时间">{{ autoStatusConfig.cancelMissedCheckInTime
-                        }}</el-descriptions-item>
-                    <el-descriptions-item label="检查频率">{{ autoStatusConfig.checkInterval }}</el-descriptions-item>
-                </el-descriptions>
+        <AutoStatusConfigDialog v-model="autoStatusConfigVisible" />
 
-                <el-divider content-position="left">
-                    <strong>自动流转规则</strong>
-                </el-divider>
+        <PrepareCheckInDialog v-model="prepareCheckInDialogVisible" :order="currentOrder" @confirmed="handlePrepareCheckInConfirmed" />
 
-                <div v-if="autoStatusConfig.rules" class="rules-content">
-                    <el-card v-for="(rule, key) in autoStatusConfig.rules" :key="key" class="rule-card" shadow="never">
-                        <template #header>
-                            <span class="rule-title">{{ key }}</span>
-                        </template>
-                        <p class="rule-description">{{ rule }}</p>
-                    </el-card>
-                </div>
+        <ViewCredentialDialog v-model="viewCredentialDialogVisible" :order="currentOrder" />
 
-                <el-alert title="说明" type="info" :closable="false" style="margin-top: 20px;">
-                    <p>系统会根据上述规则自动处理订单状态流转，减少人工干预，提高效率。</p>
-                    <p>如有特殊情况需要人工处理，请及时联系系统管理员。</p>
-                </el-alert>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="autoStatusConfigVisible = false">关闭</el-button>
-                </span>
-            </template>
-        </el-dialog>
+        <CheckOutDialog v-model="checkOutDialogVisible" :order="currentOrder" @confirmed="handleCheckOutConfirmed" />
 
-        <!-- 设置准备入住对话框 -->
-        <el-dialog v-model="prepareCheckInDialogVisible" title="设置准备入住" width="50%">
-            <div v-if="currentOrder" class="prepare-checkin-content">
-                <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px;">
-                    <template #title>
-                        <span>为订单 <strong>#{{ currentOrder.id }}</strong> 设置入住凭证</span>
-                    </template>
-                </el-alert>
+        <DepositDialog v-model="depositDialogVisible" :order="currentOrder" @confirmed="handleDepositConfirmed" />
 
-                <el-descriptions :column="2" border size="small" style="margin-bottom: 20px;">
-                    <el-descriptions-item label="房源">{{ currentOrder.homestayTitle || currentOrder.homestayName }}</el-descriptions-item>
-                    <el-descriptions-item label="客户">{{ currentOrder.guestName }}</el-descriptions-item>
-                    <el-descriptions-item label="入住日期">{{ currentOrder.checkInDate }}</el-descriptions-item>
-                    <el-descriptions-item label="退房日期">{{ currentOrder.checkOutDate }}</el-descriptions-item>
-                </el-descriptions>
-
-                <el-form :model="prepareCheckInForm" label-width="120px">
-                    <el-form-item label="入住方式">
-                        <el-radio-group v-model="prepareCheckInForm.checkInMethod">
-                            <el-radio label="MANUAL">人工办理</el-radio>
-                            <el-radio label="SELF_SERVICE">自助入住</el-radio>
-                        </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="门锁密码" v-if="prepareCheckInForm.checkInMethod === 'MANUAL' || prepareCheckInForm.checkInMethod === 'SELF_SERVICE'">
-                        <el-input v-model="prepareCheckInForm.doorPassword" placeholder="请输入门锁密码" />
-                    </el-form-item>
-                    <el-form-item label="密钥箱密码" v-if="prepareCheckInForm.checkInMethod === 'SELF_SERVICE'">
-                        <el-input v-model="prepareCheckInForm.lockboxCode" placeholder="请输入密钥箱密码" />
-                    </el-form-item>
-                    <el-form-item label="位置描述" v-if="prepareCheckInForm.checkInMethod === 'SELF_SERVICE'">
-                        <el-input v-model="prepareCheckInForm.locationDescription" type="textarea" :rows="2" placeholder="请输入房源位置描述，帮助客人找到房源" />
-                    </el-form-item>
-                    <el-form-item label="备注">
-                        <el-input v-model="prepareCheckInForm.remark" type="textarea" :rows="2" placeholder="选填：备注信息" />
-                    </el-form-item>
-                </el-form>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="prepareCheckInDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="submitPrepareCheckIn" :loading="prepareCheckInSubmitting">
-                        确认设置
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
-
-        <!-- 查看入住凭证对话框 -->
-        <el-dialog v-model="viewCredentialDialogVisible" title="入住凭证" width="50%">
-            <div v-if="checkInCredential" class="credential-content">
-                <el-descriptions :column="2" border size="small">
-                    <el-descriptions-item label="入住方式">{{ checkInCredential.checkInMethod === 'MANUAL' ? '人工办理' : '自助入住' }}</el-descriptions-item>
-                    <el-descriptions-item label="入住码">
-                        <span style="font-weight: bold; font-size: 18px; color: var(--el-color-primary);">{{ checkInCredential.checkInCode }}</span>
-                    </el-descriptions-item>
-                    <el-descriptions-item label="门锁密码" v-if="checkInCredential.doorPassword">{{ checkInCredential.doorPassword }}</el-descriptions-item>
-                    <el-descriptions-item label="密钥箱密码" v-if="checkInCredential.lockboxCode">{{ checkInCredential.lockboxCode }}</el-descriptions-item>
-                    <el-descriptions-item label="位置描述" :span="2" v-if="checkInCredential.locationDescription">{{ checkInCredential.locationDescription }}</el-descriptions-item>
-                    <el-descriptions-item label="有效起始" v-if="checkInCredential.validFrom">{{ checkInCredential.validFrom }}</el-descriptions-item>
-                    <el-descriptions-item label="有效截止" v-if="checkInCredential.validUntil">{{ checkInCredential.validUntil }}</el-descriptions-item>
-                    <el-descriptions-item label="备注" :span="2" v-if="checkInCredential.remark">{{ checkInCredential.remark }}</el-descriptions-item>
-                </el-descriptions>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="viewCredentialDialogVisible = false">关闭</el-button>
-                </span>
-            </template>
-        </el-dialog>
-
-        <!-- 办理退房对话框 -->
-        <el-dialog v-model="checkOutDialogVisible" title="办理退房" width="50%">
-            <div v-if="currentOrder" class="checkout-content">
-                <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px;">
-                    <template #title>
-                        <span>确认办理订单 <strong>#{{ currentOrder.id }}</strong> 退房</span>
-                    </template>
-                </el-alert>
-
-                <el-descriptions :column="2" border size="small" style="margin-bottom: 20px;">
-                    <el-descriptions-item label="房源">{{ currentOrder.homestayTitle || currentOrder.homestayName }}</el-descriptions-item>
-                    <el-descriptions-item label="客户">{{ currentOrder.guestName }}</el-descriptions-item>
-                    <el-descriptions-item label="入住时间">{{ currentOrder.checkedInAt || currentOrder.checkInDate }}</el-descriptions-item>
-                    <el-descriptions-item label="退房时间">{{ formatDateTime(new Date().toISOString()) }}</el-descriptions-item>
-                    <el-descriptions-item label="押金金额">¥{{ currentOrder.depositAmount || 0 }}</el-descriptions-item>
-                </el-descriptions>
-
-                <el-form :model="checkOutForm" label-width="100px">
-                    <el-form-item label="备注">
-                        <el-input v-model="checkOutForm.remark" type="textarea" :rows="2" placeholder="选填：退房备注" />
-                    </el-form-item>
-                </el-form>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="checkOutDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="submitCheckOut" :loading="checkOutSubmitting">
-                        确认退房
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
-
-        <!-- 押金操作对话框 -->
-        <el-dialog v-model="depositDialogVisible" title="押金操作" width="50%">
-            <div v-if="currentOrder && checkOutRecord" class="deposit-content">
-                <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px;">
-                    <template #title>
-                        <span>请选择押金操作类型</span>
-                    </template>
-                </el-alert>
-
-                <el-descriptions :column="2" border size="small" style="margin-bottom: 20px;">
-                    <el-descriptions-item label="押金状态">
-                        <el-tag :type="getDepositStatusType(checkOutRecord.depositStatus)" size="small">
-                            {{ getDepositStatusText(checkOutRecord.depositStatus) }}
-                        </el-tag>
-                    </el-descriptions-item>
-                    <el-descriptions-item label="押金金额">¥{{ checkOutRecord.depositAmount || 0 }}</el-descriptions-item>
-                    <el-descriptions-item label="结算金额">¥{{ checkOutRecord.settlementAmount || 0 }}</el-descriptions-item>
-                    <el-descriptions-item label="额外费用">¥{{ checkOutRecord.extraCharges || 0 }}</el-descriptions-item>
-                </el-descriptions>
-
-                <el-form :model="depositForm" label-width="100px">
-                    <el-form-item label="操作类型" required>
-                        <el-radio-group v-model="depositForm.action">
-                            <el-radio label="COLLECT">收取押金</el-radio>
-                            <el-radio label="REFUND">退还押金</el-radio>
-                            <el-radio label="RETAIN">扣押押金</el-radio>
-                            <el-radio label="WAIVE">免除押金</el-radio>
-                        </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="金额" v-if="depositForm.action === 'COLLECT' || depositForm.action === 'RETAIN'">
-                        <el-input-number v-model="depositForm.amount" :min="0" :precision="2" :step="10" style="width: 200px;" />
-                    </el-form-item>
-                    <el-form-item label="说明" v-if="depositForm.action === 'RETAIN'">
-                        <el-input v-model="depositForm.note" type="textarea" :rows="2" placeholder="请输入扣押原因" />
-                    </el-form-item>
-                </el-form>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="depositDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="submitDeposit" :loading="depositSubmitting">
-                        确认操作
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance } from 'element-plus'
 import { Search, Refresh, Clock, CircleCheck, Warning, Setting, ArrowDown } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { useUserStore } from '@/stores/user'
@@ -738,15 +524,8 @@ import {
     confirmOrder,
     rejectOrder,
     getHostOrderStats,
-    hostApproveRefund,
-    hostRejectRefund,
-    prepareCheckIn,
-    getCheckInCredential,
     performCheckIn,
     cancelPrepareCheckIn,
-    performCheckOut,
-    getCheckOutRecord,
-    processDeposit,
     confirmSettlement
 } from '@/api/hostOrder'
 import { getHostHomestayOptions } from '@/api/host'
@@ -754,12 +533,18 @@ import { canPerformActionOnStatus, OrderAction } from '@/utils/orderPermission'
 import type { HostOrderItem } from '@/types/hostOrder'
 import {
     getStatusText, getStatusType, canInitiateRefund, getPaymentStatusText, getPaymentStatusType,
-    getRefundTypeText, hasRefundInfo, formatAmount, getDepositStatusText, getDepositStatusType,
+    getRefundTypeText, hasRefundInfo, formatAmount,
     formatDateString, formatDateTime
 } from '@/utils/orderDisplay'
 import ReasonDialog from '@/components/host/order/ReasonDialog.vue'
 import RefundDialog from '@/components/host/order/RefundDialog.vue'
 import DisputeDialog from '@/components/host/order/DisputeDialog.vue'
+import ReviewRefundDialog from '@/components/host/order/ReviewRefundDialog.vue'
+import AutoStatusConfigDialog from '@/components/host/order/AutoStatusConfigDialog.vue'
+import PrepareCheckInDialog from '@/components/host/order/PrepareCheckInDialog.vue'
+import ViewCredentialDialog from '@/components/host/order/ViewCredentialDialog.vue'
+import CheckOutDialog from '@/components/host/order/CheckOutDialog.vue'
+import DepositDialog from '@/components/host/order/DepositDialog.vue'
 
 
 // 新增：定义房源选项接口
@@ -806,7 +591,6 @@ const autoStatusStats = reactive({
 // 自动状态管理相关
 const autoStatusLoading = ref(false)
 const autoStatusConfigVisible = ref(false)
-const autoStatusConfig = ref<any>({})
 
 // 筛选表单
 const filterForm = reactive({
@@ -840,47 +624,21 @@ const refundDialogVisible = ref(false)
 
 // 审核退款相关
 const reviewRefundDialogVisible = ref(false)
-const reviewRefundFormRef = ref<FormInstance>()
-const reviewRefundSubmitting = ref(false)
-const reviewRefundForm = reactive({
-    action: 'approve',
-    reason: ''
-})
 
 // 争议对话框相关
 const disputeDialogVisible = ref(false)
 
 // 设置准备入住对话框相关
 const prepareCheckInDialogVisible = ref(false)
-const prepareCheckInSubmitting = ref(false)
-const prepareCheckInForm = reactive({
-    checkInMethod: 'MANUAL',
-    doorPassword: '',
-    lockboxCode: '',
-    locationDescription: '',
-    remark: ''
-})
 
 // 查看入住凭证对话框相关
 const viewCredentialDialogVisible = ref(false)
-const checkInCredential = ref<any>(null)
 
 // 办理退房对话框相关
 const checkOutDialogVisible = ref(false)
-const checkOutSubmitting = ref(false)
-const checkOutForm = reactive({
-    remark: ''
-})
 
 // 押金操作对话框相关
 const depositDialogVisible = ref(false)
-const depositSubmitting = ref(false)
-const depositForm = reactive({
-    action: 'REFUND',
-    amount: 0,
-    note: ''
-})
-const checkOutRecord = ref<any>(null)
 
 // 处理筛选
 const handleFilter = () => {
@@ -1014,62 +772,26 @@ const openPrepareCheckIn = (order: HostOrderItem) => {
         return
     }
     currentOrder.value = order
-    // 重置表单
-    prepareCheckInForm.checkInMethod = 'MANUAL'
-    prepareCheckInForm.doorPassword = ''
-    prepareCheckInForm.lockboxCode = ''
-    prepareCheckInForm.locationDescription = ''
-    prepareCheckInForm.remark = ''
     prepareCheckInDialogVisible.value = true
 }
 
-// 提交设置准备入住
-const submitPrepareCheckIn = async () => {
-    if (!currentOrder.value || !currentOrder.value.id) {
-        ElMessage.error('无效的订单数据')
-        return
+// 设置准备入住成功回调（PrepareCheckInDialog 触发）
+const handlePrepareCheckInConfirmed = async () => {
+    if (detailsDialogVisible.value) {
+        detailsDialogVisible.value = false
     }
-
-    prepareCheckInSubmitting.value = true
-    try {
-        console.log('设置准备入住，订单ID:', currentOrder.value.id, prepareCheckInForm)
-        await prepareCheckIn(currentOrder.value.id, {
-            checkInMethod: prepareCheckInForm.checkInMethod,
-            doorPassword: prepareCheckInForm.doorPassword || undefined,
-            lockboxCode: prepareCheckInForm.lockboxCode || undefined,
-            locationDescription: prepareCheckInForm.locationDescription || undefined,
-            remark: prepareCheckInForm.remark || undefined
-        })
-        ElMessage.success('已设置准备入住')
-        prepareCheckInDialogVisible.value = false
-
-        // 关闭详情对话框（如果打开）
-        if (detailsDialogVisible.value) {
-            detailsDialogVisible.value = false
-        }
-
-        updateStats()
-        fetchOrders()
-    } catch (error: any) {
-        console.error('设置准备入住失败:', error)
-    } finally {
-        prepareCheckInSubmitting.value = false
-    }
+    updateStats()
+    fetchOrders()
 }
 
 // 查看入住凭证
-const openViewCredential = async (order: HostOrderItem) => {
+const openViewCredential = (order: HostOrderItem) => {
     if (!order || !order.id) {
         ElMessage.error('无效的订单数据')
         return
     }
-    try {
-        const res = await getCheckInCredential(order.id)
-        checkInCredential.value = res.data || res
-        viewCredentialDialogVisible.value = true
-    } catch (error: any) {
-        console.error('获取入住凭证失败:', error)
-    }
+    currentOrder.value = order
+    viewCredentialDialogVisible.value = true
 }
 
 // 取消准备入住
@@ -1111,94 +833,33 @@ const openCheckOut = (order: HostOrderItem) => {
         return
     }
     currentOrder.value = order
-    checkOutForm.remark = ''
     checkOutDialogVisible.value = true
 }
 
-// 提交退房
-const submitCheckOut = async () => {
-    if (!currentOrder.value || !currentOrder.value.id) {
-        ElMessage.error('无效的订单数据')
-        return
+// 退房成功回调（CheckOutDialog 触发）
+const handleCheckOutConfirmed = async () => {
+    if (detailsDialogVisible.value) {
+        detailsDialogVisible.value = false
     }
-
-    checkOutSubmitting.value = true
-    try {
-        console.log('办理退房，订单ID:', currentOrder.value.id)
-        await performCheckOut(currentOrder.value.id, {
-            remark: checkOutForm.remark || undefined
-        })
-        ElMessage.success('已办理退房')
-        checkOutDialogVisible.value = false
-
-        // 关闭详情对话框（如果打开）
-        if (detailsDialogVisible.value) {
-            detailsDialogVisible.value = false
-        }
-
-        await refreshOrdersAndStats()
-    } catch (error: any) {
-        console.error('办理退房失败:', error)
-    } finally {
-        checkOutSubmitting.value = false
-    }
+    await refreshOrdersAndStats()
 }
 
 // 打开押金操作对话框
-const openDeposit = async (order: HostOrderItem) => {
+const openDeposit = (order: HostOrderItem) => {
     if (!order || !order.id) {
         ElMessage.error('无效的订单数据')
         return
     }
     currentOrder.value = order
-    // 获取退房记录
-    try {
-        const res = await getCheckOutRecord(order.id)
-        checkOutRecord.value = res.data || res
-        depositForm.action = 'REFUND'
-        depositForm.amount = checkOutRecord.value?.depositAmount || 0
-        depositForm.note = ''
-        depositDialogVisible.value = true
-    } catch (error: any) {
-        console.error('获取退房记录失败:', error)
-    }
+    depositDialogVisible.value = true
 }
 
-// 提交押金操作
-const submitDeposit = async () => {
-    if (!currentOrder.value || !currentOrder.value.id) {
-        ElMessage.error('无效的订单数据')
-        return
+// 押金操作成功回调（DepositDialog 触发）
+const handleDepositConfirmed = async () => {
+    if (detailsDialogVisible.value) {
+        detailsDialogVisible.value = false
     }
-
-    if ((depositForm.action === 'COLLECT' || depositForm.action === 'RETAIN') && depositForm.amount <= 0) {
-        ElMessage.error('请输入有效的金额')
-        return
-    }
-
-    depositSubmitting.value = true
-    try {
-        console.log('押金操作，订单ID:', currentOrder.value.id, depositForm)
-        await processDeposit(
-            currentOrder.value.id,
-            depositForm.action,
-            depositForm.action === 'COLLECT' || depositForm.action === 'RETAIN' ? depositForm.amount : undefined,
-            depositForm.action === 'RETAIN' ? depositForm.note : undefined
-        )
-        ElMessage.success('押金操作成功')
-        depositDialogVisible.value = false
-
-        // 关闭详情对话框（如果打开）
-        if (detailsDialogVisible.value) {
-            detailsDialogVisible.value = false
-        }
-
-        await refreshOrdersAndStats()
-    } catch (error: any) {
-        console.error('押金操作失败:', error)
-    } finally {
-        depositSubmitting.value = false
-    }
+    await refreshOrdersAndStats()
 }
 
 // 确认结算
@@ -1319,50 +980,16 @@ const handleReviewRefund = (order: HostOrderItem) => {
         ElMessage.error('无效的订单数据')
         return
     }
-
     currentOrder.value = order
-    reviewRefundForm.action = 'approve'
-    reviewRefundForm.reason = ''
     reviewRefundDialogVisible.value = true
 }
 
-// 确认审核退款
-const confirmReviewRefund = async () => {
-    if (!reviewRefundFormRef.value) return
-    if (!currentOrder.value) {
-        ElMessage.error('当前没有选中的订单')
-        return
+// 审核退款成功回调（ReviewRefundDialog 触发）
+const handleReviewRefundConfirmed = async () => {
+    if (detailsDialogVisible.value) {
+        detailsDialogVisible.value = false
     }
-
-    await reviewRefundFormRef.value.validate(async (valid: boolean) => {
-        if (valid) {
-            reviewRefundSubmitting.value = true
-
-            try {
-                if (reviewRefundForm.action === 'approve') {
-                    console.log('同意退款，订单ID:', currentOrder.value!.id, '备注:', reviewRefundForm.reason)
-                    await hostApproveRefund(currentOrder.value!.id, reviewRefundForm.reason)
-                    ElMessage.success('已同意退款')
-                } else {
-                    console.log('拒绝退款，订单ID:', currentOrder.value!.id, '原因:', reviewRefundForm.reason)
-                    await hostRejectRefund(currentOrder.value!.id, reviewRefundForm.reason)
-                    ElMessage.success('已拒绝退款')
-                }
-
-                reviewRefundDialogVisible.value = false
-
-                if (detailsDialogVisible.value) {
-                    detailsDialogVisible.value = false
-                }
-
-                await refreshOrdersAndStats()
-            } catch (error: any) {
-                console.error('审核退款失败:', error)
-            } finally {
-                reviewRefundSubmitting.value = false
-            }
-        }
-    })
+    await refreshOrdersAndStats()
 }
 
 // 发起争议
@@ -1546,19 +1173,8 @@ const fetchAutoStatusStats = async () => {
 }
 
 // 显示自动状态配置
-const showAutoStatusConfig = async () => {
-    try {
-        const response = await request({
-            url: '/api/host/order-auto-status/config',
-            method: 'get'
-        })
-        if (response && response.data) {
-            autoStatusConfig.value = response.data
-            autoStatusConfigVisible.value = true
-        }
-    } catch (error) {
-        console.error('获取自动状态配置失败:', error)
-    }
+const showAutoStatusConfig = () => {
+    autoStatusConfigVisible.value = true
 }
 
 // 手动触发自动状态流转
