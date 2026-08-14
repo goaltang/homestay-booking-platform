@@ -187,7 +187,6 @@ const fetchReviews = async () => {
         total.value = data.totalElements || 0;
     } catch (error) {
         console.error('获取评价列表失败', error);
-        ElMessage.error('获取评价列表失败');
     } finally {
         loading.value = false;
     }
@@ -265,7 +264,6 @@ const submitReply = async () => {
         fetchReviews();
     } catch (error) {
         console.error('提交回复失败', error);
-        ElMessage.error('提交回复失败');
     }
 };
 

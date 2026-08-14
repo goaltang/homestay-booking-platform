@@ -175,7 +175,6 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = (response: any, _uploadFil
     } catch (error) {
         console.error('处理头像上传响应失败:', error);
         emit('error', error);
-        ElMessage.error('头像上传失败，请重试');
     }
 };
 

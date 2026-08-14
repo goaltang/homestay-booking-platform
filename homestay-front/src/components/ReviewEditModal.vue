@@ -234,7 +234,6 @@ const uploadImages = async (): Promise<string[]> => {
       }
     } catch (error) {
       console.error('图片上传失败:', error);
-      ElMessage.error('图片上传失败');
     }
   }
   return [...existingUrls, ...urls];
@@ -279,8 +278,6 @@ const handleSubmit = async () => {
         handleClose();
       } catch (error: any) {
         console.error('修改评价失败:', error);
-        const errMsg = error?.response?.data?.message || '修改评价失败，请稍后重试';
-        ElMessage.error(errMsg);
       } finally {
         submitting.value = false;
       }

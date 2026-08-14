@@ -185,7 +185,6 @@ const fetchReviews = async () => {
 
     } catch (error) {
         console.error('获取我的评价列表失败:', error);
-        ElMessage.error('获取评价列表失败，请稍后重试');
         reviews.value = [];
         total.value = 0;
     } finally {
@@ -224,8 +223,6 @@ const handleDeleteReview = async (reviewId: number) => { // reviewId 是 number
     } catch (error: any) {
         if (error !== 'cancel') { // 用户取消操作不报错
             console.error('删除评价失败:', error);
-            const errMsg = error?.response?.data?.message || '删除评价失败，请稍后重试';
-            ElMessage.error(errMsg);
         }
     } finally {
         deleting[String(reviewId)] = false; // reactive key 必须是 string

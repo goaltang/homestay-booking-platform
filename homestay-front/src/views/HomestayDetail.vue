@@ -270,7 +270,6 @@ const toggleFavorite = async () => {
         await favoritesStore.toggleFavorite(homestay.value.id!)
     } catch (error) {
         console.error('切换收藏状态失败:', error)
-        ElMessage.error('操作失败，请稍后重试')
     }
 }
 const contactHost = async () => {
@@ -380,7 +379,6 @@ const fetchData = async () => {
 
     } catch (error: any) {
         console.error("获取民宿详情过程中发生错误:", error)
-        ElMessage.error(error.message || '加载民宿信息时出错，请稍后重试')
         homestay.value = null
         hostDetailInfo.value = null
     } finally {

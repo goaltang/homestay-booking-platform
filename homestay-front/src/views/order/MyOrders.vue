@@ -355,9 +355,7 @@ const cancelOrder = async (orderId: number) => {
 
             // 显示具体错误信息
             if (apiError.response && apiError.response.data && apiError.response.data.error) {
-                ElMessage.error(`取消订单失败: ${apiError.response.data.error}`)
             } else {
-                ElMessage.error('取消订单失败，请重试')
             }
             console.error('取消订单API错误:', apiError)
         }
@@ -410,12 +408,6 @@ const requestRefund = async (orderId: number) => {
         } catch (error: any) {
             ElMessage.closeAll()
             console.error('申请退款失败:', error)
-
-            let errorMessage = '申请退款失败，请稍后重试'
-            if (error.response && error.response.data && error.response.data.message) {
-                errorMessage = error.response.data.message
-            }
-            ElMessage.error(errorMessage)
         }
     } catch (error) {
         // 用户取消了对话框
@@ -647,11 +639,6 @@ const handleSubmitReview = async (reviewData: any) => {
         fetchOrders(); // 重新获取订单，如果后端会标记订单已评价
     } catch (error: any) {
         console.error('提交评价失败:', error);
-        let errorMessage = '提交评价失败，请稍后重试';
-        if (error.response && error.response.data && error.response.data.message) {
-            errorMessage = error.response.data.message; // 显示后端返回的错误信息
-        }
-        ElMessage.error(errorMessage);
         // 不关闭弹窗，让用户可以修改
     }
 };

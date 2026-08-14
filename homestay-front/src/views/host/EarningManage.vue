@@ -256,7 +256,6 @@ const handleSettleEarnings = async () => {
         ]);
     } catch (error: any) {
         console.error("结算收益失败:", error);
-        ElMessage.error(error.response?.data?.error || '结算收益失败，请重试');
     } finally {
         settling.value = false;
     }
@@ -291,7 +290,6 @@ const exportData = async (command: string) => {
         ElMessage.success(`${command === 'pdf' ? '账单' : '数据'}导出成功`)
     } catch (error) {
         console.error('导出失败:', error)
-        ElMessage.error('导出失败')
     }
 }
 
@@ -384,7 +382,6 @@ const fetchStatistics = async () => {
 
     } catch (error) {
         console.error('获取统计数据失败:', error);
-        ElMessage.error('获取统计数据失败，请确保后端服务正常运行');
         // 设置默认值
         totalEarnings.value = 0;
         currentMonthEarnings.value = 0;
@@ -447,7 +444,6 @@ const fetchTrendData = async () => {
         renderChart({ labels, values });
     } catch (error) {
         console.error('获取趋势数据失败:', error);
-        ElMessage.error('获取趋势数据失败，请确保后端服务正常运行');
         // 即使出错也渲染一个空图表
         renderChart({ labels: [], values: [] });
     } finally {
@@ -539,7 +535,6 @@ const fetchHomestayOptions = async () => {
         }
     } catch (error) {
         console.error('获取房源列表失败:', error);
-        ElMessage.error('获取房源列表失败，请确保创建了房源');
         homestayOptions.value = [];
     }
 }
@@ -636,7 +631,6 @@ const fetchEarningsData = async () => {
         }
     } catch (error) {
         console.error('获取收益明细失败:', error);
-        ElMessage.error('获取收益明细失败, 请确保后端服务正常运行');
         earningsData.value = [];
         total.value = 0;
     } finally {
@@ -727,7 +721,6 @@ const testApiConnection = async () => {
         }
     } catch (error) {
         console.error("API连接测试失败:", error);
-        ElMessage.error(`无法连接到服务器`);
         return false;
     }
 };
@@ -789,7 +782,6 @@ onMounted(async () => {
         }
     } catch (error) {
         console.error("初始化数据失败:", error);
-        ElMessage.error('加载数据失败，请刷新页面重试');
     } finally {
         loading.value = false;
     }

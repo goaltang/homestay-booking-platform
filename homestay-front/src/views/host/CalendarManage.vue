@@ -172,7 +172,6 @@ async function handleExport() {
     URL.revokeObjectURL(url);
     ElMessage.success("导出成功");
   } catch {
-    ElMessage.error("导出失败");
   }
 }
 

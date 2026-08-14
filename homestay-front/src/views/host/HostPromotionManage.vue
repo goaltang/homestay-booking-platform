@@ -311,7 +311,6 @@ async function loadCampaigns() {
     campaignList.value = res.content || [];
     total.value = res.totalElements || 0;
   } catch (e) {
-    ElMessage.error("加载活动列表失败");
   } finally {
     loading.value = false;
   }
@@ -350,7 +349,6 @@ async function handleCreate() {
     showCreateDialog.value = false;
     loadCampaigns();
   } catch (e: any) {
-    ElMessage.error(e.response?.data?.error || "创建失败");
   } finally {
     submitting.value = false;
   }

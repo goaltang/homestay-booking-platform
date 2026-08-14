@@ -290,7 +290,6 @@ const fetchHostReviewStats = async () => {
         }
     } catch (error) {
         console.error('获取评价统计失败:', error);
-        ElMessage.error('获取评价统计失败');
     }
 };
 
@@ -302,7 +301,6 @@ const fetchHomestayOptions = async () => {
         homestayOptions.value = options.map(opt => ({ id: opt.id, title: opt.title })); // 确保格式正确
     } catch (error) {
         console.error('获取房源选项失败:', error);
-        ElMessage.error('获取房源选项失败');
         homestayOptions.value = []; // 出错时清空
     }
 };
@@ -338,7 +336,6 @@ const fetchReviews = async () => {
         }
     } catch (error) {
         console.error('获取评价列表失败:', error);
-        ElMessage.error('获取评价列表失败');
         reviews.value = [];
         total.value = 0;
     } finally {
@@ -377,8 +374,6 @@ const submitReply = async () => {
                 replyDialogVisible.value = false;
             } catch (error: any) {
                 console.error('回复提交失败:', error);
-                const errMsg = error?.response?.data?.message || '操作失败，请重试';
-                ElMessage.error(errMsg);
             } finally {
                 submitting.value = false;
             }
@@ -422,8 +417,6 @@ const handleDeleteReply = async (review: ReviewItem) => {
             }
         } catch (error: any) {
             console.error('删除回复失败:', error);
-            const errMsg = error?.response?.data?.message || '删除回复失败，请重试';
-            ElMessage.error(errMsg);
         } finally {
             loading.value = false;
         }

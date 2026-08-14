@@ -213,7 +213,6 @@ const fetchSummary = async () => {
         summary.value = response;
     } catch (error) {
         console.error('获取收益汇总失败', error);
-        ElMessage.error('获取收益汇总失败');
     }
 };
 
@@ -235,7 +234,6 @@ const fetchEarnings = async () => {
         total.value = response.totalElements;
     } catch (error) {
         console.error('获取收益明细失败', error);
-        ElMessage.error('获取收益明细失败');
     } finally {
         loading.value = false;
     }
@@ -260,7 +258,6 @@ const fetchTrend = async () => {
         renderChart(response);
     } catch (error) {
         console.error('获取收益趋势失败', error);
-        ElMessage.error('获取收益趋势失败');
     }
 };
 
@@ -396,7 +393,6 @@ const handleExport = async (command: string) => {
         ElMessage.success(`${command === 'pdf' ? '账单' : '数据'}导出成功`);
     } catch (error) {
         console.error('导出失败:', error);
-        ElMessage.error('导出失败');
     }
 };
 

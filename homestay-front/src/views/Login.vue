@@ -339,7 +339,6 @@ const handleLogin = async (event?: Event) => {
 
       } catch (fetchError: any) {
         console.error("获取用户信息失败:", fetchError);
-        ElMessage.error(fetchError.message || "获取用户信息失败，请重新登录");
         userStore.logout();
       }
 

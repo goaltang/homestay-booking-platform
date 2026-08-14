@@ -689,7 +689,6 @@ const submitOrder = async () => {
                 }
             })
         } else {
-            ElMessage.error('订单提交失败，请稍后重试')
         }
     } finally {
         submitting.value = false
@@ -989,7 +988,6 @@ onMounted(async () => {
         }
     } catch (error) {
         console.error('初始化订单数据失败:', error)
-        ElMessage.error('加载订单数据失败')
     } finally {
         loading.value = false
     }

@@ -192,7 +192,6 @@ const fetchOrderDetail = async () => {
         await store.fetchOrderDetail(orderId)
     } catch (error: any) {
         console.error('获取订单详情失败:', error)
-        ElMessage.error(error.response?.data?.message || '获取订单详情失败')
     } finally {
         loading.value = false
     }
@@ -381,7 +380,6 @@ const generateQRCode = async () => {
         // 检查是否是502错误（支付宝服务器问题）
         if (error.response?.status === 502 ||
             (errorMsg && errorMsg.includes('502'))) {
-            ElMessage.error('支付宝服务暂时不可用，请稍后重试或选择其他支付方式')
             ElNotification({
                 title: '支付服务提示',
                 message: '当前支付宝沙箱环境出现临时故障，建议：\n1. 稍后重试\n2. 选择微信支付\n3. 联系客服处理',
@@ -389,7 +387,6 @@ const generateQRCode = async () => {
                 duration: 8000
             })
         } else {
-            ElMessage.error('支付服务连接超时，请稍后重试')
         }
     } finally {
         paymentLoading.value = false
@@ -485,7 +482,6 @@ const checkPaymentStatus = async () => {
     } catch (error: any) {
         loadingInstance.close(); // 关闭加载提示
         console.error("检查支付状态接口调用失败:", error);
-        ElMessage.error('检查支付状态失败，请重试');
     }
 }
 
@@ -545,7 +541,6 @@ const cancelOrder = async () => {
             ElMessage.closeAll()
 
             console.error('取消订单失败:', error)
-            ElMessage.error('取消订单失败，请重试')
         }
     } catch (error: any) {
         if (error !== 'cancel') {
@@ -596,7 +591,6 @@ const manualJumpToAlipay = () => {
         ElMessage.success('正在跳转到支付页面...')
     } catch (e) {
         console.error('当前窗口跳转失败:', e)
-        ElMessage.error('跳转失败，请尝试重新生成支付或使用其他支付方式')
     }
 }
 

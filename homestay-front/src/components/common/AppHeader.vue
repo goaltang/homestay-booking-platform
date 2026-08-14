@@ -197,7 +197,6 @@ const handleCommand = (command: string) => {
             if (userStore.isLandlord) {
                 router.push('/host').catch(err => {
                     console.error('跳转到房东中心失败:', err);
-                    ElMessage.error('跳转到房东中心失败');
                 });
             } else {
                 ElMessage.warning('您不是房东，无法访问房东中心');

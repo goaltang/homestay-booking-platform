@@ -88,10 +88,10 @@
 
 <script setup lang="ts">
 import { ref, nextTick, watch } from "vue";
+import { ElMessage } from "element-plus";
 import { useSupportAgentStore } from "@/stores/supportAgent";
 import { chatWithAgent, confirmAgentAction } from "@/api/supportAgent";
 import type { AgentPendingAction } from "@/api/supportAgent";
-import { ElMessage } from "element-plus";
 
 interface ChatMessage {
   id: number;

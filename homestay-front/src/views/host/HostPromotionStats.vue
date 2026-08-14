@@ -109,7 +109,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
-import { ElMessage } from "element-plus";
 import { getHostCampaigns, getHostPromotionStats, getHostRoiOverview, getHostRoiCampaigns } from "@/api/hostPromotion";
 import type { HostCampaign, HostPromotionStats, HostRoiOverview, HostRoiCampaign } from "@/api/hostPromotion";
 
@@ -167,7 +166,6 @@ async function loadData() {
     Object.assign(roi, roiRes);
     roiCampaigns.value = roiCampRes || [];
   } catch (e) {
-    ElMessage.error("加载数据失败");
   } finally {
     loading.value = false;
   }

@@ -216,7 +216,6 @@ const uploadImages = async (): Promise<string[]> => {
             }
         } catch (error) {
             console.error('图片上传失败:', error);
-            ElMessage.error('图片上传失败');
         }
     }
     return urls;
@@ -240,7 +239,6 @@ const submitForm = async () => {
                 // handleClose();
             } catch (error) {
                 console.error('Error preparing review submission:', error);
-                ElMessage.error('提交评价准备失败，请稍后重试');
             } finally {
                 loading.value = false;
             }

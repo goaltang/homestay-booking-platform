@@ -322,7 +322,6 @@ const handleQuickAddAmenities = (command: string) => {
         }
     } catch (error) {
         console.error('快速添加设施失败:', error);
-        ElMessage.error('添加设施失败');
     }
 }
 

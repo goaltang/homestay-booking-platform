@@ -291,7 +291,6 @@ const fetchBalance = async () => {
         balanceInfo.withdrawn = withdrawn
     } catch (error) {
         console.error('获取余额失败:', error)
-        ElMessage.error('获取余额失败')
     }
 }
 
@@ -301,7 +300,6 @@ const fetchAccounts = async () => {
         accounts.value = await getBankAccounts()
     } catch (error) {
         console.error('获取账户列表失败:', error)
-        ElMessage.error('获取账户列表失败')
     }
 }
 
@@ -315,7 +313,6 @@ const fetchWithdrawals = async () => {
         })
     } catch (error) {
         console.error('获取提现记录失败:', error)
-        ElMessage.error('获取提现记录失败')
     } finally {
         loading.value = false
     }
@@ -397,7 +394,6 @@ const submitAccount = async () => {
         fetchAccounts()
     } catch (error) {
         console.error('提交账户失败:', error)
-        ElMessage.error('提交账户失败')
     }
 }
 
@@ -409,7 +405,6 @@ const setDefaultAccount = async (id: number) => {
         fetchAccounts()
     } catch (error) {
         console.error('设置默认账户失败:', error)
-        ElMessage.error('设置默认账户失败')
     }
 }
 
@@ -432,7 +427,6 @@ const deleteAccount = async (account: BankAccount) => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('删除账户失败:', error)
-            ElMessage.error('删除账户失败')
         }
     }
 }
@@ -471,7 +465,6 @@ const submitWithdrawal = async () => {
         ])
     } catch (error) {
         console.error('提交提现申请失败:', error)
-        ElMessage.error('提交提现申请失败')
     }
 }
 
@@ -499,7 +492,6 @@ const cancelWithdrawal = async (id: number) => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('取消提现失败:', error)
-            ElMessage.error('取消提现失败')
         }
     }
 }

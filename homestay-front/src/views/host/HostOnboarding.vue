@@ -271,7 +271,6 @@ const validateAndNext = async (step: number) => {
                     ElMessage.success('个人介绍保存成功');
                     nextStep();
                 } catch (error) {
-                    ElMessage.error('保存失败，请重试');
                     console.error('保存介绍信息失败:', error);
                 }
             }
@@ -291,7 +290,6 @@ const validateAndNext = async (step: number) => {
                     ElMessage.success('身份信息已提交，等待审核');
                     nextStep();
                 } catch (error) {
-                    ElMessage.error('提交失败，请重试');
                     console.error('提交身份验证信息失败:', error);
                 }
             }
@@ -366,7 +364,6 @@ const skipVerification = () => {
             router.push('/host');
         } catch (error) {
             console.error('跳过验证设置失败:', error);
-            ElMessage.error('操作失败，请重试');
         }
     }).catch(() => {
         // 用户取消跳过，继续停留在当前页面

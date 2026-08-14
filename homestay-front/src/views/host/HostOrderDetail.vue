@@ -238,7 +238,6 @@ const fetchOrderDetail = async () => {
         }
     } catch (error: any) {
         console.error('获取订单详情失败:', error)
-        ElMessage.error('获取订单详情失败: ' + (error.response?.data?.message || error.message || '未知错误'))
         orderData.value = null;
     } finally {
         loading.value = false
@@ -276,7 +275,6 @@ const confirmOrder = async () => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('接受预订失败:', error)
-            ElMessage.error(error.response?.data?.error || error.response?.data?.message || '接受预订失败，请重试')
         }
     } finally {
         submitting.value = false
@@ -305,7 +303,6 @@ const rejectOrder = async () => {
     } catch (error: any) {
         if (error !== false) {
             console.error('拒绝预订失败:', error)
-            ElMessage.error(error.response?.data?.error || error.response?.data?.message || '拒绝预订失败，请重试')
         }
     } finally {
         submitting.value = false
@@ -435,7 +432,6 @@ const handleCheckIn = async () => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('办理入住失败:', error);
-            ElMessage.error(error.response?.data?.message || '办理入住失败');
         }
     } finally {
         submitting.value = false;
@@ -454,7 +450,6 @@ const handleComplete = async () => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('完成订单失败:', error);
-            ElMessage.error(error.response?.data?.message || '完成订单失败');
         }
     } finally {
         submitting.value = false;
@@ -477,7 +472,6 @@ const handleCancel = async () => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('取消订单失败:', error);
-            ElMessage.error(error.response?.data?.message || '取消订单失败');
         }
     } finally {
         submitting.value = false;

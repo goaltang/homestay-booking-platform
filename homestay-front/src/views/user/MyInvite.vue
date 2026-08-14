@@ -153,8 +153,6 @@ const claimReferral = async () => {
     referralCode.value = ''
     fetchData()
   } catch (e: any) {
-    const msg = e?.response?.data?.error || '领取失败，请检查邀请码是否有效'
-    ElMessage.error(msg)
   } finally {
     claiming.value = false
   }
@@ -169,7 +167,6 @@ const copyCode = (code: string) => {
   navigator.clipboard.writeText(code).then(() => {
     ElMessage.success('邀请码已复制')
   }).catch(() => {
-    ElMessage.error('复制失败')
   })
 }
 
@@ -177,7 +174,6 @@ const copyLink = () => {
   navigator.clipboard.writeText(shareLink.value).then(() => {
     ElMessage.success('分享链接已复制')
   }).catch(() => {
-    ElMessage.error('复制失败')
   })
 }
 

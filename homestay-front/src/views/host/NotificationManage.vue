@@ -287,7 +287,6 @@ const fetchNotifications = async () => {
     } catch (error) {
         if (thisFetchId !== currentFetchId) return;
         console.error('[HostNotificationManage] 获取通知失败 (catch block):', error);
-        ElMessage.error('加载通知失败，请稍后重试');
         notifications.value = [];
         totalNotifications.value = 0;
     } finally {
@@ -318,7 +317,6 @@ const handleMarkRead = async (id: number) => {
 
     } catch (error) {
         console.error('[HostNotificationManage] 标记已读失败 (catch block):', error);
-        ElMessage.error('操作失败，请稍后重试');
     }
 };
 
@@ -332,7 +330,6 @@ const handleMarkAllRead = async () => {
         await notificationStore.fetchUnreadCount();
     } catch (error) {
         console.error('全部标记已读失败:', error);
-        ElMessage.error('操作失败，请稍后重试');
         loading.value = false;
     }
 };
@@ -351,7 +348,6 @@ const handleBatchMarkRead = async () => {
         await notificationStore.fetchUnreadCount();
     } catch (error) {
         console.error('批量标记已读失败:', error);
-        ElMessage.error('批量标记已读失败');
     }
 };
 
@@ -378,7 +374,6 @@ const handleDelete = async (id: number) => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('删除通知失败:', error);
-            ElMessage.error('删除失败，请稍后重试');
         }
     } finally {
         loading.value = false;
@@ -413,7 +408,6 @@ const handleBatchDelete = async () => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('批量删除通知失败:', error);
-            ElMessage.error('批量删除失败');
         }
     }
 };

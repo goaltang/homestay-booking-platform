@@ -96,7 +96,7 @@ const handleSubmit = async () => {
             router.push('/login')
         }, 1500)
     } catch (error: any) {
-        ElMessage.error(error.response?.data?.message || '密码重置失败，请重试')
+        // 拦截器已统一弹出后端返回的错误信息
     } finally {
         loading.value = false
     }

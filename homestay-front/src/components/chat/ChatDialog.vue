@@ -62,7 +62,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from "vue";
 import { useChatStore } from "@/stores/chat";
-import { ElMessage } from "element-plus";
 
 const chatStore = useChatStore();
 const messageContent = ref("");
@@ -110,7 +109,6 @@ const sendMessageHandler = async () => {
     await nextTick();
     scrollToBottom();
   } catch (error) {
-    ElMessage.error("发送失败");
   }
 };
 

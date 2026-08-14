@@ -72,8 +72,8 @@ const handleSubmit = async () => {
 
     ElMessage.success('重置密码链接已发送到您的邮箱，请查收');
   } catch (error: any) {
+    // 拦截器已统一弹出后端返回的错误信息
     console.error('发送重置链接失败:', error);
-    ElMessage.error(error.response?.data?.message || '发送重置链接失败，请重试');
   } finally {
     loading.value = false;
   }

@@ -536,33 +536,8 @@ const handleRegister = async () => {
         ElMessage.error('注册处理失败，请稍后重试');
       }
     } catch (error: any) {
+      // 注册失败：拦截器已统一弹出后端返回的具体错误信息（如"邮箱已存在"/"用户名已存在"）
       console.error('注册失败详情:', error);
-
-      // 优先使用后端返回的具体错误信息
-      let errorMessage = "注册失败，请重试";
-
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (error.response?.data) {
-        if (typeof error.response.data === "string") {
-          errorMessage = error.response.data;
-        } else if (error.response.data.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response.data.error) {
-          errorMessage = error.response.data.error;
-        } else if (error.displayMessage) {
-          errorMessage = error.displayMessage;
-        }
-      }
-
-      // 针对特定错误进行友好提示
-      if (errorMessage.includes('邮箱已存在') || errorMessage.includes('邮箱已被注册')) {
-        ElMessage.error('该邮箱已被注册，请使用其他邮箱或直接登录');
-      } else if (errorMessage.includes('用户名已存在') || errorMessage.includes('用户名已被使用')) {
-        ElMessage.error('该用户名已被使用，请选择其他用户名');
-      } else {
-        ElMessage.error(errorMessage);
-      }
     }
   } catch (formError: any) {
     console.error('表单验证失败:', formError);

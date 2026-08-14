@@ -62,7 +62,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { getMyCoupons } from '@/api/coupon'
-import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 
 interface CouponItem {
@@ -103,7 +102,6 @@ const fetchCoupons = async () => {
     }
   } catch (error) {
     console.error('获取优惠券失败:', error)
-    ElMessage.error('获取优惠券失败')
     coupons.value = []
   } finally {
     loading.value = false

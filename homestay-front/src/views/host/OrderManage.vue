@@ -1234,7 +1234,6 @@ const fetchHomestayOptions = async () => {
 
     } catch (error) {
         console.error('获取房源选项失败:', error)
-        ElMessage.error('获取房源选项失败')
         homestayOptions.value = [] // 出错时清空
     }
 }
@@ -1267,7 +1266,6 @@ const handleConfirm = async (order: HostOrderItem) => {
             await refreshOrdersAndStats()
         } catch (error: any) {
             console.error('确认订单失败:', error)
-            ElMessage.error(error.response?.data?.message || '操作失败，请重试')
         } finally {
             loading.value = false
         }
@@ -1300,7 +1298,6 @@ const handlePerformCheckIn = async (order: HostOrderItem) => {
             await refreshOrdersAndStats()
         } catch (error: any) {
             console.error('办理入住失败:', error)
-            ElMessage.error(error.response?.data?.message || '操作失败，请重试')
         } finally {
             loading.value = false
         }
@@ -1352,7 +1349,6 @@ const submitPrepareCheckIn = async () => {
         fetchOrders()
     } catch (error: any) {
         console.error('设置准备入住失败:', error)
-        ElMessage.error(error.response?.data?.message || '操作失败，请重试')
     } finally {
         prepareCheckInSubmitting.value = false
     }
@@ -1370,7 +1366,6 @@ const openViewCredential = async (order: HostOrderItem) => {
         viewCredentialDialogVisible.value = true
     } catch (error: any) {
         console.error('获取入住凭证失败:', error)
-        ElMessage.error(error.response?.data?.message || '获取入住凭证失败')
     }
 }
 
@@ -1400,7 +1395,6 @@ const handleCancelPrepare = async (order: HostOrderItem) => {
             await refreshOrdersAndStats()
         } catch (error: any) {
             console.error('取消准备入住失败:', error)
-            ElMessage.error(error.response?.data?.message || '操作失败，请重试')
         } finally {
             loading.value = false
         }
@@ -1442,7 +1436,6 @@ const submitCheckOut = async () => {
         await refreshOrdersAndStats()
     } catch (error: any) {
         console.error('办理退房失败:', error)
-        ElMessage.error(error.response?.data?.message || '操作失败，请重试')
     } finally {
         checkOutSubmitting.value = false
     }
@@ -1465,7 +1458,6 @@ const openDeposit = async (order: HostOrderItem) => {
         depositDialogVisible.value = true
     } catch (error: any) {
         console.error('获取退房记录失败:', error)
-        ElMessage.error(error.response?.data?.message || '获取退房记录失败')
     }
 }
 
@@ -1501,7 +1493,6 @@ const submitDeposit = async () => {
         await refreshOrdersAndStats()
     } catch (error: any) {
         console.error('押金操作失败:', error)
-        ElMessage.error(error.response?.data?.message || '操作失败，请重试')
     } finally {
         depositSubmitting.value = false
     }
@@ -1533,7 +1524,6 @@ const handleConfirmSettlement = async (order: HostOrderItem) => {
             await refreshOrdersAndStats()
         } catch (error: any) {
             console.error('确认结算失败:', error)
-            ElMessage.error(error.response?.data?.message || '操作失败，请重试')
         } finally {
             loading.value = false
         }
@@ -1605,7 +1595,6 @@ const confirmCancel = async () => {
                 await refreshOrdersAndStats()
             } catch (error: any) {
                 console.error('取消订单失败:', error)
-                ElMessage.error(error.message || '取消订单失败，请重试')
             } finally {
                 submitting.value = false
             }
@@ -1654,7 +1643,6 @@ const confirmReject = async () => {
                 await refreshOrdersAndStats()
             } catch (error: any) {
                 console.error('拒绝订单失败:', error)
-                ElMessage.error(error.response?.data?.message || error.message || '拒绝订单失败，请重试')
             } finally {
                 submitting.value = false
             }
@@ -1710,7 +1698,6 @@ const confirmRefund = async () => {
                 await refreshOrdersAndStats()
             } catch (error: any) {
                 console.error('发起退款失败:', error)
-                ElMessage.error(error.response?.data?.error || error.message || '发起退款失败，请重试')
             } finally {
                 refundSubmitting.value = false
             }
@@ -1763,7 +1750,6 @@ const confirmReviewRefund = async () => {
                 await refreshOrdersAndStats()
             } catch (error: any) {
                 console.error('审核退款失败:', error)
-                ElMessage.error(error.response?.data?.error || error.message || '审核退款失败，请重试')
             } finally {
                 reviewRefundSubmitting.value = false
             }
@@ -1809,7 +1795,6 @@ const confirmDispute = async () => {
                 await refreshOrdersAndStats()
             } catch (error: any) {
                 console.error('发起争议失败:', error)
-                ElMessage.error(error.response?.data?.error || error.message || '发起争议失败，请重试')
             } finally {
                 disputeSubmitting.value = false
             }
@@ -1945,7 +1930,6 @@ const fetchOrders = async () => {
         }
     } catch (error) {
         console.error('获取订单列表失败:', error)
-        ElMessage.error('获取订单列表失败')
         orders.value = []
         total.value = 0
     } finally {
@@ -2012,7 +1996,6 @@ const showAutoStatusConfig = async () => {
         }
     } catch (error) {
         console.error('获取自动状态配置失败:', error)
-        ElMessage.error('获取配置信息失败')
     }
 }
 
@@ -2035,7 +2018,6 @@ const manualTriggerAutoStatus = async () => {
             await refreshOrdersAndStats()
         } catch (error: any) {
             console.error('手动触发自动状态流转失败:', error)
-            ElMessage.error(error.response?.data?.error || '执行失败，请重试')
         } finally {
             autoStatusLoading.value = false
         }

@@ -95,8 +95,9 @@ export function formatApiErrorMessage(
     errorMessage = errorCodeMessages[errorCode];
   }
 
-  // 无错误码时按 HTTP 状态码兜底，避免笼统的"操作失败"
-  if (!errorCode) {
+  // 无错误码、且未提取到具体错误信息时，按 HTTP 状态码兜底，
+  // 避免用笼统的"操作失败"，同时不覆盖后端已返回的具体 message。
+  if (!errorCode && errorMessage === defaultMsg) {
     const statusMessages: Record<number, string> = {
       400: "请求参数错误",
       403: "没有权限访问该资源",

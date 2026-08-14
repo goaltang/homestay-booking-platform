@@ -170,7 +170,6 @@ const saveToServer = async () => {
     ElMessage.success('保存成功')
   } catch (e: any) {
     console.error('保存常用入住人失败', e)
-    ElMessage.error(e.message || '保存失败')
   } finally {
     saving.value = false
   }

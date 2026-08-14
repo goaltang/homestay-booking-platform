@@ -615,7 +615,6 @@ const fetchHomestayTypes = async () => {
     } catch (error) {
         console.error('获取房源类型接口请求失败:', error);
         homestayTypeOptions.value = [];
-        ElMessage.error('加载房源类型选项时出错');
     }
 };
 
@@ -657,10 +656,8 @@ const fetchHomestays = async () => {
 
         if (error.response && error.response.status === 403) {
             emptyText.value = '没有访问权限，请确认您已经注册为房东';
-            ElMessage.error('没有访问权限，请确认您已经注册为房东');
         } else {
             emptyText.value = '加载失败，请刷新重试';
-            ElMessage.error('获取房源列表失败: ' + (error.message || '未知错误'));
         }
     } finally {
         loading.value = false;
@@ -707,7 +704,6 @@ const handleEdit = (id: number) => {
         router.push(`/host/homestay/edit/${id}`);
     } catch (error) {
         console.error('编辑房源导航失败', error);
-        ElMessage.error('无法跳转到编辑页面，请重试');
     }
 };
 
@@ -719,7 +715,6 @@ const handleActivate = async (id: number) => {
         fetchHomestays();
     } catch (error) {
         console.error('上线房源失败', error);
-        ElMessage.error('上线房源失败');
     }
 };
 
@@ -731,7 +726,6 @@ const handleDeactivate = async (id: number) => {
         fetchHomestays();
     } catch (error) {
         console.error('下架房源失败', error);
-        ElMessage.error('下架房源失败');
     }
 };
 
@@ -764,24 +758,6 @@ const handleSubmitForReview = async (id: number) => {
         }
         console.error('提交审核失败', error);
 
-        // 根据错误类型提供更具体的错误信息
-        let errorMessage = '提交审核失败';
-        if (error.response) {
-            const status = error.response.status;
-            const data = error.response.data;
-
-            if (status === 400) {
-                errorMessage = data?.message || '房源信息不完整，无法提交审核';
-            } else if (status === 403) {
-                errorMessage = '您没有权限操作此房源';
-            } else if (status === 409) {
-                errorMessage = '房源当前状态不允许提交审核';
-            } else {
-                errorMessage = data?.message || '提交审核失败，请稍后重试';
-            }
-        }
-
-        ElMessage.error(errorMessage);
     } finally {
         loading.value = false;
     }
@@ -811,24 +787,6 @@ const handleWithdrawReview = async (id: number) => {
         }
         console.error('撤回审核申请失败', error);
 
-        // 根据错误类型提供更具体的错误信息
-        let errorMessage = '撤回审核申请失败';
-        if (error.response) {
-            const status = error.response.status;
-            const data = error.response.data;
-
-            if (status === 400) {
-                errorMessage = data?.message || '房源当前状态不允许撤回审核';
-            } else if (status === 403) {
-                errorMessage = '您没有权限操作此房源';
-            } else if (status === 409) {
-                errorMessage = '房源当前状态不允许撤回审核';
-            } else {
-                errorMessage = data?.message || '撤回审核申请失败，请稍后重试';
-            }
-        }
-
-        ElMessage.error(errorMessage);
     } finally {
         loading.value = false;
     }
@@ -865,24 +823,6 @@ const handleRequestReactivation = async (id: number) => {
         }
         console.error('申请重新上架失败', error);
 
-        // 根据错误类型提供更具体的错误信息
-        let errorMessage = '申请重新上架失败';
-        if (error.response) {
-            const status = error.response.status;
-            const data = error.response.data;
-
-            if (status === 400) {
-                errorMessage = data?.message || '申请信息有误';
-            } else if (status === 403) {
-                errorMessage = '您没有权限操作此房源';
-            } else if (status === 409) {
-                errorMessage = '房源当前状态不允许申请重新上架';
-            } else {
-                errorMessage = data?.message || '申请重新上架失败，请稍后重试';
-            }
-        }
-
-        ElMessage.error(errorMessage);
     } finally {
         loading.value = false;
     }
@@ -910,7 +850,6 @@ const handleViewAuditHistory = async (id: number) => {
         await refreshCurrentAuditHistory();
     } catch (error: any) {
         console.error('查看审核历史失败', error);
-        ElMessage.error('查看审核历史失败');
     }
 };
 
@@ -948,40 +887,7 @@ const handleDelete = async (id: number) => {
             return;
         }
 
-        let errorMessage = '未知错误';
-
-        if (error.response) {
-            // 根据HTTP状态码提供具体错误信息
-            const status = error.response.status;
-
-            if (status === 403) {
-                errorMessage = '您没有权限删除此房源';
-            } else if (status === 404) {
-                errorMessage = '房源不存在或已被删除';
-            } else if (status === 400) {
-                errorMessage = '请求参数有误';
-            } else if (status === 500) {
-                errorMessage = '服务器内部错误，请稍后重试';
-            } else {
-                errorMessage = `服务器返回错误(${status})`;
-            }
-
-            // 如果有详细错误信息，优先使用
-            if (error.response.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error.response.data?.error) {
-                errorMessage = error.response.data.error;
-            }
-        } else if (error.request) {
-            // 请求发出但没有收到响应
-            errorMessage = '服务器无响应，请检查网络连接';
-        } else {
-            // 请求设置触发的错误
-            errorMessage = error.message || '删除请求发送失败';
-        }
-
         console.error('删除房源失败', error);
-        ElMessage.error('删除房源失败: ' + errorMessage);
 
         // 可选：询问用户是否重试
         try {
@@ -1057,7 +963,6 @@ const handleBatchActivate = async () => {
         fetchHomestays();
     } catch (error: any) {
         console.error('批量上线失败:', error);
-        ElMessage.error(error.response?.data?.message || error.message || '批量上线失败');
     }
 };
 
@@ -1081,7 +986,6 @@ const handleBatchDeactivate = async () => {
         fetchHomestays();
     } catch (error: any) {
         console.error('批量下架失败:', error);
-        ElMessage.error(error.response?.data?.message || error.message || '批量下架失败');
     }
 };
 
@@ -1105,7 +1009,6 @@ const handleBatchDelete = async () => {
         fetchHomestays();
     } catch (error: any) {
         console.error('批量删除失败:', error);
-        ElMessage.error(error.response?.data?.message || error.message || '批量删除失败');
     }
 };
 
@@ -1241,28 +1144,6 @@ const handleQuickAddHomestay = async () => {
     } catch (error: any) {
         console.error('创建测试房源失败', error);
 
-        // 添加详细的错误处理逻辑
-        let errorMessage = '未知错误';
-        if (error.response) {
-            // 服务器返回了错误响应
-            console.error('服务器响应错误：', error.response.status, error.response.data);
-            if (error.response.data && error.response.data.error) {
-                errorMessage = error.response.data.error;
-            } else if (error.response.data && error.response.data.message) {
-                errorMessage = error.response.data.message;
-            } else {
-                errorMessage = `服务器错误 (${error.response.status})`;
-            }
-        } else if (error.request) {
-            // 请求已发出，但没有收到响应
-            console.error('没有收到服务器响应');
-            errorMessage = '服务器无响应，请检查网络连接';
-        } else {
-            // 请求配置出错
-            errorMessage = error.message || '请求错误';
-        }
-
-        ElMessage.error('创建测试房源失败: ' + errorMessage);
     } finally {
         quickAddLoading.value = false;
     }
@@ -1348,21 +1229,6 @@ const refreshCurrentAuditHistory = async () => {
         } catch (error: any) {
             console.error('刷新审核历史失败', error);
 
-            let errorMessage = '获取审核历史失败';
-            if (error.response) {
-                const status = error.response.status;
-                const data = error.response.data;
-
-                if (status === 403) {
-                    errorMessage = '您没有权限查看此房源的审核历史';
-                } else if (status === 404) {
-                    errorMessage = '房源不存在';
-                } else {
-                    errorMessage = data?.message || '获取审核历史失败，请稍后重试';
-                }
-            }
-
-            ElMessage.error(errorMessage);
             auditRecords.value = [];
         } finally {
             loadingAuditHistory.value = false;
@@ -1482,7 +1348,6 @@ const handleSaveGroup = async () => {
         await fetchGroups();
     } catch (error: any) {
         console.error('保存分组失败:', error);
-        ElMessage.error(error.response?.data?.error || '保存分组失败');
     } finally {
         groupFormLoading.value = false;
     }
@@ -1502,7 +1367,6 @@ const handleDeleteGroup = async (id: number) => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('删除分组失败:', error);
-            ElMessage.error(error.response?.data?.error || '删除分组失败');
         }
     }
 };
@@ -1536,7 +1400,6 @@ const handleBatchGroup = async () => {
         await fetchHomestays();
     } catch (error: any) {
         console.error('批量分组失败:', error);
-        ElMessage.error(error.response?.data?.error || '批量分组失败');
     } finally {
         batchGroupLoading.value = false;
     }

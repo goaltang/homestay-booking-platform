@@ -544,8 +544,6 @@ const handleSubmitReview = async (reviewData: any) => {
         store.fetchOrders();
         store.fetchStatsOrders();
     } catch (error: any) {
-        const errMsg = error?.response?.data?.message || '评价提交失败，请稍后重试';
-        ElMessage.error(errMsg);
     }
 };
 // --- End state ---
@@ -566,7 +564,6 @@ const openCheckInCredential = async () => {
         checkInCredential.value = res.data || res
         checkInCredentialDialogVisible.value = true
     } catch (error: any) {
-        ElMessage.error(error.message || '获取入住凭证失败')
     }
 }
 
@@ -585,7 +582,6 @@ const submitSelfCheckIn = async () => {
         store.fetchOrders()
         store.fetchStatsOrders()
     } catch (error: any) {
-        ElMessage.error(error.message || '自助入住失败')
     } finally {
         selfCheckInLoading.value = false
     }
@@ -607,7 +603,6 @@ const handleConfirmArrival = async () => {
             store.fetchOrders()
             store.fetchStatsOrders()
         } catch (error: any) {
-            ElMessage.error(error.message || '确认到达失败')
         } finally {
             confirmArrivalLoading.value = false
         }
@@ -651,7 +646,6 @@ const fetchOrderDetail = async () => {
 
     } catch (error: any) {
         console.error('获取订单详情失败:', error);
-        ElMessage.error('获取订单详情失败，请重试');
     } finally {
         loading.value = false;
     }
@@ -956,14 +950,12 @@ const confirmCancel = async () => {
             }
 
             console.error('取消订单失败:', errorMsg);
-            ElMessage.error(errorMsg);
             // 刷新订单数据
             fetchOrderDetail();
         }
     } catch (error: any) {
         if (error !== 'cancel' && error !== 'close') {
             console.error('取消订单确认失败:', error);
-            ElMessage.error('取消订单失败，请重试');
         }
     }
 }
@@ -1025,7 +1017,6 @@ const generateQrCode = async () => {
         }
     } catch (error) {
         console.error('生成支付信息异常:', error)
-        ElMessage.error('发起支付失败，请检查网络或稍后重试')
     } finally {
         qrCodeLoading.value = false
     }
@@ -1092,7 +1083,6 @@ const checkPaymentStatus = async () => {
             ElMessage.warning('尚未检测到支付成功，请扫码支付')
         }
     } catch (error) {
-        ElMessage.error('查询支付状态失败')
     } finally {
         checkingStatus.value = false
     }
@@ -1133,7 +1123,6 @@ const handleManualPay = async () => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('手动支付异常:', error)
-            ElMessage.error(error.message || '支付接口调用失败')
         }
     } finally {
         payLoading.value = false
@@ -1235,12 +1224,6 @@ const confirmRequestRefund = async () => {
         } catch (error: any) {
             ElMessage.closeAll()
             console.error('申请退款失败:', error)
-
-            let errorMessage = '申请退款失败，请稍后重试'
-            if (error.response && error.response.data && error.response.data.message) {
-                errorMessage = error.response.data.message
-            }
-            ElMessage.error(errorMessage)
         }
     } catch (error) {
         // 用户取消了对话框
@@ -1291,12 +1274,6 @@ const confirmRaiseDispute = async () => {
         } catch (error: any) {
             ElMessage.closeAll()
             console.error('发起争议失败:', error)
-
-            let errorMessage = '发起争议失败，请稍后重试'
-            if (error.response && error.response.data && error.response.data.message) {
-                errorMessage = error.response.data.message
-            }
-            ElMessage.error(errorMessage)
         }
     } catch (error) {
         // 用户取消了对话框
@@ -1359,8 +1336,6 @@ const handleDeleteReview = async (reviewId: number) => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('删除评价失败:', error);
-            const errMsg = error?.response?.data?.message || '删除评价失败，请稍后重试';
-            ElMessage.error(errMsg);
         }
     } finally {
         isDeletingReview.value = false;

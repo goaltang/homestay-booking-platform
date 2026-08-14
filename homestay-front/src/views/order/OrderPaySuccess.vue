@@ -93,7 +93,6 @@ onMounted(async () => {
         homestayId.value = response.data.homestayId
     } catch (error) {
         console.error('获取订单详情失败:', error)
-        ElMessage.error('获取订单详情失败')
     }
 })
 

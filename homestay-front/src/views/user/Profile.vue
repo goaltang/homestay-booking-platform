@@ -308,7 +308,6 @@ const submitProfileUpdate = async () => {
         ElMessage.success('资料保存成功');
     } catch (error: any) {
         console.error('保存资料失败:', error);
-        ElMessage.error(error.message || '保存失败，请稍后重试');
     } finally {
         saving.value = false;
     }
@@ -389,7 +388,6 @@ const submitPasswordChange = async () => {
             confirmPassword: ''
         };
     } catch (error: any) {
-        ElMessage.error(error.message || '密码修改失败');
     }
 };
 
@@ -403,7 +401,6 @@ const checkUserInfo = async () => {
         } catch (error: any) {
             console.error("获取用户信息失败:", error);
             if (error.response && error.response.status === 401) {
-                ElMessage.error("登录已过期，请重新登录");
                 userStore.logout();
                 router.push("/login");
             }

@@ -755,7 +755,6 @@ const handleBooking = async () => {
         emit('booking-confirmed')
     } catch (error) {
         console.error('验证可用性失败:', error)
-        ElMessage.error('验证预订可用性失败，请稍后重试')
     } finally {
         isVerifying.value = false
     }

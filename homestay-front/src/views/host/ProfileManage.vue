@@ -714,7 +714,6 @@ const fetchHostInfo = async () => {
         }
     } catch (error) {
         console.error('获取房东信息失败:', error);
-        ElMessage.error('获取房东信息失败');
     } finally {
         loading.value = false;
     }
@@ -758,8 +757,6 @@ const handleSubmit = async () => {
                 }
             } catch (error: any) {
                 console.error('更新资料失败:', error);
-                const errorMessage = error?.response?.data?.message || error?.message || '更新资料失败，请重试';
-                ElMessage.error(errorMessage);
             } finally {
                 loading.value = false;
             }
@@ -814,7 +811,6 @@ const submitVerification = async () => {
                 formData.idCard = verifyForm.idCard;
             } catch (error) {
                 console.error('提交身份验证失败:', error);
-                ElMessage.error('提交验证失败: ' + (error instanceof Error ? error.message : '请重试'));
             } finally {
                 verifyLoading.value = false;
             }
@@ -843,7 +839,6 @@ const handleChangePassword = async () => {
                 passwordForm.confirmPassword = '';
             } catch (error) {
                 console.error('修改密码失败:', error);
-                ElMessage.error('修改密码失败');
             } finally {
                 passwordLoading.value = false;
             }
@@ -962,7 +957,6 @@ const beforeAvatarUpload = (file: File) => {
         })
         .catch(error => {
             console.error('头像上传失败:', error);
-            ElMessage.error('头像上传失败，请重试');
         });
 
     // 阻止el-upload默认上传行为
@@ -1084,7 +1078,6 @@ const handleCustomUpload = (type: 'idCardFront' | 'idCardBack') => {
             })
             .catch(error => {
                 console.error('上传失败:', error);
-                ElMessage.error(`上传失败: ${error.message || '未知错误'}`);
 
                 // 调用el-upload的onError回调
                 onError(error);
@@ -1210,7 +1203,6 @@ onMounted(async () => {
         }
     } catch (error) {
         console.error('初始化失败:', error);
-        ElMessage.error('加载用户信息失败，请刷新页面重试');
     }
 });
 </script>

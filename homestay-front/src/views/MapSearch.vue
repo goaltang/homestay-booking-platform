@@ -703,7 +703,6 @@ const handleSearchEnter = async () => {
       ElMessage.warning('未找到匹配地点，请尝试其他关键词');
     }
   } catch (e) {
-    ElMessage.error('搜索失败，请稍后重试');
   }
 };
 

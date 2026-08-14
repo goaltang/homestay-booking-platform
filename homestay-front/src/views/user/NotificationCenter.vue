@@ -267,7 +267,6 @@ const fetchNotifications = async () => {
     } catch (error) {
         if (thisFetchId !== currentFetchId) return;
         console.error('获取通知失败:', error);
-        ElMessage.error('加载通知失败，请稍后重试');
     }
 };
 
@@ -281,7 +280,6 @@ const handleMarkRead = async (id: number) => {
         ElMessage.success('已标记为已读');
     } catch (error) {
         console.error('标记已读失败:', error);
-        ElMessage.error('操作失败');
     } finally {
         markingIds.value.delete(id);
     }
@@ -295,7 +293,6 @@ const handleMarkAllRead = async () => {
         await fetchNotifications();
     } catch (error) {
         console.error('全部标记已读失败:', error);
-        ElMessage.error('操作失败');
     }
 };
 
@@ -315,7 +312,6 @@ const handleBatchMarkRead = async () => {
         await notificationStore.fetchUnreadCount();
     } catch (error) {
         console.error('批量标记已读失败:', error);
-        ElMessage.error('批量标记已读失败');
     }
 };
 
@@ -337,7 +333,6 @@ const handleDelete = async (id: number) => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('删除通知失败:', error);
-            ElMessage.error('删除失败');
         }
     } finally {
         deletingIds.value.delete(id);
@@ -366,7 +361,6 @@ const handleBatchDelete = async () => {
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('批量删除通知失败:', error);
-            ElMessage.error('批量删除失败');
         }
     }
 };
@@ -433,7 +427,6 @@ const handlePreferenceChange = async (domain: string, enabled: boolean) => {
         ElMessage.success(`${domainLabels[domain]}已${enabled ? '开启' : '关闭'}`);
     } catch (error) {
         console.error('更新通知偏好失败:', error);
-        ElMessage.error('设置保存失败');
     } finally {
         preferenceLoading.value = false;
     }

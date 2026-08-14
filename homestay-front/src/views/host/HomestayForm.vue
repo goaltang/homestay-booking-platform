@@ -736,7 +736,6 @@ const saveDraft = async () => {
             }
         }
 
-        ElMessage.error(errorMessage);
     } finally {
         savingDraft.value = false;
     }
@@ -919,28 +918,11 @@ const handleSubmit = async () => {
         } catch (error: any) {
             console.error('提交表单失败:', error);
 
-            // 增强错误处理，显示更详细的错误信息
-            let errorMessage = '操作失败: ' + (error.message || '未知错误');
-
-            // 如果有详细的服务器响应，尝试提取更有用的错误信息
-            if (error.response && error.response.data) {
-                const serverError = error.response.data;
-                console.log('服务器返回的错误详情:', serverError);
-
-                if (serverError.error) {
-                    errorMessage = `服务器错误: ${serverError.error}`;
-                } else if (serverError.message) {
-                    errorMessage = `服务器错误: ${serverError.message}`;
-                }
-            }
-
-            ElMessage.error(errorMessage);
         } finally {
             loading.value = false;
         }
     } catch (error) {
         console.error('表单验证失败:', error);
-        ElMessage.error('表单验证失败，请检查输入内容');
     }
 }
 
@@ -1049,7 +1031,6 @@ const handleCustomUpload = (type: 'cover' | 'gallery') => {
             })
             .catch(error => {
                 console.error('图片上传异常:', error);
-                ElMessage.error(`图片上传失败: ${error.message || '网络错误'}`);
                 if (onError) onError(error);
             })
             .finally(() => {
@@ -1153,7 +1134,6 @@ onMounted(async () => {
             console.log('所有权检查通过，用户可以编辑此房源');
         } catch (error) {
             console.error('检查房源所有权失败:', error);
-            ElMessage.error('验证房源所有权失败，请稍后再试');
             return;
         }
     }
@@ -1175,7 +1155,6 @@ onMounted(async () => {
             console.log('房源数据加载成功');
         } catch (error) {
             console.error('加载房源数据失败:', error);
-            ElMessage.error('加载房源数据失败，请稍后再试');
         }
     } else {
         // 新增模式：加载草稿或设置默认值
@@ -1283,7 +1262,6 @@ const reloadLocationData = async () => {
     } catch (error) {
         console.error('重新加载位置数据失败:', error);
         locationDataError.value = '位置数据加载失败，请稍后再试';
-        ElMessage.error('位置数据加载失败');
     } finally {
         loadingLocationData.value = false;
     }
@@ -1303,7 +1281,6 @@ const checkAuthentication = async () => {
         ElMessage.success('认证检查完成，请查看控制台日志获取详细信息');
     } catch (error: any) {
         console.error('认证检查失败:', error);
-        ElMessage.error('认证检查失败: ' + (error.message || '未知错误'));
     } finally {
         checkingAuth.value = false;
     }
@@ -1375,7 +1352,6 @@ const initEditForm = async () => {
 
     } catch (error) {
         console.error('初始化房源编辑表单失败:', error);
-        ElMessage.error('加载房源数据失败，请稍后再试');
     } finally {
         loading.value = false;
     }
@@ -1602,7 +1578,6 @@ const checkEditPermission = async (homestayId: number) => {
             currentUser = JSON.parse((localStorage.getItem('homestay_user') || localStorage.getItem('userInfo')) || '{}');
         } catch (e) {
             console.error('解析用户信息失败', e);
-            ElMessage.error('无法验证用户信息，请重新登录');
             router.push('/login');
             return false;
         }
@@ -1619,7 +1594,6 @@ const checkEditPermission = async (homestayId: number) => {
         return true;
     } catch (error) {
         console.error('权限检查失败:', error);
-        ElMessage.error('权限验证失败，请重新登录');
         return false;
     }
 };
