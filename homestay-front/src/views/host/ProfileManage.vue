@@ -404,10 +404,11 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import {  } from 'vue-router'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { Upload, House, Calendar, Document, ChatDotRound, Star, Delete, Plus, View, Service } from '@element-plus/icons-vue'
-import { getHostProfile, updateHostProfile, uploadHostAvatar } from '@/api/host'
+import { getHostProfile, updateHostProfile } from '@/api/host'
 import { useUserStore } from '@/stores/user'
 import { getAvatarUrl } from '@/utils/image'
 import { useIdCardUpload } from '@/composables/useIdCardUpload'
+import { useAvatarUpload } from '@/composables/useAvatarUpload'
 
 const userStore = useUserStore()
 const formRef = ref<FormInstance>()
@@ -659,6 +660,25 @@ const handleAvatarError = (e: Event) => {
     handleImageError(e, 'avatar');
 }
 
+// 头像上传逻辑（解析与上传，副作用通过回调处理）
+const { handleAvatarSuccess, beforeAvatarUpload } = useAvatarUpload(formData, (avatarUrl) => {
+    if (userStore.userInfo) {
+        userStore.userInfo.avatar = avatarUrl;
+        localStorage.setItem('homestay_user', JSON.stringify(userStore.userInfo));
+    }
+
+    setTimeout(() => {
+        const avatarElement = document.querySelector('.avatar-image') as HTMLImageElement;
+        if (avatarElement) {
+            avatarElement.src = formatAvatar(avatarUrl);
+        }
+    }, 500);
+
+    setTimeout(() => {
+        userStore.fetchUserInfo();
+    }, 1000);
+});
+
 // 获取房东信息
 const fetchHostInfo = async () => {
     loading.value = true;
@@ -866,109 +886,6 @@ const removeCompanion = (index: number) => {
 }
 
 // 头像上传成功处理
-const handleAvatarSuccess = (response: any) => {
-    console.log('头像上传响应:', response);
-    let avatarUrl = '';
-
-    // 处理新的统一文件上传API响应格式
-    if (response.data && response.data.fileName) {
-        // 新格式: { data: { fileName: "xxx.jpg" } }
-        avatarUrl = `/api/files/avatar/${response.data.fileName}`;
-        console.log('解析到的头像URL (新格式):', avatarUrl);
-    } else if (response.fileName) {
-        // 直接的fileName字段
-        avatarUrl = `/api/files/avatar/${response.fileName}`;
-        console.log('解析到的头像URL (fileName):', avatarUrl);
-    } else if (response.data && response.data.url) {
-        // 旧格式保持兼容
-        avatarUrl = response.data.url;
-        console.log('解析到的头像URL (旧格式):', avatarUrl);
-    } else if (response.url) {
-        avatarUrl = response.url;
-        console.log('解析到的头像URL (url):', avatarUrl);
-    } else if (typeof response === 'string') {
-        avatarUrl = response;
-        console.log('解析到的头像URL (字符串):', avatarUrl);
-    }
-
-    if (avatarUrl) {
-        console.log('最终解析到的头像URL:', avatarUrl);
-
-        // 更新表单数据
-        formData.avatar = avatarUrl;
-        ElMessage.success('头像上传成功');
-
-        // 更新用户存储中的用户信息，确保全局状态同步
-        if (userStore.userInfo) {
-            userStore.userInfo.avatar = avatarUrl;
-            // 保存到localStorage确保刷新页面后仍能显示
-            localStorage.setItem('homestay_user', JSON.stringify(userStore.userInfo));
-        }
-
-        // 强制刷新头像显示
-        setTimeout(() => {
-            // 替换头像src为新的URL（带时间戳）
-            const avatarElement = document.querySelector('.avatar-image') as HTMLImageElement;
-            if (avatarElement) {
-                avatarElement.src = formatAvatar(avatarUrl);
-            }
-        }, 500);
-
-        // 重新获取用户信息以确保头像更新正确显示
-        setTimeout(() => {
-            userStore.fetchUserInfo();
-        }, 1000);
-    } else {
-        ElMessage.error('头像上传失败，返回格式不正确');
-        console.error('无法解析头像URL:', response);
-        // 添加详细的调试信息
-        console.error('响应详细信息:', {
-            hasData: !!response.data,
-            dataKeys: response.data ? Object.keys(response.data) : [],
-            responseKeys: Object.keys(response || {}),
-            response: response
-        });
-    }
-};
-
-const beforeAvatarUpload = (file: File) => {
-    const isImage = file.type.startsWith('image/');
-    const isLt10M = file.size / 1024 / 1024 < 10;
-
-    if (!isImage) {
-        ElMessage.error('上传头像图片只能是图片格式!');
-        return false;
-    }
-    if (!isLt10M) {
-        ElMessage.error('上传头像图片大小不能超过 10MB!');
-        return false;
-    }
-
-    // 记录调试信息
-    console.log('准备上传头像文件:', {
-        文件名: file.name,
-        类型: file.type,
-        大小: (file.size / 1024).toFixed(2) + 'KB'
-    });
-
-    // 使用API函数直接上传文件，而不通过el-upload的action属性
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // 显示加载状态
-    ElMessage.info('正在上传头像，请稍候...');
-
-    uploadHostAvatar(formData)
-        .then(response => {
-            handleAvatarSuccess(response);
-        })
-        .catch(error => {
-            console.error('头像上传失败:', error);
-        });
-
-    // 阻止el-upload默认上传行为
-    return false;
-}
 
 
 // 修改预览身份证照片的函数，添加加载状态和水印
