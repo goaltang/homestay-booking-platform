@@ -484,40 +484,12 @@
         </el-dialog>
 
         <!-- 取消订单对话框 -->
-        <el-dialog v-model="cancelDialogVisible" title="取消订单" width="40%">
-            <el-form :model="cancelForm" ref="cancelFormRef">
-                <el-form-item label="取消原因" prop="reason"
-                    :rules="[{ required: true, message: '请输入取消原因', trigger: 'blur' }]">
-                    <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请输入取消原因" />
-                </el-form-item>
-            </el-form>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="cancelDialogVisible = false">取消</el-button>
-                    <el-button type="danger" @click="confirmCancel" :loading="submitting">
-                        确认取消订单
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
+        <ReasonDialog v-model="cancelDialogVisible" title="取消订单" label="取消原因"
+            confirm-text="确认取消订单" :on-submit="submitCancel" />
 
         <!-- 拒绝订单对话框 -->
-        <el-dialog v-model="rejectDialogVisible" title="拒绝订单" width="40%">
-            <el-form :model="rejectForm" ref="rejectFormRef">
-                <el-form-item label="拒绝原因" prop="reason"
-                    :rules="[{ required: true, message: '请输入拒绝原因', trigger: 'blur' }]">
-                    <el-input v-model="rejectForm.reason" type="textarea" :rows="3" placeholder="请输入拒绝原因" />
-                </el-form-item>
-            </el-form>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="rejectDialogVisible = false">取消</el-button>
-                    <el-button type="danger" @click="confirmReject" :loading="submitting">
-                        确认拒绝订单
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
+        <ReasonDialog v-model="rejectDialogVisible" title="拒绝订单" label="拒绝原因"
+            confirm-text="确认拒绝订单" :on-submit="submitReject" />
 
         <!-- 退款确认对话框 -->
         <el-dialog v-model="refundDialogVisible" title="发起退款" width="45%">
@@ -860,6 +832,7 @@ import {
     getRefundTypeText, hasRefundInfo, formatAmount, getDepositStatusText, getDepositStatusType,
     formatDateString, formatDateTime
 } from '@/utils/orderDisplay'
+import ReasonDialog from '@/components/host/order/ReasonDialog.vue'
 
 
 // 新增：定义房源选项接口
@@ -931,20 +904,9 @@ const orders = ref<HostOrderItem[]>([])
 const detailsDialogVisible = ref(false)
 const currentOrder = ref<HostOrderItem | null>(null)
 
-// 取消对话框相关
+// 取消/拒绝订单对话框（ReasonDialog 内部管理 form 与 submitting）
 const cancelDialogVisible = ref(false)
-const cancelFormRef = ref<FormInstance>()
-const submitting = ref(false)
-const cancelForm = reactive({
-    reason: ''
-})
-
-// 拒绝订单相关
 const rejectDialogVisible = ref(false)
-const rejectFormRef = ref<FormInstance>()
-const rejectForm = reactive({
-    reason: ''
-})
 
 // 退款对话框相关
 const refundDialogVisible = ref(false)
@@ -1364,43 +1326,25 @@ const handleCancel = (order: HostOrderItem) => {
         return
     }
 
-    console.log('取消订单:', order)
     currentOrder.value = order
-    cancelForm.reason = ''
     cancelDialogVisible.value = true
 }
 
-// 确认取消订单
-const confirmCancel = async () => {
-    if (!cancelFormRef.value) return
+// 取消订单提交（由 ReasonDialog 回调）
+const submitCancel = async (reason: string) => {
     if (!currentOrder.value) {
         ElMessage.error('当前没有选中的订单')
         return
     }
 
-    await cancelFormRef.value.validate(async (valid: boolean) => {
-        if (valid) {
-            submitting.value = true
+    await cancelOrder(currentOrder.value.id, reason)
+    ElMessage.success('订单已取消')
 
-            try {
-                console.log('取消订单ID:', currentOrder.value!.id, '原因:', cancelForm.reason)
-                await cancelOrder(currentOrder.value!.id, cancelForm.reason)
+    if (detailsDialogVisible.value) {
+        detailsDialogVisible.value = false
+    }
 
-                ElMessage.success('订单已取消')
-                cancelDialogVisible.value = false
-
-                if (detailsDialogVisible.value) {
-                    detailsDialogVisible.value = false
-                }
-
-                await refreshOrdersAndStats()
-            } catch (error: any) {
-                console.error('取消订单失败:', error)
-            } finally {
-                submitting.value = false
-            }
-        }
-    })
+    await refreshOrdersAndStats()
 }
 
 
@@ -1412,43 +1356,25 @@ const handleReject = (order: HostOrderItem) => {
         return
     }
 
-    console.log('拒绝订单:', order)
     currentOrder.value = order
-    rejectForm.reason = ''
     rejectDialogVisible.value = true
 }
 
-// 确认拒绝订单
-const confirmReject = async () => {
-    if (!rejectFormRef.value) return
+// 拒绝订单提交（由 ReasonDialog 回调）
+const submitReject = async (reason: string) => {
     if (!currentOrder.value) {
         ElMessage.error('当前没有选中的订单')
         return
     }
 
-    await rejectFormRef.value.validate(async (valid: boolean) => {
-        if (valid) {
-            submitting.value = true
+    await rejectOrder(currentOrder.value.id, reason)
+    ElMessage.success('订单已拒绝')
 
-            try {
-                console.log('拒绝订单ID:', currentOrder.value!.id, '原因:', rejectForm.reason)
-                await rejectOrder(currentOrder.value!.id, rejectForm.reason)
+    if (detailsDialogVisible.value) {
+        detailsDialogVisible.value = false
+    }
 
-                ElMessage.success('订单已拒绝')
-                rejectDialogVisible.value = false
-
-                if (detailsDialogVisible.value) {
-                    detailsDialogVisible.value = false
-                }
-
-                await refreshOrdersAndStats()
-            } catch (error: any) {
-                console.error('拒绝订单失败:', error)
-            } finally {
-                submitting.value = false
-            }
-        }
-    })
+    await refreshOrdersAndStats()
 }
 
 // 发起退款

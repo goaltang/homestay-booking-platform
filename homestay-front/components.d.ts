@@ -102,6 +102,7 @@ declare module 'vue' {
     PopularHomestays: typeof import('./src/components/homestay/PopularHomestays.vue')['default']
     PromoBanner: typeof import('./src/components/home/PromoBanner.vue')['default']
     PropertyTypeSelector: typeof import('./src/components/PropertyTypeSelector.vue')['default']
+    ReasonDialog: typeof import('./src/components/host/order/ReasonDialog.vue')['default']
     RecentViewed: typeof import('./src/components/home/RecentViewed.vue')['default']
     RecommendedHomestays: typeof import('./src/components/homestay/RecommendedHomestays.vue')['default']
     ReviewEditModal: typeof import('./src/components/ReviewEditModal.vue')['default']
