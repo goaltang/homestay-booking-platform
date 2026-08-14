@@ -1,23 +1,26 @@
 <template>
-  <div class="app-container">
-    <!-- 修改 v-if 条件，排除登录和注册页 -->
-    <AppHeader v-if="showHeader" />
+  <el-config-provider :locale="zhCn">
+    <div class="app-container">
+      <!-- 修改 v-if 条件，排除登录和注册页 -->
+      <AppHeader v-if="showHeader" />
 
-    <!-- 主内容区 -->
-    <main class="app-main" :class="{ 'host-center-main': isHostCenterRoute }">
-      <router-view />
-    </main>
+      <!-- 主内容区 -->
+      <main class="app-main" :class="{ 'host-center-main': isHostCenterRoute }">
+        <router-view />
+      </main>
 
-    <!-- 修改 v-if 条件，排除登录和注册页 -->
-    <AppFooter v-if="showFooter" />
+      <!-- 修改 v-if 条件，排除登录和注册页 -->
+      <AppFooter v-if="showFooter" />
 
-    <!-- AI 智能客服对话框（全局挂载） -->
-    <SupportAgentDialog />
-  </div>
+      <!-- AI 智能客服对话框（全局挂载） -->
+      <SupportAgentDialog />
+    </div>
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { useRoute } from 'vue-router' // 移除 useRouter, ElMessage, Menu 等 Header 相关的导入
 import { useUserStore } from './stores/user'
 import { useFavoritesStore } from './stores/favorites'

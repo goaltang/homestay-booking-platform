@@ -6,6 +6,7 @@ import { ElMessage } from "element-plus";
 import { initWebSocket, disconnectWebSocket } from "@/services/websocketService";
 import { useNotificationStore } from "@/stores/notification";
 import { extractErrorMessage, ApiRequestError } from "@/types/error";
+import { extractRole, normalizeAvatarUrl } from "@/utils/userHelpers";
 
 export interface UserInfo {
   id: number;
@@ -146,38 +147,9 @@ export const useUserStore = defineStore("user", () => {
         // 设置token
         setToken(response.data.token);
 
-        // 角色提取优先级：嵌套user对象 > 顶层role > authorities > 默认ROLE_USER
-        let role = "";
-        
-        // 优先从嵌套的user对象获取角色（后端login接口主要设置此字段）
-        if (response.data.user && response.data.user.role) {
-          role = response.data.user.role;
-          log("从user对象获取的角色:", role);
-        }
-        // 其次从顶层role获取
-        else if (response.data.role) {
-          role = response.data.role;
-          log("从响应顶层获取的角色:", role);
-        }
-
-        // 如果role仍然为空，从authorities中提取角色
-        if (
-          (!role || role === "") &&
-          response.data.authorities &&
-          response.data.authorities.length > 0
-        ) {
-          log(
-            "从authorities中提取角色信息:",
-            response.data.authorities
-          );
-          const authority = response.data.authorities.find((auth: any) =>
-            auth.authority.startsWith("ROLE_")
-          );
-          if (authority) {
-            role = authority.authority;
-            log("已从authorities提取角色:", role);
-          }
-        }
+        // 统一提取角色（嵌套 user 对象 > 顶层 role > authorities）
+        const role = extractRole(response.data);
+        log("最终确定的用户角色:", role);
 
         // 优先使用嵌套user对象中的字段
         const userObj = response.data.user;
@@ -189,40 +161,10 @@ export const useUserStore = defineStore("user", () => {
           realName: userObj?.realName || response.data.realName || "",
           idCard: userObj?.idCard || response.data.idCard || "",
           role: role || "ROLE_USER", // 确保始终有角色
-          avatar: userObj?.avatar || response.data.avatar || "",
+          avatar: normalizeAvatarUrl(userObj?.avatar || response.data.avatar),
           verificationStatus:
             userObj?.verificationStatus || response.data.verificationStatus || "",
         };
-
-        log("最终确定的用户角色:", userData.role);
-
-        // 处理头像URL，确保如果是完整URL带域名的，转换为相对路径
-        if (
-          userData.avatar &&
-          (userData.avatar.startsWith("http://") ||
-            userData.avatar.startsWith("https://"))
-        ) {
-          try {
-            const url = new URL(userData.avatar);
-            // 如果包含/uploads/avatars/或/uploads/avatar/路径，转换为/api/files/avatar/格式
-            if (
-              url.pathname.includes("/uploads/avatars/") ||
-              url.pathname.includes("/uploads/avatar/")
-            ) {
-              const filename = url.pathname.split("/").pop();
-              userData.avatar = `/api/files/avatar/${filename}`;
-              log("头像URL已转换为API路径:", userData.avatar);
-            }
-            // 如果是其他/uploads/路径
-            else if (url.pathname.includes("/uploads/")) {
-              // 将完整URL转换为API路径
-              userData.avatar = `/api${url.pathname}`;
-              log("头像URL已转换为相对路径:", userData.avatar);
-            }
-          } catch (e) {
-            console.error("头像URL解析错误:", e);
-          }
-        }
 
         log("准备保存的用户数据:", userData);
         setUser(userData);
@@ -295,27 +237,8 @@ export const useUserStore = defineStore("user", () => {
         // 设置token
         setToken(response.data.token);
 
-        // 确保角色信息正确
-        let role = response.data.role || registerData.role;
-
-        // 如果role为空但authorities存在，从authorities中提取角色
-        if (
-          (!role || role === "") &&
-          response.data.authorities &&
-          response.data.authorities.length > 0
-        ) {
-          log(
-            "从authorities中提取角色信息:",
-            response.data.authorities
-          );
-          const authority = response.data.authorities.find((auth: any) =>
-            auth.authority.startsWith("ROLE_")
-          );
-          if (authority) {
-            role = authority.authority;
-            log("已提取角色:", role);
-          }
-        }
+        // 统一提取角色（顶层 role > authorities，回退到注册时选择的角色）
+        const role = extractRole(response.data, registerData.role || "ROLE_USER");
 
         // 设置用户信息
         const userData = {
@@ -324,7 +247,7 @@ export const useUserStore = defineStore("user", () => {
           email: response.data.email,
           phone: response.data.phone || registerData.phone,
           role: role,
-          avatar: response.data.avatar,
+          avatar: normalizeAvatarUrl(response.data.avatar),
           verificationStatus: response.data.verificationStatus,
           authorities: response.data.authorities, // 确保authorities也被保存
         };
@@ -480,14 +403,8 @@ export const useUserStore = defineStore("user", () => {
             phone: response.data.phone || "",
             realName: response.data.realName || "",
             idCard: response.data.idCard || "",
-            role:
-              response.data.role ||
-              (response.data.authorities && response.data.authorities.length > 0
-                ? (typeof response.data.authorities[0] === "string"
-                    ? response.data.authorities[0]
-                    : response.data.authorities[0].authority)
-                : "ROLE_USER"),
-            avatar: response.data.avatar || "",
+            role: extractRole(response.data),
+            avatar: normalizeAvatarUrl(response.data.avatar),
             verificationStatus: response.data.verificationStatus || "",
           };
         }
@@ -504,14 +421,8 @@ export const useUserStore = defineStore("user", () => {
               phone: userDataObj.phone || "",
               realName: userDataObj.realName || "",
               idCard: userDataObj.idCard || "",
-              role:
-                userDataObj.role ||
-                (userDataObj.authorities && userDataObj.authorities.length > 0
-                  ? (typeof userDataObj.authorities[0] === "string"
-                      ? userDataObj.authorities[0]
-                      : userDataObj.authorities[0].authority)
-                  : "ROLE_USER"),
-              avatar: userDataObj.avatar || "",
+              role: extractRole(userDataObj),
+              avatar: normalizeAvatarUrl(userDataObj.avatar),
               verificationStatus: userDataObj.verificationStatus || "",
             };
           }
@@ -521,52 +432,8 @@ export const useUserStore = defineStore("user", () => {
       if (userData) {
         log("解析到的用户数据:", userData);
 
-        // 处理头像URL，统一格式
-        if (userData.avatar) {
-          // 如果是完整URL带域名的，转换为相对路径
-          if (
-            userData.avatar.startsWith("http://") ||
-            userData.avatar.startsWith("https://")
-          ) {
-            try {
-              const url = new URL(userData.avatar);
-              // 如果包含/uploads/avatars/或/uploads/avatar/路径，转换为/api/files/avatar/格式
-              if (
-                url.pathname.includes("/uploads/avatars/") ||
-                url.pathname.includes("/uploads/avatar/")
-              ) {
-                const filename = url.pathname.split("/").pop();
-                userData.avatar = `/api/files/avatar/${filename}`;
-                log("头像URL已转换为API路径:", userData.avatar);
-              }
-              // 如果是其他/uploads/路径
-              else if (url.pathname.includes("/uploads/")) {
-                // 将完整URL转换为API路径
-                userData.avatar = `/api${url.pathname}`;
-                log("头像URL已转换为相对路径:", userData.avatar);
-              }
-            } catch (e) {
-              console.error("头像URL解析错误:", e);
-            }
-          }
-          // 如果是旧格式的/uploads/avatars/路径，也要转换
-          else if (
-            userData.avatar.startsWith("/uploads/avatars/") ||
-            userData.avatar.startsWith("/uploads/avatar/")
-          ) {
-            const filename = userData.avatar.split("/").pop();
-            userData.avatar = `/api/files/avatar/${filename}`;
-            log("旧格式头像URL已转换:", userData.avatar);
-          }
-          // 如果只是文件名，构建完整路径
-          else if (
-            !userData.avatar.startsWith("/api/files/avatar/") &&
-            !userData.avatar.includes("/")
-          ) {
-            userData.avatar = `/api/files/avatar/${userData.avatar}`;
-            log("文件名已转换为完整URL:", userData.avatar);
-          }
-        }
+        // 统一格式化头像 URL
+        userData.avatar = normalizeAvatarUrl(userData.avatar);
 
         setUser(userData);
         await fetchUnreadCount();

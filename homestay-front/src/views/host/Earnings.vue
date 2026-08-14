@@ -126,8 +126,7 @@ import { getHomestaysByOwner } from '@/api/homestay';
 import { ElMessage } from 'element-plus';
 import { useRouter } from 'vue-router';
 import { ArrowDown } from '@element-plus/icons-vue';
-import type { EChartsType } from 'echarts';
-import * as echarts from 'echarts';
+import echarts, { type EChartsType } from '@/utils/echarts';
 
 const router = useRouter();
 

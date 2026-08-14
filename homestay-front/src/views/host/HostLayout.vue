@@ -143,7 +143,7 @@ import {
     Calendar,
     List,
     Money,
-    StarFilled,
+    StarFilled, Ticket, TrendCharts,
     User,
     ArrowDown,
     HomeFilled,

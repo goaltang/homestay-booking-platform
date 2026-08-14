@@ -13,9 +13,9 @@
             <div class="selected-pills">
                 <div v-for="item in normalizedModelValue" :key="typeof item === 'object' ? item.value : item"
                     class="selected-pill">
-                    <span class="pill-icon" v-if="getAmenityIcon(typeof item === 'object' ? item.value : item)">
+                    <span class="pill-icon" v-if="resolveIcon(getAmenityIcon(typeof item === 'object' ? item.value : item))">
                         <el-icon>
-                            <component :is="getAmenityIcon(typeof item === 'object' ? item.value : item)" />
+                            <component :is="resolveIcon(getAmenityIcon(typeof item === 'object' ? item.value : item))" />
                         </el-icon>
                     </span>
                     <span class="pill-text">{{ typeof item === 'object' && item.label ? item.label :
@@ -46,7 +46,7 @@
                         :class="['amenity-card', isSelected(item) ? 'selected' : '']" @click="toggleAmenity(item)">
                         <div class="amenity-icon">
                             <el-icon v-if="item.icon">
-                                <component :is="item.icon" />
+                                <component :is="resolveIcon(item.icon)" />
                             </el-icon>
                             <div class="fallback-icon" v-else>
                                 <i class="el-icon-setting"></i>
@@ -88,6 +88,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { getAmenitiesByCategoryApi } from '@/api/amenities'
 import { Check, Plus, Close } from '@element-plus/icons-vue'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 // 定义设施类型接口
@@ -260,6 +261,13 @@ const getAmenityLabel = (amenityValue: string) => {
 };
 
 // 获取设施图标
+// 将后端返回的图标名字符串解析为图标组件（后端 icon 为 Element Plus 图标名）
+const iconRegistry = ElementPlusIconsVue as unknown as Record<string, unknown>;
+const resolveIcon = (name?: string | null) => {
+    if (!name) return null;
+    return iconRegistry[name] || null;
+};
+
 const getAmenityIcon = (amenityValue: string) => {
     if (!amenityValue) return null;
 

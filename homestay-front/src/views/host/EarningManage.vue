@@ -161,8 +161,7 @@ import {
     getPendingEarnings,
     settleHostEarnings,
 } from '@/api/earnings'
-import * as echarts from 'echarts'
-import type { EChartsType } from 'echarts'
+import echarts, { type EChartsType } from '@/utils/echarts'
 import { getOwnerHomestays } from '@/api/homestay'
 import request from '@/utils/request'
 

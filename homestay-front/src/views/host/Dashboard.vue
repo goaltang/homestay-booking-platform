@@ -203,7 +203,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 import {
     House, List, Star, Warning, CircleCheck,
     Plus, ArrowRight, Loading

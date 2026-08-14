@@ -1,10 +1,9 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
-import ElementPlus from "element-plus";
+// Element Plus 组件通过 unplugin-vue-components + ElementPlusResolver 按需自动导入，
+// 这里只保留全量 CSS（命令式 API 如 ElMessage 的样式依赖它）。
 import "element-plus/dist/index.css";
-import zhCn from "element-plus/es/locale/lang/zh-cn";
-import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import App from "./App.vue";
 import router from "./router";
 import "./assets/main.css";
@@ -19,14 +18,6 @@ pinia.use(piniaPluginPersistedstate);
 
 app.use(pinia);
 app.use(router);
-app.use(ElementPlus, {
-  locale: zhCn,
-});
-
-// 注册所有图标
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component);
-}
 
 // 初始化用户信息
 const initializeApp = async () => {
