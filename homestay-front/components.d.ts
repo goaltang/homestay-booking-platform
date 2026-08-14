@@ -86,6 +86,7 @@ declare module 'vue' {
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     FeaturesList: typeof import('./src/components/homestay/FeaturesList.vue')['default']
+    GroupManageDialog: typeof import('./src/components/host/GroupManageDialog.vue')['default']
     HeroBanner: typeof import('./src/components/home/HeroBanner.vue')['default']
     HomestayCard: typeof import('./src/components/homestay/HomestayCard.vue')['default']
     HomestaySection: typeof import('./src/components/homestay/HomestaySection.vue')['default']
