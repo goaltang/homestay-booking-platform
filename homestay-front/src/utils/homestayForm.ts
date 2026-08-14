@@ -114,3 +114,42 @@ export function calculateFormCompletion(form: Record<string, unknown>): number {
 
   return Math.round((completedFields / totalFields) * 100);
 }
+
+/** 标准化房源表单数据（价格/数字/设施/默认值） */
+export function normalizeHomestayData(data: Record<string, any>): Record<string, any> {
+  const processed = data;
+
+  // 处理价格
+  if (processed.price && typeof processed.price === "string") {
+    processed.price = String(parseFloat(processed.price));
+  }
+
+  // 处理最大/最小入住
+  if (processed.maxGuests) {
+    processed.maxGuests = Number(processed.maxGuests);
+  }
+  if (processed.minNights) {
+    processed.minNights = Number(processed.minNights);
+  }
+
+  // 处理设施数据（提取 value 字符串数组）
+  if (Array.isArray(processed.amenities)) {
+    processed.amenities = processed.amenities
+      .map((amenity: any) => {
+        if (typeof amenity === "string") return amenity;
+        if (typeof amenity === "object" && amenity !== null) return amenity.value || "";
+        return "";
+      })
+      .filter(Boolean);
+  } else {
+    processed.amenities = [];
+  }
+
+  // 确保必要字段有默认值，用于草稿保存
+  if (!processed.title) processed.title = "";
+  if (!processed.type) processed.type = "";
+  if (!processed.description) processed.description = "";
+  if (!processed.status) processed.status = "DRAFT";
+
+  return processed;
+}

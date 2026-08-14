@@ -428,7 +428,7 @@ import {
 import AmenitySelector from '@/components/AmenitySelector.vue'
 import { useHomestayImageUpload } from '@/composables/useHomestayImageUpload'
 import { useHomestayDraft } from '@/composables/useHomestayDraft'
-import { getHomestayTypeText, processAmenities, formatLastSavedText, calculateFormCompletion } from '@/utils/homestayForm'
+import { getHomestayTypeText, processAmenities, formatLastSavedText, calculateFormCompletion, normalizeHomestayData } from '@/utils/homestayForm'
 import type { Homestay } from '@/types/homestay'
 import PropertyTypeSelector from '@/components/PropertyTypeSelector.vue'
 import { checkAuthentication as checkAuthAPI, ensureUserLoggedIn } from "@/utils/auth"
@@ -631,11 +631,7 @@ const preprocessFormData = () => {
         const userInfoStr = (localStorage.getItem('homestay_user') || localStorage.getItem('userInfo'))
         if (userInfoStr) {
             const userInfo = JSON.parse(userInfoStr)
-            if (userInfo && userInfo.username) {
-                processedData.ownerUsername = userInfo.username
-            } else {
-                processedData.ownerUsername = ''
-            }
+            processedData.ownerUsername = userInfo?.username || ''
         } else {
             processedData.ownerUsername = ''
         }
@@ -644,42 +640,7 @@ const preprocessFormData = () => {
         processedData.ownerUsername = ''
     }
 
-    // 处理价格
-    if (processedData.price && typeof processedData.price === 'string') {
-        processedData.price = String(parseFloat(processedData.price))
-    }
-
-    // 处理最大/最小入住
-    if (processedData.maxGuests) {
-        processedData.maxGuests = Number(processedData.maxGuests)
-    }
-    if (processedData.minNights) {
-        processedData.minNights = Number(processedData.minNights)
-    }
-
-    // 处理设施数据
-    if (processedData.amenities) {
-        if (Array.isArray(processedData.amenities)) {
-            const amenityValues = processedData.amenities.map((amenity: any) => {
-                if (typeof amenity === 'string') return amenity
-                if (typeof amenity === 'object' && amenity !== null) return amenity.value || ''
-                return ''
-            }).filter(Boolean)
-            processedData.amenities = amenityValues
-        } else {
-            processedData.amenities = []
-        }
-    } else {
-        processedData.amenities = []
-    }
-
-    // 确保必要字段有默认值，用于草稿保存
-    if (!processedData.title) processedData.title = '';
-    if (!processedData.type) processedData.type = '';
-    if (!processedData.description) processedData.description = '';
-    if (!processedData.status) processedData.status = 'DRAFT';
-
-    return processedData
+    return normalizeHomestayData(processedData);
 }
 
 // 草稿逻辑（保存/自动保存/加载）
