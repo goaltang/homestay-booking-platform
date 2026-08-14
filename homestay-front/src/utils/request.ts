@@ -24,6 +24,7 @@ const requestWarn = (...args: unknown[]) => {
 const request: AxiosInstance = axios.create({
   baseURL,
   timeout: 30000,
+  withCredentials: true, // 携带/接收 httpOnly 认证 Cookie（跨源同站）
   headers: {
     "Content-Type": "application/json",
   },

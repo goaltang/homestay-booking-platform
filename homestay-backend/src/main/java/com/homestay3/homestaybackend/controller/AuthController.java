@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.Authentication;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -33,10 +36,14 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "用户注册", description = "注册新用户并返回 JWT")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request,
+                                                 HttpServletResponse servletResponse) {
         log.info("注册请求: {}", request.getUsername());
         try {
             AuthResponse response = authService.register(request);
+            if (response != null && response.getToken() != null) {
+                setAuthCookie(servletResponse, response.getToken());
+            }
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("注册失败: {}", e.getMessage());
@@ -46,10 +53,14 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "用户名密码登录，返回 JWT")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request,
+                                              HttpServletResponse servletResponse) {
         log.info("登录请求: {}", request.getUsername());
         try {
             AuthResponse response = authService.login(request);
+            if (response != null && response.getToken() != null) {
+                setAuthCookie(servletResponse, response.getToken());
+            }
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("登录失败: {}", e.getMessage());
@@ -83,6 +94,15 @@ public class AuthController {
             log.error("重置密码失败: {}", e.getMessage());
             throw e;
         }
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "用户登出", description = "清除 httpOnly 认证 Cookie")
+    public ResponseEntity<Map<String, String>> logout(HttpServletResponse servletResponse) {
+        clearAuthCookie(servletResponse);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "已退出登录");
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -175,5 +195,31 @@ public class AuthController {
     }
     
 
+
+
+    /**
+     * 设置 httpOnly 认证 Cookie（与 JWT 有效期一致，24 小时）
+     * 本地 HTTP 环境不设置 Secure；生产环境通过配置开启
+     */
+    private void setAuthCookie(HttpServletResponse response, String token) {
+        ResponseCookie cookie = ResponseCookie.from("homestay_token", token)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(86400)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    /** 清除认证 Cookie */
+    private void clearAuthCookie(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("homestay_token", "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
 
 } 

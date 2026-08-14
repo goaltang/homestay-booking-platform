@@ -114,9 +114,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
+        // 1. 优先从 httpOnly Cookie 读取（防 XSS）
+        String cookieToken = readTokenFromCookies(request);
+        if (cookieToken != null && !cookieToken.isBlank()) {
+            return cookieToken;
+        }
+
+        // 2. 兜底：从 Authorization header 读取（兼容旧客户端 / WebSocket）
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        return null;
+    }
+
+    private String readTokenFromCookies(HttpServletRequest request) {
+        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (jakarta.servlet.http.Cookie cookie : cookies) {
+            if ("homestay_token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
         }
         return null;
     }
