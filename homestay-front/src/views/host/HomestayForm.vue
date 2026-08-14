@@ -419,7 +419,6 @@ import {
     getHomestayTypes, // 这个API可能不再需要，或者需要调整用途
     updateHomestay as updateHomestayApi,
     createHomestay as createHomestayApi,
-    saveHomestayDraft,
     getHomestayGroups,
     getProvinces
 } from '@/api/homestay'
@@ -428,6 +427,7 @@ import {
 } from '@/api/amenities'
 import AmenitySelector from '@/components/AmenitySelector.vue'
 import { useHomestayImageUpload } from '@/composables/useHomestayImageUpload'
+import { useHomestayDraft } from '@/composables/useHomestayDraft'
 import { getHomestayTypeText, processAmenities, formatLastSavedText, calculateFormCompletion } from '@/utils/homestayForm'
 import type { Homestay } from '@/types/homestay'
 import PropertyTypeSelector from '@/components/PropertyTypeSelector.vue'
@@ -443,7 +443,6 @@ const homestayId = computed(() => Number(route.params.id))
 // 步骤和预览相关
 const activeStep = ref(1);
 const showPreview = ref(true);
-const savingDraft = ref(false);
 
 // --- 步骤跳转控制 --- 
 const goToStep = (stepIndex: number) => {
@@ -467,8 +466,6 @@ const loadingLocationData = ref(false)
 const locationDataError = ref('')
 
 // 添加自动保存提示和状态
-const lastSaved = ref<Date | null>(null)
-const autoSaveInterval = ref<number | null>(null)
 
 // 添加上传错误处理相关状态
 
@@ -685,6 +682,22 @@ const preprocessFormData = () => {
     return processedData
 }
 
+// 草稿逻辑（保存/自动保存/加载）
+const {
+    savingDraft,
+    lastSaved,
+    saveDraft,
+    loadDraft,
+    startAutoSave,
+    stopAutoSave,
+} = useHomestayDraft({
+    form: homestayForm,
+    isEdit,
+    selectedAreaCodes,
+    preprocess: preprocessFormData,
+    router,
+});
+
 /**
  * 获取提交按钮文本
  */
@@ -699,56 +712,6 @@ const getSubmitButtonText = () => {
     } else {
         // 新建模式：直接提交审核
         return '提交审核'
-    }
-}
-
-/**
- * 保存草稿
- */
-const saveDraft = async () => {
-    try {
-        savingDraft.value = true;
-
-        // 获取处理后的表单数据，但不需要完整验证
-        const processedData = preprocessFormData();
-
-        // 使用专门的草稿保存API
-        const result = await saveHomestayDraft(processedData);
-
-        if (result.data) {
-            ElMessage.success('房源草稿保存成功');
-            lastSaved.value = new Date();
-
-            // 如果是新创建的草稿，更新表单状态并导航到编辑页面
-            if (!isEdit.value && result.data.id) {
-                // 更新表单数据中的ID和状态
-                homestayForm.id = result.data.id;
-                homestayForm.status = 'DRAFT';
-
-                // 导航到编辑页面
-                router.replace(`/host/homestay/edit/${result.data.id}`);
-            }
-        } else {
-            ElMessage.error(result.message || '保存草稿失败，请稍后重试');
-        }
-    } catch (error) {
-        console.error('保存草稿出错:', error);
-
-        // 更详细的错误处理
-        let errorMessage = '保存草稿失败';
-        if (error instanceof Error) {
-            errorMessage += ': ' + error.message;
-        } else if (typeof error === 'object' && error !== null && 'response' in error) {
-            const axiosError = error as any;
-            if (axiosError.response?.data?.message) {
-                errorMessage += ': ' + axiosError.response.data.message;
-            } else if (axiosError.response?.status) {
-                errorMessage += ': HTTP ' + axiosError.response.status;
-            }
-        }
-
-    } finally {
-        savingDraft.value = false;
     }
 }
 
@@ -1042,34 +1005,16 @@ onMounted(async () => {
     }
 
     // 设置自动保存
-    autoSaveInterval.value = window.setInterval(autoSaveDraft, 3 * 60 * 1000);
+    startAutoSave();
     console.log('初始化完成，已设置自动保存');
 });
 
 // 在组件卸载时清除定时器
 onUnmounted(() => {
-    if (autoSaveInterval.value) {
-        clearInterval(autoSaveInterval.value)
-    }
+    stopAutoSave()
 })
 
 // 自动保存草稿
-const autoSaveDraft = () => {
-    if (calculateFormCompletion(homestayForm) > 0) {
-        // 将当前表单数据保存为草稿
-        const draftData = {
-            ...homestayForm,
-            status: 'DRAFT', // 设置状态为草稿
-            _lastSaved: new Date().toISOString()
-        };
-
-        // 保存到本地存储
-        localStorage.setItem('homestayDraft', JSON.stringify(draftData));
-        lastSaved.value = new Date();
-        console.log('自动保存草稿完成:', new Date().toLocaleTimeString());
-    }
-}
-
 // 添加重新加载位置数据函数
 const reloadLocationData = async () => {
     try {
@@ -1194,44 +1139,6 @@ const initEditForm = async () => {
 }
 
 // 添加加载草稿函数
-const loadDraft = () => {
-    console.log('尝试加载草稿数据');
-    try {
-        const draftData = localStorage.getItem('homestayDraft'); // 与 autoSaveDraft 保持一致
-        if (draftData) {
-            const parsed = JSON.parse(draftData);
-            console.log('找到表单草稿数据:', parsed);
-
-            // 合并草稿数据到表单
-            Object.assign(homestayForm, parsed);
-
-            // **处理草稿地址回显**
-            if (parsed.provinceCode && parsed.cityCode) {
-                const codes = [parsed.provinceCode, parsed.cityCode];
-                if (parsed.districtCode) {
-                    codes.push(parsed.districtCode);
-                }
-                selectedAreaCodes.value = codes; // 设置级联选择器的值
-                console.log('草稿地址回显，设置 selectedAreaCodes:', codes);
-            } else {
-                selectedAreaCodes.value = []; // 清空
-            }
-
-            lastSaved.value = new Date(parsed._lastSaved || Date.now()); // 注意草稿保存的时间字段名
-            ElMessage.success('已恢复上次编辑的草稿');
-        } else {
-            console.log('没有找到草稿数据');
-            // 设置默认值
-            homestayForm.status = 'DRAFT';
-            homestayForm.maxGuests = 1;
-            homestayForm.minNights = 1;
-        }
-    } catch (e) {
-        console.error('加载草稿失败:', e);
-        ElMessage.warning('加载草稿失败，将使用默认值');
-    }
-};
-
 // 获取位置文本的辅助函数 (修改为使用 codeToText)
 const getLocationText = () => {
     const parts = [];
