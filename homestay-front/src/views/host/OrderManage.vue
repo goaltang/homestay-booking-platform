@@ -535,40 +535,7 @@
         </el-dialog>
 
         <!-- 发起争议对话框 -->
-        <el-dialog v-model="disputeDialogVisible" title="发起争议" width="45%">
-            <div v-if="currentOrder" class="refund-dialog-content">
-                <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 20px;">
-                    <template #title>
-                        <span>对订单 <strong>#{{ currentOrder.id }}</strong> 的退款有异议？</span>
-                    </template>
-                    <div>发起争议后，订单将进入争议处理流程，需要管理员进行仲裁。</div>
-                </el-alert>
-
-                <el-descriptions :column="1" border size="small" class="refund-order-info">
-                    <el-descriptions-item label="订单号">{{ currentOrder.orderNumber || currentOrder.id }}</el-descriptions-item>
-                    <el-descriptions-item label="退款原因">{{ currentOrder.refundReason || '无' }}</el-descriptions-item>
-                    <el-descriptions-item label="退款金额">
-                        <span class="refund-amount-highlight">¥{{ formatAmount(currentOrder.refundAmount || currentOrder.totalAmount) }}</span>
-                    </el-descriptions-item>
-                </el-descriptions>
-
-                <el-form :model="disputeForm" ref="disputeFormRef" style="margin-top: 20px;">
-                    <el-form-item label="争议原因" prop="reason"
-                        :rules="[{ required: true, message: '请输入争议原因', trigger: 'blur' }]">
-                        <el-input v-model="disputeForm.reason" type="textarea" :rows="3"
-                            placeholder="请输入您认为不应退款的原因，例如：客人违反了房屋使用规定、房屋损坏等" maxlength="200" show-word-limit />
-                    </el-form-item>
-                </el-form>
-            </div>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="disputeDialogVisible = false">取消</el-button>
-                    <el-button type="danger" @click="confirmDispute" :loading="disputeSubmitting">
-                        发起争议
-                    </el-button>
-                </span>
-            </template>
-        </el-dialog>
+        <DisputeDialog v-model="disputeDialogVisible" :order="currentOrder" @confirmed="handleDisputeConfirmed" />
 
         <!-- 自动状态配置对话框 -->
         <el-dialog v-model="autoStatusConfigVisible" title="自动状态流转配置" width="60%">
@@ -773,7 +740,6 @@ import {
     getHostOrderStats,
     hostApproveRefund,
     hostRejectRefund,
-    hostRaiseDispute,
     prepareCheckIn,
     getCheckInCredential,
     performCheckIn,
@@ -793,6 +759,7 @@ import {
 } from '@/utils/orderDisplay'
 import ReasonDialog from '@/components/host/order/ReasonDialog.vue'
 import RefundDialog from '@/components/host/order/RefundDialog.vue'
+import DisputeDialog from '@/components/host/order/DisputeDialog.vue'
 
 
 // 新增：定义房源选项接口
@@ -882,11 +849,6 @@ const reviewRefundForm = reactive({
 
 // 争议对话框相关
 const disputeDialogVisible = ref(false)
-const disputeFormRef = ref<FormInstance>()
-const disputeSubmitting = ref(false)
-const disputeForm = reactive({
-    reason: ''
-})
 
 // 设置准备入住对话框相关
 const prepareCheckInDialogVisible = ref(false)
@@ -1411,41 +1373,16 @@ const handleRaiseDispute = (order: HostOrderItem) => {
     }
 
     currentOrder.value = order
-    disputeForm.reason = ''
     disputeDialogVisible.value = true
 }
 
-// 确认发起争议
-const confirmDispute = async () => {
-    if (!disputeFormRef.value) return
-    if (!currentOrder.value) {
-        ElMessage.error('当前没有选中的订单')
-        return
+// 争议发起成功回调（DisputeDialog 触发）
+const handleDisputeConfirmed = async () => {
+    if (detailsDialogVisible.value) {
+        detailsDialogVisible.value = false
     }
 
-    await disputeFormRef.value.validate(async (valid: boolean) => {
-        if (valid) {
-            disputeSubmitting.value = true
-
-            try {
-                console.log('发起争议，订单ID:', currentOrder.value!.id, '原因:', disputeForm.reason)
-                await hostRaiseDispute(currentOrder.value!.id, disputeForm.reason)
-
-                ElMessage.success('争议已发起，等待管理员仲裁')
-                disputeDialogVisible.value = false
-
-                if (detailsDialogVisible.value) {
-                    detailsDialogVisible.value = false
-                }
-
-                await refreshOrdersAndStats()
-            } catch (error: any) {
-                console.error('发起争议失败:', error)
-            } finally {
-                disputeSubmitting.value = false
-            }
-        }
-    })
+    await refreshOrdersAndStats()
 }
 
 // 更新统计数据

@@ -20,6 +20,7 @@ declare module 'vue' {
     CalendarToolbar: typeof import('./src/components/host-calendar/CalendarToolbar.vue')['default']
     ChatDialog: typeof import('./src/components/chat/ChatDialog.vue')['default']
     CustomIcons: typeof import('./src/components/CustomIcons.vue')['default']
+    DisputeDialog: typeof import('./src/components/host/order/DisputeDialog.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
