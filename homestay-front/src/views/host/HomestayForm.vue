@@ -364,16 +364,16 @@
 
                     <div class="save-status" v-if="lastSaved">
                         <el-tooltip :content="'上次保存时间: ' + lastSaved?.toLocaleString()" placement="top">
-                            <span><i class="el-icon-time"></i> {{ lastSavedText }}</span>
+                            <span><i class="el-icon-time"></i> {{ formatLastSavedText(lastSaved) }}</span>
                         </el-tooltip>
                     </div>
                 </div>
 
                 <!-- 完成度指示器 -->
                 <div class="form-completion">
-                    <div class="completion-text">表单完成度: <strong>{{ formCompletionPercentage }}%</strong></div>
-                    <el-progress :percentage="formCompletionPercentage"
-                        :status="formCompletionPercentage === 100 ? 'success' : ''"></el-progress>
+                    <div class="completion-text">表单完成度: <strong>{{ calculateFormCompletion(homestayForm) }}%</strong></div>
+                    <el-progress :percentage="calculateFormCompletion(homestayForm)"
+                        :status="calculateFormCompletion(homestayForm) === 100 ? 'success' : ''"></el-progress>
                 </div>
             </el-form>
         </el-card>
@@ -390,7 +390,7 @@
                 </div>
                 <div class="preview-info">
                     <h4>{{ homestayForm.title || '房源标题' }}</h4>
-                    <div class="preview-type">{{ getHomestayTypeText(homestayForm.type) }}</div>
+                    <div class="preview-type">{{ getHomestayTypeText(homestayForm.type, homestayTypes) }}</div>
                     <div class="preview-price">¥{{ homestayForm.price || '0' }}/晚</div>
                     <div class="preview-location">
                         {{ getLocationText() }}
@@ -428,6 +428,7 @@ import {
 } from '@/api/amenities'
 import AmenitySelector from '@/components/AmenitySelector.vue'
 import { useHomestayImageUpload } from '@/composables/useHomestayImageUpload'
+import { getHomestayTypeText, processAmenities, formatLastSavedText, calculateFormCompletion } from '@/utils/homestayForm'
 import type { Homestay } from '@/types/homestay'
 import PropertyTypeSelector from '@/components/PropertyTypeSelector.vue'
 import { checkAuthentication as checkAuthAPI, ensureUserLoggedIn } from "@/utils/auth"
@@ -1052,31 +1053,9 @@ onUnmounted(() => {
     }
 })
 
-// 计算上次保存时间文本
-const lastSavedText = computed(() => {
-    if (!lastSaved.value) return '未保存';
-
-    const now = new Date();
-    const diff = now.getTime() - lastSaved.value.getTime();
-
-    // 如果小于1分钟
-    if (diff < 60 * 1000) {
-        return '刚刚保存';
-    }
-
-    // 如果小于1小时
-    if (diff < 60 * 60 * 1000) {
-        const minutes = Math.floor(diff / (60 * 1000));
-        return `${minutes}分钟前保存`;
-    }
-
-    // 否则显示具体时间
-    return `${lastSaved.value.toLocaleTimeString()}保存`;
-});
-
 // 自动保存草稿
 const autoSaveDraft = () => {
-    if (formCompletionPercentage.value > 0) {
+    if (calculateFormCompletion(homestayForm) > 0) {
         // 将当前表单数据保存为草稿
         const draftData = {
             ...homestayForm,
@@ -1253,26 +1232,6 @@ const loadDraft = () => {
     }
 };
 
-// 创建获取房源类型文本的函数 (使用动态获取的类型列表)
-const getHomestayTypeText = (typeCode: string | undefined): string => {
-    // console.log('getHomestayTypeText input typeCode:', typeCode);
-    if (!typeCode) return '未知类型';
-
-    // 从已获取的 homestayTypes 列表中查找
-    // 假设 homestayTypes.value 是一个数组，每个元素有 code 和 name/label 属性
-    // 注意：需要确认 homestayTypes.value 的确切结构
-    const foundType = homestayTypes.value.find(t => t.code === typeCode || t.value === typeCode);
-
-    if (foundType) {
-        // 优先使用 name，其次 label，最后是 code 本身
-        return foundType.name || foundType.label || typeCode;
-    }
-
-    // 如果在列表中找不到，返回未知类型或原始代码
-    console.warn(`未能在 homestayTypes 列表中找到类型代码: ${typeCode}`);
-    return '未知类型';
-};
-
 // 获取位置文本的辅助函数 (修改为使用 codeToText)
 const getLocationText = () => {
     const parts = [];
@@ -1299,84 +1258,6 @@ const getLocationText = () => {
     // 用空格连接各个部分
     return parts.join(' ');
 };
-
-/**
- * 处理设施数据
- * @param amenitiesData 设施数据数组
- * @returns 标准化后的设施数据
- */
-const processAmenities = (amenitiesData: any[]): { value: string, label?: string }[] => {
-    console.log('原始设施数据:', amenitiesData);
-
-    if (!amenitiesData || !Array.isArray(amenitiesData)) {
-        console.warn('设施数据无效，返回空数组');
-        return [];
-    }
-
-    const result = amenitiesData
-        .map(item => {
-            // 如果是字符串，转换为对象格式
-            if (typeof item === 'string') {
-                return { value: item.trim() };
-            }
-
-            // 如果是对象，提取value和label
-            if (item && typeof item === 'object') {
-                // 确保有value属性
-                const value = item.value || item.code || '';
-                if (!value) {
-                    console.warn('跳过无效的设施项:', item);
-                    return null;
-                }
-
-                return {
-                    value: String(value).trim(),
-                    label: item.label || item.name || value
-                };
-            }
-
-            // 其他情况跳过
-            console.warn('无法处理的设施项:', item);
-            return null;
-        })
-        .filter((item): item is { value: string; label?: string } => item !== null); // 过滤空值
-
-    console.log('处理后的设施数据:', result);
-    return result;
-};
-
-// 计算表单完成度百分比
-const formCompletionPercentage = computed(() => {
-    let completedFields = 0;
-    let totalFields = 0;
-
-    // 必填字段
-    const requiredFields: Array<keyof typeof homestayForm> = [
-        'title', 'type', 'price', 'provinceCode', 'addressDetail', 'maxGuests', 'minNights', 'coverImage', 'description'
-    ];
-
-    // 计算必填字段完成情况
-    for (const field of requiredFields) {
-        totalFields++;
-        if (homestayForm[field]) {
-            completedFields++;
-        }
-    }
-
-    // 额外字段
-    if (homestayForm.amenities && homestayForm.amenities.length > 0) {
-        completedFields++;
-    }
-    totalFields++;
-
-    if (homestayForm.images && homestayForm.images.length > 0) {
-        completedFields++;
-    }
-    totalFields++;
-
-    // 计算百分比并四舍五入
-    return Math.round((completedFields / totalFields) * 100);
-});
 
 // 添加验证上传文件的函数
 // 添加这个函数到onMounted之前的位置
