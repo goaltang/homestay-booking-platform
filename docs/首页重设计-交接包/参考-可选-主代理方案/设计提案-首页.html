@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>首页重设计 · 提案（示意图，非最终代码）</title>
+<style>
+/* ============ 全部取自项目现有 token：src/styles/tokens/*.css（Organic Warmth） ============ */
+:root{
+  --color-primary-50:#fdf2ec; --color-primary-500:#d45f2e; --color-primary-600:#c44e26;
+  --color-secondary-500:#558555; --color-secondary-50:#eef3ee;
+  --color-neutral-0:#ffffff; --color-neutral-50:#faf9f7; --color-neutral-200:#e6e2db;
+  --color-neutral-500:#8a8276; --color-neutral-900:#1f1c19; --color-background-warm:#f7f4f0;
+  --color-warning:#c9872c;
+  --font-display:'Playfair Display','Noto Serif SC',Georgia,serif;
+  --font-body:'Plus Jakarta Sans','Noto Sans SC','PingFang SC','Microsoft YaHei',-apple-system,sans-serif;
+  --text-hero:clamp(2rem,5vw,3rem); --text-h2:clamp(1.375rem,3vw,1.75rem); --text-h3:clamp(1.125rem,2vw,1.375rem);
+  --text-body:clamp(.9375rem,1.2vw,1rem); --text-price:clamp(1.25rem,2.5vw,1.5rem);
+  --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px; --space-8:32px; --space-12:48px; --space-16:64px;
+  --container-max:1200px; --container-padding-mobile:16px; --container-padding-desktop:24px;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-pill:999px;
+  --shadow-sm:0 1px 2px rgba(31,28,25,.06),0 2px 8px rgba(31,28,25,.05);
+  --shadow-md:0 8px 28px rgba(31,28,25,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--color-neutral-50);color:var(--color-neutral-900);font-family:var(--font-body)}
+h1,h2,h3{font-family:var(--font-display)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;border:0}
+.wrap{max-width:var(--container-max);margin:0 auto;padding:0 var(--container-padding-desktop)}
+/* ---------- 头部：64px，滚动后毛玻璃 ---------- */
+header{position:sticky;top:0;z-index:50;background:rgba(250,249,247,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-neutral-200)}
+.nav{height:64px;display:flex;align-items:center;gap:28px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+.logo .mk{width:26px;height:26px;border-radius:var(--radius-sm);background:var(--color-primary-500);color:#fff;display:grid;place-items:center;font-size:13px}
+.links{display:flex;gap:22px;font-size:14px;color:var(--color-neutral-500)}
+.right{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:14px}
+.btn{border-radius:var(--radius-pill);padding:10px 18px;font-size:14px;font-weight:600}
+.btn-primary{background:var(--color-primary-500);color:#fff}
+.btn-primary:hover{background:var(--color-primary-600)}
+.btn-ghost{background:transparent;color:var(--color-neutral-900);border:1px solid var(--color-neutral-200)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--color-neutral-200)}
+/* ---------- Hero：全出血实景图 + 单侧暗罩 + 左对齐文案 ---------- */
+.hero{position:relative;overflow:hidden;background:#2a231d}
+.hero .art{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(90deg,rgba(31,28,25,.80) 0%,rgba(31,28,25,.58) 45%,rgba(31,28,25,.12) 100%)}
+.hero .inner{position:relative;z-index:2;max-width:var(--container-max);margin:0 auto;padding:var(--space-16) var(--container-padding-desktop) var(--space-16)}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#f3e6dc;background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.22);padding:6px 12px;border-radius:var(--radius-pill);margin-bottom:var(--space-5)}
+.hero h1{margin:0;color:#fff;font-size:var(--text-hero);line-height:1.14;max-width:15em}
+.hero p{margin:var(--space-4) 0 0;color:rgba(255,255,255,.84);font-size:var(--text-body);line-height:1.75;max-width:34em}
+.hero .cta{margin-top:var(--space-6);display:flex;gap:var(--space-3);flex-wrap:wrap}
+.hero .cta .btn-ghost{color:#fff;border-color:rgba(255,255,255,.34);background:rgba(255,255,255,.08)}
+/* ---------- 搜索条：贴在 Hero 内侧底部，桌面单行 4 段 ---------- */
+.searchbar{position:relative;z-index:3;max-width:var(--container-max);margin:-64px auto 0;padding:0 var(--container-padding-desktop)}
+.searchbar .box{background:var(--color-neutral-0);border:1px solid var(--color-neutral-200);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-md);display:flex;align-items:stretch;padding:10px;gap:4px}
+.field{flex:1;min-width:0;padding:10px 16px;border-radius:var(--radius-md);display:flex;flex-direction:column;gap:2px}
+.field:focus-within{background:var(--color-background-warm)}
+.field .lbl{font-size:12px;font-weight:600;color:var(--color-neutral-500)}
+.field .val{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field .val.ph{color:var(--color-neutral-500);opacity:.7}
+.field.range{flex:1.3}
+.field .row{display:flex;gap:10px}
+.field .row>div{flex:1;min-width:0}
+.sep{align-self:center;width:1px;height:34px;background:var(--color-neutral-200)}
+.searchbar .go{align-self:center;margin:0 6px;width:52px;height:52px;border-radius:var(--radius-pill);
+  background:var(--color-primary-500);color:#fff;display:grid;place-items:center;flex:0 0 auto}
+.searchbar .compact{display:none}
+/* ---------- 区块 ---------- */
+main{max-width:var(--container-max);margin:0 auto;padding:0 var(--container-padding-desktop) var(--space-16)}
+.section{padding-top:var(--space-12)}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5)}
+.section-head h2{margin:0;font-size:var(--text-h2)}
+.section-head .sub{margin:8px 0 0;color:var(--color-neutral-500);font-size:14px}
+.link-more{font-size:14px;font-weight:600;color:var(--color-primary-500);white-space:nowrap}
+/* 类型 chips：可横滑 + 右侧露出 1/3 项作为可滑动提示 */
+.types{display:flex;gap:var(--space-3);overflow-x:auto;padding:4px 0 8px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.types::-webkit-scrollbar{display:none}
+.type{scroll-snap-align:start;flex:0 0 auto;min-width:104px;background:var(--color-neutral-0);border:1px solid var(--color-neutral-200);
+  border-radius:var(--radius-md);padding:14px 16px;text-align:center;box-shadow:var(--shadow-sm);min-height:88px}
+.type .ic{width:30px;height:30px;margin:0 auto 8px;border-radius:var(--radius-sm);background:var(--color-primary-50);
+  display:grid;place-items:center;color:var(--color-primary-500);font-size:15px}
+.type .nm{font-size:13px;font-weight:600;color:var(--color-neutral-900)}
+/* 卡片：桌面 3 列 / ≤900 两列 / ≤640 单列横卡 */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-5)}
+.card{background:var(--color-neutral-0);border:1px solid var(--color-neutral-200);border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:var(--shadow-sm);display:flex;flex-direction:column}
+.card .ph{position:relative;aspect-ratio:4/3;background:var(--color-background-warm)}
+.card .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.badge{position:absolute;left:12px;top:12px;background:rgba(31,28,25,.72);color:#fff;font-size:12px;font-weight:600;padding:5px 10px;border-radius:var(--radius-pill)}
+.fav{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.92);
+  display:grid;place-items:center;font-size:15px;color:var(--color-neutral-900)}
+.card .bd{padding:var(--space-4);display:flex;flex-direction:column;gap:6px}
+.card .ttl{margin:0;font-family:var(--font-body);font-size:16px;font-weight:700;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
+.meta{display:flex;align-items:center;gap:6px;color:var(--color-neutral-500);font-size:13px}
+.rate{color:var(--color-warning);font-weight:700}
+.price{margin-top:2px;display:flex;align-items:baseline;gap:6px}
+.price b{font-family:var(--font-body);font-size:var(--text-price);letter-spacing:-.2px}
+.price span{font-size:12px;color:var(--color-neutral-500)}
+/* 目的地灵感 */
+.dest{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4)}
+.dest a{position:relative;display:block;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:3/2;box-shadow:var(--shadow-sm)}
+.dest img{width:100%;height:100%;object-fit:cover}
+.dest .tag{position:absolute;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(180deg,transparent,rgba(31,28,25,.84));color:#fff}
+.dest .tag b{display:block;font-size:16px}
+.dest .tag span{font-size:12px;color:rgba(255,255,255,.82)}
+/* 信任条：合并原「为什么选择我们」+ 平台统计 */
+.trust{margin-top:var(--space-12);background:var(--color-neutral-0);border:1px solid var(--color-neutral-200);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);padding:var(--space-6);display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-5)}
+.trust .it{display:flex;gap:12px}
+.trust .ic{width:38px;height:38px;flex:0 0 auto;border-radius:var(--radius-sm);background:var(--color-secondary-50);
+  color:var(--color-secondary-500);display:grid;place-items:center;font-size:17px}
+.trust b{display:block;font-size:15px;margin-bottom:4px}
+.trust p{margin:0;font-size:13px;line-height:1.6;color:var(--color-neutral-500)}
+.statline{margin-top:var(--space-4);display:flex;gap:28px;flex-wrap:wrap;color:var(--color-neutral-500);font-size:13px}
+.statline b{color:var(--color-neutral-900);font-size:15px}
+/* 房东 CTA */
+.host{margin-top:var(--space-12);border-radius:var(--radius-lg);background:var(--color-background-warm);border:1px solid var(--color-neutral-200);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-6);padding:var(--space-8)}
+.host h3{margin:0 0 8px;font-size:var(--text-h3)}
+.host p{margin:0;color:var(--color-neutral-500);font-size:14px;max-width:44em}
+.host .btn{background:var(--color-primary-500);color:#fff;white-space:nowrap}
+/* 页脚 */
+footer{margin-top:var(--space-16);border-top:1px solid var(--color-neutral-200);background:var(--color-neutral-0)}
+footer .cols{max-width:var(--container-max);margin:0 auto;padding:var(--space-8) var(--container-padding-desktop);
+  display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-6)}
+footer h4{margin:0 0 12px;font-size:14px}
+footer ul{margin:0;padding:0}
+footer li{list-style:none;margin:0 0 8px;font-size:13px;color:var(--color-neutral-500)}
+.copy{max-width:var(--container-max);margin:0 auto;padding:0 var(--container-padding-desktop) var(--space-8);color:var(--color-neutral-500);font-size:12px}
+.mobile-only{display:none}
+/* ---------- 平板 ---------- */
+@media (max-width:1024px){
+  .grid{grid-template-columns:repeat(3,1fr)}
+  .trust{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .dest{grid-template-columns:repeat(2,1fr)}
+  footer .cols{grid-template-columns:repeat(2,1fr)}
+}
+/* ---------- 手机（对齐 token 断点 640） ---------- */
+@media (max-width:640px){
+  .wrap,.searchbar,main,footer .cols,.copy{padding-left:var(--container-padding-mobile);padding-right:var(--container-padding-mobile)}
+  .links{display:none}
+  .hero .inner{padding:var(--space-12) var(--container-padding-mobile)}
+  .hero h1{font-size:clamp(1.75rem,8vw,2.25rem)}
+  .searchbar{margin-top:-48px}
+  .searchbar .box{display:none}
+  /* 手机端：一行摘要 → 点击展开全屏搜索面板（不把 5 个字段堆在首屏） */
+  .searchbar .compact{display:flex;align-items:center;gap:12px;background:var(--color-neutral-0);border:1px solid var(--color-neutral-200);
+    border-radius:var(--radius-pill);box-shadow:var(--shadow-md);padding:8px 8px 8px 18px;min-height:56px}
+  .compact .txt{flex:1;min-width:0}
+  .compact .txt b{display:block;font-size:14px}
+  .compact .txt span{font-size:12px;color:var(--color-neutral-500)}
+  .compact .go{width:44px;height:44px;border-radius:50%;background:var(--color-primary-500);color:#fff;display:grid;place-items:center;flex:0 0 auto}
+  .grid,.dest,.trust,footer .cols{grid-template-columns:1fr}
+  .grid{gap:var(--space-4)}
+  .section{padding-top:var(--space-8)}
+  /* 手机端卡片改横排小卡：信息不换行堆叠 */
+  .card{flex-direction:row;align-items:stretch}
+  .card .ph{width:112px;min-width:112px;aspect-ratio:auto}
+  .card .bd{padding:10px 12px;gap:4px;justify-content:center;overflow:hidden}
+  .card .ttl{font-size:15px;min-height:0;line-height:1.35;-webkit-line-clamp:2}
+  .card .meta{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{left:8px;top:8px}
+  .host{flex-direction:column;align-items:flex-start;padding:var(--space-6)}
+  .types{scroll-padding-left:var(--container-padding-mobile)}
+  .mobbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;justify-content:space-around;
+    background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--color-neutral-200);padding:8px 0 10px;font-size:11px;color:var(--color-neutral-500)}
+  .mobbar div{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px;min-height:44px;justify-content:center}
+  .mobbar .on{color:var(--color-primary-500);font-weight:700}
+  body{padding-bottom:60px}
+  .mobile-only{display:block}
+  .desktop-only{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="mk">宿</span> 民宿预订</div>
+    <nav class="links"><a>找民宿</a><a>目的地</a><a>我的订单</a><a>客服</a></nav>
+    <div class="right">
+      <a class="desktop-only" style="color:var(--color-neutral-500)">成为房东</a>
+      <button class="btn btn-ghost desktop-only">登录 / 注册</button>
+      <div class="avatar"></div>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <!-- 示意实景图位：实施时换成真实房源/风景大图（Banner.imageUrl），带 object-fit:cover 与暗罩 -->
+  <svg class="art" viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2b3a34"/><stop offset=".5" stop-color="#4a5f52"/><stop offset="1" stop-color="#c9c2ab"/>
+      </linearGradient>
+      <linearGradient id="m1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f2a25"/><stop offset="1" stop-color="#2c3a33"/></linearGradient>
+      <linearGradient id="m2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3c5145"/><stop offset="1" stop-color="#68806f"/></linearGradient>
+    </defs>
+    <rect width="1440" height="560" fill="url(#sky)"/>
+    <circle cx="1215" cy="120" r="40" fill="#f0e4cc" opacity=".38"/>
+    <path d="M0 380 L220 262 L380 344 L560 214 L740 332 L920 226 L1100 328 L1280 244 L1440 342 L1440 560 L0 560Z" fill="url(#m2)"/>
+    <path d="M0 452 L190 372 L350 436 L530 350 L710 442 L890 360 L1070 446 L1250 376 L1440 452 L1440 560 L0 560Z" fill="url(#m1)"/>
+  </svg>
+  <div class="veil"></div>
+  <div class="inner">
+    <span class="kicker">● 贵州 · 42 个目的地已上线</span>
+    <h1>住进贵州的山水之间</h1>
+    <p>1,286 家精选山野民宿，真实房东、真实评价。今晚就能住，不满意先行赔付。</p>
+    <div class="cta">
+      <button class="btn btn-primary">开始找房</button>
+      <button class="btn btn-ghost">看看这周特价 →</button>
+    </div>
+  </div>
+</section>
+
+<div class="searchbar">
+  <div class="box desktop-only">
+    <div class="field"><span class="lbl">目的地</span><span class="val ph">你要去哪里？</span></div>
+    <div class="sep"></div>
+    <div class="field range"><span class="lbl">入住 · 退房</span>
+      <div class="row"><div class="val ph">添加日期</div><div class="val ph">添加日期</div></div></div>
+    <div class="sep"></div>
+    <div class="field"><span class="lbl">房客</span><span class="val">1 位房客</span></div>
+    <div class="go">⌕</div>
+  </div>
+  <div class="compact mobile-only">
+    <div class="txt"><b>你要去哪里？</b><span>添加日期 · 1 位房客</span></div>
+    <div class="go">⌕</div>
+  </div>
+</div>
+
+<main>
+  <section class="section">
+    <div class="types">
+      <a class="type"><div class="ic">◍</div><div class="nm">整套房子</div></a>
+      <a class="type"><div class="ic">◫</div><div class="nm">独立房间</div></a>
+      <a class="type"><div class="ic">◔</div><div class="nm">合住房间</div></a>
+      <a class="type"><div class="ic">◑</div><div class="nm">客栈房间</div></a>
+      <a class="type"><div class="ic">◧</div><div class="nm">Loft</div></a>
+      <a class="type"><div class="ic">⌂</div><div class="nm">别墅</div></a>
+      <a class="type"><div class="ic">▤</div><div class="nm">酒店公寓</div></a>
+      <a class="type"><div class="ic">◇</div><div class="nm">整套公寓</div></a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><h2>精选房源</h2><p class="sub">房东直营 · 即刻可订</p></div>
+      <a class="link-more">查看全部 1,286 家 →</a>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <div class="ph"><img src="tools/placeholders/p1.jpg" alt="青岩古镇石语庭院民宿"><span class="badge">即时预订</span><span class="fav">♡</span></div>
+        <div class="bd"><h3 class="ttl">青岩古镇 · 石语庭院民宿</h3>
+          <div class="meta"><span>贵阳市 · 云岩区</span><span class="rate">★ 4.8</span><span>12 条</span></div>
+          <div class="price"><b>¥328</b><span>/晚</span></div></div>
+      </article>
+      <article class="card">
+        <div class="ph"><img src="tools/placeholders/p2.jpg" alt="花溪十里河滩临水小筑"><span class="fav">♡</span></div>
+        <div class="bd"><h3 class="ttl">花溪十里河滩 · 临水小筑</h3>
+          <div class="meta"><span>贵阳市 · 花溪区</span><span class="rate">★ 4.7</span><span>9 条</span></div>
+          <div class="price"><b>¥268</b><span>/晚</span></div></div>
+      </article>
+      <article class="card">
+        <div class="ph"><img src="tools/placeholders/p3.jpg" alt="黄果树旁布依石头寨"><span class="badge">房东推荐</span><span class="fav">♡</span></div>
+        <div class="bd"><h3 class="ttl">黄果树旁 · 布依石头寨</h3>
+          <div class="meta"><span>安顺市 · 镇宁县</span><span class="rate">★ 4.9</span><span>21 条</span></div>
+          <div class="price"><b>¥398</b><span>/晚</span></div></div>
+      </article>
+      <article class="card">
+        <div class="ph"><img src="tools/placeholders/p4.jpg" alt="西江千户苗寨观景阁楼"><span class="fav">♡</span></div>
+        <div class="bd"><h3 class="ttl">西江千户苗寨 · 观景阁楼</h3>
+          <div class="meta"><span>黔东南州 · 雷山县</span><span class="rate">★ 4.6</span><span>18 条</span></div>
+          <div class="price"><b>¥458</b><span>/晚</span></div></div>
+      </article>
+      <article class="card">
+        <div class="ph"><img src="tools/placeholders/p5.jpg" alt="黔灵山脚城市漫居Loft"><span class="badge">即时预订</span><span class="fav">♡</span></div>
+        <div class="bd"><h3 class="ttl">黔灵山脚 · 城市漫居 Loft</h3>
+          <div class="meta"><span>贵阳市 · 云岩区</span><span class="rate">★ 4.5</span><span>7 条</span></div>
+          <div class="price"><b>¥188</b><span>/晚</span></div></div>
+      </article>
+      <article class="card">
+        <div class="ph"><img src="tools/placeholders/p6.jpg" alt="梵净山下云舍木屋"><span class="fav">♡</span></div>
+        <div class="bd"><h3 class="ttl">梵净山下 · 云舍木屋</h3>
+          <div class="meta"><span>铜仁市 · 江口县</span><span class="rate">★ 5.0</span><span>24 条</span></div>
+          <div class="price"><b>¥518</b><span>/晚</span></div></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div><h2>目的地灵感</h2><p class="sub">按城市找房，选你去得成的地方</p></div>
+      <a class="link-more">全部目的地 →</a>
+    </div>
+    <div class="dest">
+      <a><img src="tools/placeholders/p2.jpg" alt="贵阳"><span class="tag"><b>贵阳</b><span>412 家房源</span></span></a>
+      <a><img src="tools/placeholders/p3.jpg" alt="黔东南"><span class="tag"><b>黔东南</b><span>286 家房源</span></span></a>
+      <a><img src="tools/placeholders/p4.jpg" alt="安顺"><span class="tag"><b>安顺</b><span>173 家房源</span></span></a>
+      <a><img src="tools/placeholders/p5.jpg" alt="铜仁"><span class="tag"><b>铜仁</b><span>128 家房源</span></span></a>
+    </div>
+  </section>
+
+  <section class="trust">
+    <div class="it"><div class="ic">✓</div><div><b>实名房东</b><p>身份证 + 房产双验证，信息真实可查</p></div></div>
+    <div class="it"><div class="ic">⛨</div><div><b>资金托管</b><p>入住后才结算给房东，不满意先行赔付</p></div></div>
+    <div class="it"><div class="ic">☎</div><div><b>7×24 客服</b><p>在线客服 + AI 助手，5 分钟内响应</p></div></div>
+    <div class="it"><div class="ic">↺</div><div><b>灵活退改</b><p>入住前 24 小时免费取消（标注可退房源）</p></div></div>
+  </section>
+  <div class="statline">
+    <span><b>1,286</b> 家在营房源</span><span><b>42</b> 个目的地</span><span><b>98%</b> 好评率</span>
+    <span><b>376</b> 近 30 天订单</span><span><b>214</b> 今日可订</span>
+  </div>
+
+  <section class="host">
+    <div><h3>把你的空房变成收入</h3><p>0 门槛入驻，平台负责流量、支付与客服。平均每月多赚 ¥8,000+，最快 48 小时上线。</p></div>
+    <button class="btn">成为房东</button>
+  </section>
+</main>
+
+<footer>
+  <div class="cols">
+    <div><h4>关于我们</h4><ul><li>公司介绍</li><li>加入我们</li><li>联系方式</li></ul></div>
+    <div><h4>帮助中心</h4><ul><li>预订流程</li><li>退改政策</li><li>发票说明</li></ul></div>
+    <div><h4>商务合作</h4><ul><li>房源入驻</li><li>企业协议</li><li>媒体合作</li></ul></div>
+    <div><h4>法律条款</h4><ul><li>用户协议</li><li>隐私政策</li><li>Cookie 政策</li></ul></div>
+  </div>
+  <div class="copy">© 2026 民宿预订平台 · 设计示意图，仅用于评审，不代表最终代码</div>
+</footer>
+
+<nav class="mobbar mobile-only">
+  <div class="on">⌕<span>找民宿</span></div>
+  <div>♡<span>收藏</span></div>
+  <div>▤<span>订单</span></div>
+  <div>◍<span>我的</span></div>
+</nav>
+
+</body>
+</html>

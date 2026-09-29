@@ -10,11 +10,11 @@ English | **[中文](README.md)**
 
 A full-featured homestay booking platform connecting guests, hosts, and platform administrators. It covers the complete lifecycle: property listing, platform review, online search, booking & payment, check-in / check-out, reviews, earnings analytics, and back-office governance.
 
-> 25 business modules · 100K+ lines of code · 267 commits · 16 months of continuous iteration · 50+ project docs
+> 25 business modules · 150K+ lines of code · 326 commits · 18 months of continuous iteration · 70+ project docs
 
 ## Background
 
-Homestay is a **solo-delivered** full-stack project spanning 25 business modules and 100K+ lines of code, with a Spring Boot 3 backend, Vue 3 frontends, and full integrations with MySQL / Redis / Elasticsearch / Alipay.
+Homestay is a **solo-delivered** full-stack project spanning 25 business modules and 150K+ lines of code, with a Spring Boot 3 backend, Vue 3 frontends, and full integrations with MySQL / Redis / Elasticsearch / RabbitMQ / Alipay.
 
 Development started in February 2025 and continues to this day. I use AI coding tools (Cursor / Claude Code / Kimi Code CLI, etc.) for ~90% of the coding, while I handle **architecture design, product decisions, code review, critical module implementation, and quality control**.
 
