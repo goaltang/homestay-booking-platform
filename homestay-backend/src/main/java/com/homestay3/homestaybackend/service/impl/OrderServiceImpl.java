@@ -4,9 +4,6 @@ import com.homestay3.homestaybackend.dto.OrderDTO;
 import com.homestay3.homestaybackend.dto.PriceCalculationRequest;
 import com.homestay3.homestaybackend.dto.PriceCalculationResponse;
 import com.homestay3.homestaybackend.dto.ReviewDTO;
-import com.homestay3.homestaybackend.dto.EarningDTO;
-import com.homestay3.homestaybackend.dto.refund.RefundRequest;
-import com.homestay3.homestaybackend.dto.refund.RefundResponse;
 import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.exception.ResourceNotFoundException;
 import com.homestay3.homestaybackend.entity.Homestay;
@@ -14,26 +11,17 @@ import com.homestay3.homestaybackend.entity.Order;
 import com.homestay3.homestaybackend.entity.Review;
 import com.homestay3.homestaybackend.model.OrderStatus;
 import com.homestay3.homestaybackend.model.PaymentStatus;
-import com.homestay3.homestaybackend.model.RefundType;
-import com.homestay3.homestaybackend.model.HomestayStatus;
 import com.homestay3.homestaybackend.entity.User;
 import com.homestay3.homestaybackend.repository.HomestayRepository;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
 import com.homestay3.homestaybackend.repository.ReviewRepository;
-import com.homestay3.homestaybackend.service.NotificationService;
-import com.homestay3.homestaybackend.service.OrderNotificationService;
 import com.homestay3.homestaybackend.service.SystemConfigService;
-import com.homestay3.homestaybackend.model.enums.NotificationType;
-import com.homestay3.homestaybackend.model.enums.EntityType;
 import com.homestay3.homestaybackend.service.OrderService;
-import com.homestay3.homestaybackend.service.EarningService;
-import com.homestay3.homestaybackend.service.BookingConflictService;
-import com.homestay3.homestaybackend.service.PaymentService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
 import com.homestay3.homestaybackend.service.OrderLifecycleService;
 import com.homestay3.homestaybackend.service.PricingService;
-import lombok.RequiredArgsConstructor;
+import com.homestay3.homestaybackend.service.RefundPolicyCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -45,13 +33,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -64,39 +49,30 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final HomestayRepository homestayRepository;
-    private final NotificationService notificationService;
-    private final OrderNotificationService orderNotificationService;
-    private final EarningService earningService;
     private final ReviewRepository reviewRepository;
-    private final BookingConflictService bookingConflictService;
     private final PaymentProcessingService paymentProcessingService;
     private final OrderLifecycleService orderLifecycleService;
     private final PricingService pricingService;
+    private final RefundPolicyCalculator refundPolicyCalculator;
     private final ObjectProvider<SystemConfigService> systemConfigServiceProvider;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             UserRepository userRepository,
                             HomestayRepository homestayRepository,
-                            NotificationService notificationService,
-                            OrderNotificationService orderNotificationService,
-                            EarningService earningService,
                             ReviewRepository reviewRepository,
-                            BookingConflictService bookingConflictService,
                             PaymentProcessingService paymentProcessingService,
                             OrderLifecycleService orderLifecycleService,
                             PricingService pricingService,
+                            RefundPolicyCalculator refundPolicyCalculator,
                             ObjectProvider<SystemConfigService> systemConfigServiceProvider) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.homestayRepository = homestayRepository;
-        this.notificationService = notificationService;
-        this.orderNotificationService = orderNotificationService;
-        this.earningService = earningService;
         this.reviewRepository = reviewRepository;
-        this.bookingConflictService = bookingConflictService;
         this.paymentProcessingService = paymentProcessingService;
         this.orderLifecycleService = orderLifecycleService;
         this.pricingService = pricingService;
+        this.refundPolicyCalculator = refundPolicyCalculator;
         this.systemConfigServiceProvider = systemConfigServiceProvider;
     }
     private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
@@ -154,260 +130,6 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO updateOrderStatus(Long id, String status) {
         // 委托给OrderLifecycleService处理核心生命周期逻辑
         return orderLifecycleService.updateOrderStatus(id, status);
-    }
-
-    /**
-     * 验证订单状态流转是否合法
-     * 
-     * @param currentStatus 当前状态
-     * @param targetStatus  目标状态
-     * @return 如果状态流转合法则返回true
-     */
-    private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus targetStatus) {
-        // 定义状态流转规则
-        Map<OrderStatus, List<OrderStatus>> transitions = new HashMap<>();
-
-        // 待确认状态可以转换为：已确认、已取消（各种取消状态）、已拒绝
-        transitions.put(OrderStatus.PENDING, Arrays.asList(
-                OrderStatus.CONFIRMED,
-                OrderStatus.CANCELLED,
-                OrderStatus.CANCELLED_BY_USER,
-                OrderStatus.CANCELLED_BY_HOST,
-                OrderStatus.CANCELLED_SYSTEM,
-                OrderStatus.REJECTED));
-
-        // 已确认状态可以转换为：支付中、已取消、已支付
-        transitions.put(OrderStatus.CONFIRMED, Arrays.asList(
-                OrderStatus.PAYMENT_PENDING,
-                OrderStatus.CANCELLED,
-                OrderStatus.CANCELLED_BY_USER,
-                OrderStatus.CANCELLED_BY_HOST,
-                OrderStatus.CANCELLED_SYSTEM,
-                OrderStatus.PAID // 直接支付也可以
-        ));
-
-        // 支付中状态可以转换为：已支付、支付失败、用户取消、系统取消
-        transitions.put(OrderStatus.PAYMENT_PENDING, Arrays.asList(
-                OrderStatus.PAID,
-                OrderStatus.PAYMENT_FAILED,
-                OrderStatus.CANCELLED_BY_USER,
-                OrderStatus.CANCELLED, // 系统取消
-                OrderStatus.CANCELLED_SYSTEM // 系统自动取消（用于超时处理）
-        ));
-
-        // 支付失败状态可以转换为：支付中、已取消、用户取消、系统取消
-        transitions.put(OrderStatus.PAYMENT_FAILED, Arrays.asList(
-                OrderStatus.PAYMENT_PENDING,
-                OrderStatus.CANCELLED,
-                OrderStatus.CANCELLED_BY_USER,
-                OrderStatus.CANCELLED_SYSTEM // 系统自动取消
-        ));
-
-        // 已支付状态可以转换为：待入住、退款中、各种取消状态、已入住
-        transitions.put(OrderStatus.PAID, Arrays.asList(
-                OrderStatus.READY_FOR_CHECKIN,
-                OrderStatus.REFUND_PENDING,
-                OrderStatus.CANCELLED_BY_HOST,
-                OrderStatus.CANCELLED_BY_USER, // 用户取消
-                OrderStatus.CANCELLED_SYSTEM, // 系统取消
-                OrderStatus.CANCELLED, // 通用取消
-                OrderStatus.CHECKED_IN // 直接入住也可以
-        ));
-
-        // 待入住状态可以转换为：已入住、退款中、各种取消状态
-        transitions.put(OrderStatus.READY_FOR_CHECKIN, Arrays.asList(
-                OrderStatus.CHECKED_IN,
-                OrderStatus.REFUND_PENDING,
-                OrderStatus.CANCELLED_BY_HOST,
-                OrderStatus.CANCELLED_BY_USER, // 用户取消
-                OrderStatus.CANCELLED_SYSTEM, // 系统取消
-                OrderStatus.CANCELLED // 通用取消
-        ));
-
-        // 已入住状态只能转换为：已完成
-        transitions.put(OrderStatus.CHECKED_IN, List.of(OrderStatus.COMPLETED));
-
-        // 已完成状态不能转换为任何状态
-        transitions.put(OrderStatus.COMPLETED, Collections.emptyList());
-
-        // 已取消（各种取消状态）不能转换为任何状态，除了房东取消可能需要触发退款
-        transitions.put(OrderStatus.CANCELLED, Collections.emptyList());
-        transitions.put(OrderStatus.CANCELLED_BY_USER, Collections.emptyList());
-        transitions.put(OrderStatus.CANCELLED_BY_HOST, List.of(OrderStatus.REFUND_PENDING));
-        transitions.put(OrderStatus.CANCELLED_SYSTEM, Collections.emptyList());
-
-        // 退款相关状态
-        transitions.put(OrderStatus.REFUND_PENDING, Arrays.asList(
-                OrderStatus.REFUNDED,
-                OrderStatus.REFUND_FAILED));
-        transitions.put(OrderStatus.REFUNDED, Collections.emptyList());
-        transitions.put(OrderStatus.REFUND_FAILED, List.of(OrderStatus.REFUND_PENDING));
-
-        // 拒绝状态不能转换为任何状态
-        transitions.put(OrderStatus.REJECTED, Collections.emptyList());
-
-        // 检查当前状态是否有对应的流转规则
-        if (!transitions.containsKey(currentStatus)) {
-            return false;
-        }
-
-        // 检查目标状态是否在允许的流转列表中
-        return transitions.get(currentStatus).contains(targetStatus);
-    }
-
-    /**
-     * 计算退款金额
-     * 根据房源取消政策（cancelPolicyType）和距离入住还剩多少小时来决定退款比例：
-     * 政策1（宽松）：24h前全额退；24h内扣首晚
-     * 政策2（普通，默认）：48h前全额退；24-48h退50%；24h内扣首晚
-     * 政策3（严格）：72h前全额退；72h内退50%
-     */
-    private BigDecimal calculateRefundAmount(Order order) {
-        if (order.getCheckInDate() == null || order.getTotalAmount() == null) {
-            return BigDecimal.ZERO;
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime checkInTime = order.getCheckInDate().atTime(14, 0); // 假设14:00入住
-        long hoursBetween = java.time.Duration.between(now, checkInTime).toHours();
-
-        // 读取房源取消政策类型（1=宽松，2=普通，3=严格），默认为2
-        int policyType = 2;
-        if (order.getHomestay() != null && order.getHomestay().getCancelPolicyType() != null) {
-            policyType = order.getHomestay().getCancelPolicyType();
-        }
-
-        BigDecimal refundAmt;
-        String policyNote;
-
-        if (policyType == 1) {
-            // 宽松政策：入住24小时前取消 → 全额退款；24小时内 → 扣除首晚
-            if (hoursBetween >= 24) {
-                refundAmt = order.getTotalAmount();
-                policyNote = "退款测算（宽松政策）: 距离入住大于24小时，提供全额退款。";
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                    policyNote = "退款测算（宽松政策）: 距离入住不足24小时（仅1晚），不予退款。";
-                } else {
-                    BigDecimal perNight = order.getTotalAmount().divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = order.getTotalAmount().subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                    policyNote = "退款测算（宽松政策）: 距离入住不足24小时，扣除首晚房费。";
-                }
-            }
-        } else if (policyType == 3) {
-            // 严格政策：入住72小时前取消 → 全额退款；72小时内 → 退款50%
-            if (hoursBetween >= 72) {
-                refundAmt = order.getTotalAmount();
-                policyNote = "退款测算（严格政策）: 距离入住大于72小时，提供全额退款。";
-            } else {
-                refundAmt = order.getTotalAmount().multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-                policyNote = "退款测算（严格政策）: 距离入住不足72小时，退款50%。";
-            }
-        } else {
-            // 普通政策（默认policyType=2）：48h前全额退；24-48h退50%；24h内扣首晚
-            if (hoursBetween >= 48) {
-                refundAmt = order.getTotalAmount();
-                policyNote = "退款测算（普通政策）: 距离入住大于48小时，提供全额退款。";
-            } else if (hoursBetween >= 24) {
-                refundAmt = order.getTotalAmount().multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-                policyNote = "退款测算（普通政策）: 距离入住24-48小时，退款50%。";
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                    policyNote = "退款测算（普通政策）: 距离入住不足24小时（仅1晚），不予退款。";
-                } else {
-                    BigDecimal perNight = order.getTotalAmount().divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = order.getTotalAmount().subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                    policyNote = "退款测算（普通政策）: 距离入住不足24小时，扣除首晚房费。";
-                }
-            }
-        }
-
-        order.setRemark((order.getRemark() != null ? order.getRemark() + "\n" : "") + policyNote);
-        return refundAmt;
-    }
-
-    /**
-     * 根据政策类型和距离入住时间，计算退款金额和对应说明（纯查询，不修改 order 备注）
-     */
-    private Map<String, Object> buildRefundPreviewInfo(Order order) {
-        if (order.getCheckInDate() == null || order.getTotalAmount() == null) {
-            return Map.of(
-                "estimatedRefundAmount", BigDecimal.ZERO,
-                "policyDescription", "无法计算退款金额（缺少入住日期或订单金额）"
-            );
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime checkInTime = order.getCheckInDate().atTime(14, 0);
-        // 修复：如果已超过入住时间，hoursBetween会为负数，取绝对值后按"已过入住时间"处理
-        long hoursBetween = Math.abs(java.time.Duration.between(now, checkInTime).toHours());
-
-        int policyType = 2;
-        if (order.getHomestay() != null && order.getHomestay().getCancelPolicyType() != null) {
-            policyType = order.getHomestay().getCancelPolicyType();
-        }
-
-        BigDecimal refundAmt;
-        String policyDescription;
-
-        if (policyType == 1) {
-            if (hoursBetween >= 24) {
-                refundAmt = order.getTotalAmount();
-                policyDescription = "宽松政策：距离入住超过24小时，可获得全额退款 ¥" + refundAmt;
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                    policyDescription = "宽松政策：距离入住不足24小时（仅1晚），不予退款";
-                } else {
-                    BigDecimal perNight = order.getTotalAmount().divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = order.getTotalAmount().subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                    policyDescription = "宽松政策：距离入住不足24小时，扣除首晚房费，可退 ¥" + refundAmt;
-                }
-            }
-        } else if (policyType == 3) {
-            if (hoursBetween >= 72) {
-                refundAmt = order.getTotalAmount();
-                policyDescription = "严格政策：距离入住超过72小时，可获得全额退款 ¥" + refundAmt;
-            } else {
-                refundAmt = order.getTotalAmount().multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-                policyDescription = "严格政策：距离入住不足72小时，退款50%，预计退款 ¥" + refundAmt;
-            }
-        } else {
-            if (hoursBetween >= 48) {
-                refundAmt = order.getTotalAmount();
-                policyDescription = "普通政策：距离入住超过48小时，可获得全额退款 ¥" + refundAmt;
-            } else if (hoursBetween >= 24) {
-                refundAmt = order.getTotalAmount().multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-                policyDescription = "普通政策：距离入住24-48小时，退款50%，预计退款 ¥" + refundAmt;
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                    policyDescription = "普通政策：距离入住不足24小时（仅1晚），不予退款";
-                } else {
-                    BigDecimal perNight = order.getTotalAmount().divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = order.getTotalAmount().subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                    policyDescription = "普通政策：距离入住不足24小时，扣除首晚房费，预计退款 ¥" + refundAmt;
-                }
-            }
-        }
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("estimatedRefundAmount", refundAmt);
-        result.put("totalAmount", order.getTotalAmount());
-        result.put("policyDescription", policyDescription);
-        result.put("policyType", policyType);
-        result.put("hoursBeforeCheckIn", hoursBetween);
-        return result;
     }
 
     @Override
@@ -792,14 +514,6 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new UsernameNotFoundException("用户不存在"));
     }
 
-    // 工具方法：生成订单号
-    private String generateOrderNumber() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        String datePart = LocalDate.now().format(formatter);
-        String randomPart = String.format("%06d", new Random().nextInt(999999));
-        return "HS" + datePart + randomPart;
-    }
-
     // 工具方法：检查用户是否为订单的房东
     private boolean isOrderOwner(Order order, User user) {
         return order.getHomestay() != null && order.getHomestay().getOwner() != null
@@ -809,14 +523,6 @@ public class OrderServiceImpl implements OrderService {
     // 工具方法：检查用户是否为订单的客户
     private boolean isOrderGuest(Order order, User user) {
         return order.getGuest() != null && order.getGuest().getId().equals(user.getId());
-    }
-
-    private boolean hasAdminAuthority(User user) {
-        if (user == null || user.getRole() == null) { // 假设 getRole() 返回 String
-            return false;
-        }
-        // 与 isOrderAccessible 方法中的 isAdmin 逻辑保持一致
-        return user.getRole().contains("ADMIN");
     }
 
     /**
@@ -1021,7 +727,15 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        Map<String, Object> preview = new HashMap<>(buildRefundPreviewInfo(order));
+        RefundPolicyCalculator.Quote quote = refundPolicyCalculator.calculate(order);
+        Map<String, Object> preview = new HashMap<>();
+        preview.put("estimatedRefundAmount", quote.amount());
+        preview.put("policyDescription", quote.description());
+        if (quote.hoursBeforeCheckIn() != null) {
+            preview.put("totalAmount", order.getTotalAmount());
+            preview.put("policyType", quote.policyType());
+            preview.put("hoursBeforeCheckIn", quote.hoursBeforeCheckIn());
+        }
         preview.put("eligible", true);
         preview.put("orderId", orderId);
         preview.put("orderNumber", order.getOrderNumber());
@@ -1108,21 +822,6 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    /**
-     * 获取房源折扣率
-     */
-    private BigDecimal getHomestayDiscount(Long homestayId) {
-        String discountKey = "homestay.discount." + homestayId;
-        String discountValue = systemConfigServiceProvider.getObject().getConfigValue(discountKey);
-        if (discountValue != null) {
-            try {
-                return new BigDecimal(discountValue);
-            } catch (NumberFormatException e) {
-                log.warn("房源折扣配置 {} 格式错误: {}", discountKey, e.getMessage());
-            }
-        }
-        return null; // 无折扣
-    }
 
 
 }

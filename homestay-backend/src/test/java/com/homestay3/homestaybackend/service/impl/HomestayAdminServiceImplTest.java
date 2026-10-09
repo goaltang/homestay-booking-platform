@@ -9,6 +9,7 @@ import com.homestay3.homestaybackend.repository.HomestayAuditLogRepository;
 import com.homestay3.homestaybackend.repository.HomestayRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
 import com.homestay3.homestaybackend.service.HomestayCommandService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,6 +70,11 @@ class HomestayAdminServiceImplTest {
     private User adminUser;
     private User hostUser;
     private Homestay activeHomestay;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @BeforeEach
     void setUp() {

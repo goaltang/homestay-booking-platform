@@ -279,7 +279,7 @@ class HomestayGroupServiceTest {
 
         when(userRepository.findByUsername("testhost")).thenReturn(Optional.of(host));
         when(groupRepository.findByOwnerIdAndId(1L, 1L)).thenReturn(Optional.of(group));
-        when(homestayRepository.findAllById(homestayIds)).thenReturn(Arrays.asList(homestay1, homestay2));
+        when(homestayRepository.findAllByIdIn(homestayIds)).thenReturn(Arrays.asList(homestay1, homestay2));
 
         groupService.assignHomestaysToGroup(1L, homestayIds, "testhost");
 
@@ -307,7 +307,7 @@ class HomestayGroupServiceTest {
 
         when(userRepository.findByUsername("testhost")).thenReturn(Optional.of(host));
         when(groupRepository.findByOwnerIdAndId(1L, 1L)).thenReturn(Optional.of(group));
-        when(homestayRepository.findAllById(homestayIds)).thenReturn(Arrays.asList(otherHomestay));
+        when(homestayRepository.findAllByIdIn(homestayIds)).thenReturn(Arrays.asList(otherHomestay));
 
         assertThrows(IllegalArgumentException.class, () ->
                 groupService.assignHomestaysToGroup(1L, homestayIds, "testhost"));
@@ -318,7 +318,7 @@ class HomestayGroupServiceTest {
         List<Long> homestayIds = Arrays.asList(10L, 11L);
 
         when(userRepository.findByUsername("testhost")).thenReturn(Optional.of(host));
-        when(homestayRepository.findAllById(homestayIds)).thenReturn(Arrays.asList(homestay1, homestay2));
+        when(homestayRepository.findAllByIdIn(homestayIds)).thenReturn(Arrays.asList(homestay1, homestay2));
 
         groupService.removeHomestaysFromGroup(homestayIds, "testhost");
 

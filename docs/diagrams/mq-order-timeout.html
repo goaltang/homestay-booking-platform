@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MQ · 订单超时延迟队列</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+SC:wght@400;600&amp;family=Noto+Serif+SC:wght@400&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { --paper:#f5f5f5; --ink:#2d3142; --muted:#4f5d75; --accent:#eb6c36; --link:#2e5aa8; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist','Noto Sans SC','Microsoft YaHei','WenQuanYi Zen Hei',sans-serif; }
+    main { max-width:1392px; margin:auto; padding:48px 32px 32px; min-width:0; }
+    .eyebrow { color:var(--muted); font:500 11px 'Geist Mono',monospace; letter-spacing:.16em; }
+    h1 { margin:12px 0; font:400 40px 'Instrument Serif','Noto Serif SC','Songti SC',serif; }
+    .intro { margin:0 0 28px; font-size:14px; line-height:1.8; color:var(--muted); }
+    .diagram-container { width:100%; overflow-x:auto; border:1px solid #d7d9df; border-radius:8px; }
+    svg { display:block; width:100%; min-width:1280px; }
+    svg .name { font-size:16px; font-weight:600; }
+    svg .body { font-size:12px; fill:var(--muted); }
+    svg .mono { font:400 12px 'Geist Mono',monospace; fill:var(--muted); }
+    svg .tag { font:500 8px 'Geist Mono',monospace; letter-spacing:.12em; fill:var(--muted); }
+    svg .heading { font-size:14px; font-weight:600; }
+    svg .wire { fill:none; stroke:var(--muted); stroke-width:1.5;  }
+    svg .http { stroke:var(--link);  }
+    svg .async { stroke-dasharray:5 4; }
+    svg .edge-label { font:400 12px 'Geist Mono',monospace; fill:var(--muted); text-anchor:middle; }
+    .notes { display:grid; grid-template-columns:1.2fr 1fr; gap:32px; margin:28px 0; }
+    .notes h2 { font-size:16px; margin:0 0 8px; }
+    .notes p { margin:0; color:var(--muted); font-size:13px; line-height:1.9; }
+    footer { border-top:1px solid #d7d9df; padding-top:16px; font-size:12px; line-height:1.8; color:var(--muted); }
+    @media(max-width:640px) { main { padding:24px 16px; } h1 { font-size:30px; } .notes { grid-template-columns:1fr; gap:20px; } }
+    @media print { main { padding:0; max-width:none; } .diagram-container { overflow-x:visible; } svg { min-width:0; } .notes,footer { break-inside:avoid; } }
+  </style>
+<style>
+svg text { fill:#2d3142; }
+svg .name { font-size:16px; font-weight:600; }
+svg .detail { font-size:12px; fill:#4f5d75; }
+svg .code { font:400 12px 'Geist Mono','WenQuanYi Zen Hei',monospace; fill:#4f5d75; }
+svg .small { font-size:12px; fill:#4f5d75; }
+svg .label { font-size:12px; fill:#4f5d75; }
+svg .wire { stroke:#4f5d75; fill:none; stroke-width:1.5; }
+.notes { display:block; } .notes p { margin-bottom:10px; }
+nav { margin:16px 0; font-size:13px; } a { color:#2e5aa8; }
+</style></head><body><main><div class="eyebrow">HOMESTAY / ARCHITECTURE / DETAIL</div><h1>MQ · 订单超时延迟队列</h1><p class="intro">数据库提交后发布延迟消息，TTL 到期经 DLX 进入消费队列；消费者核对当前状态再取消。</p><nav><a href="index.html">全部架构图</a> · <a href="mq-order-timeout.png">高清 PNG</a></nav><div class="diagram-container" tabindex="0" aria-label="MQ · 订单超时延迟队列，窄屏可横向滚动"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="mq-order-timeout-title mq-order-timeout-desc"><title id="mq-order-timeout-title">MQ · 订单超时延迟队列</title><desc id="mq-order-timeout-desc">数据库提交后发布延迟消息，TTL 到期经 DLX 进入消费队列；消费者核对当前状态再取消。</desc><defs><marker id="mq-order-timeout-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="#4f5d75"/></marker><marker id="mq-order-timeout-open" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs><rect width="1280" height="720" fill="#f5f5f5"/><path class="wire" d="M288 176L416 176" stroke-dasharray="5 4" marker-end="url(#mq-order-timeout-arrow)"/><path class="wire" d="M656 176L784 176" stroke-dasharray="5 4" marker-end="url(#mq-order-timeout-arrow)"/><path class="wire" d="M904 232L904 352" marker-end="url(#mq-order-timeout-arrow)"/><path class="wire" d="M784 400L656 400" marker-end="url(#mq-order-timeout-arrow)"/><path class="wire" d="M416 400L288 400" marker-end="url(#mq-order-timeout-arrow)"/><path class="wire" d="M536 448L536 552" marker-end="url(#mq-order-timeout-arrow)"/><path class="wire" d="M168 552L168 448" stroke-dasharray="5 4" marker-end="url(#mq-order-timeout-arrow)"/><rect x="298" y="148" width="108" height="20" fill="#f5f5f5"/><text x="352" y="164" class="label" text-anchor="middle">AFTER COMMIT</text><rect x="678" y="148" width="84" height="20" fill="#f5f5f5"/><text x="720" y="164" class="label" text-anchor="middle">TTL / DLX</text><rect x="930" y="276" width="68" height="20" fill="#f5f5f5"/><text x="964" y="292" class="label" text-anchor="middle">DELIVER</text><rect x="688" y="372" width="64" height="20" fill="#f5f5f5"/><text x="720" y="388" class="label" text-anchor="middle">检查订单</text><rect x="320" y="372" width="64" height="20" fill="#f5f5f5"/><text x="352" y="388" class="label" text-anchor="middle">是：取消</text><rect x="564" y="492" width="64" height="20" fill="#f5f5f5"/><text x="596" y="508" class="label" text-anchor="middle">否：跳过</text><rect x="196" y="492" width="64" height="20" fill="#f5f5f5"/><text x="228" y="508" class="label" text-anchor="middle">补偿扫描</text><g data-node="lifecycle"><rect x="48" y="120" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="68" y="148" class="name">订单状态变更</text><text x="68" y="172" class="code">PENDING / CONFIRMED</text><text x="68" y="192" class="code">PAYMENT_PENDING</text></g><g data-node="delay"><rect x="416" y="120" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="436" y="148" class="name">延迟队列</text><text x="436" y="172" class="detail">消息级 expiration</text><text x="436" y="192" class="detail">默认 2h，可配置</text></g><g data-node="queue"><rect x="784" y="120" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="804" y="148" class="name">消费队列</text><text x="804" y="172" class="code">order.timeout.queue</text></g><g data-node="consumer"><rect x="784" y="352" width="240" height="96" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="804" y="380" class="name">超时消费者</text><text x="804" y="404" class="code">OrderTimeoutConsumer</text></g><g data-node="guard"><path d="M536.0 352L656 400.0L536.0 448L416 400.0Z" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1.5"/><text x="536.0" y="396.0" class="name" text-anchor="middle">期望状态仍一致？</text><text x="536.0" y="420.0" class="detail" text-anchor="middle">状态校验</text></g><g data-node="cancel"><rect x="48" y="352" width="240" height="96" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="68" y="380" class="name">系统取消</text><text x="68" y="404" class="code">CANCELLED_SYSTEM</text></g><g data-node="skip"><rect x="416" y="552" width="240" height="80" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="436" y="580" class="name">跳过并 ACK</text><text x="436" y="604" class="detail">状态已流转 / 无效消息</text></g><g data-node="scanner"><rect x="48" y="552" width="240" height="80" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="68" y="580" class="name">定时扫描兜底</text><text x="68" y="604" class="code">10 / 5 / 1 min</text></g><path d="M40 660H1240" stroke="#d7d9df"/><text x="40" y="692" class="detail">实线：业务动作 / 关系    虚线：返回、异步或补偿路径    橙色：本图重点</text></svg></div><section class="notes"><h2>阅读说明与范围</h2><p>PENDING、CONFIRMED、PAYMENT_PENDING 各自有超时配置，当前默认均为 2 小时。延迟队列采用消息级 expiration，经 direct 交换机进入消费队列；图中交换机折叠在 DLX 连线。</p><p>状态已流转、订单不存在或消息无效时直接 ACK；消费异常 basicNack(requeue=false)。本场景没有画成与批量发券相同的 60 秒重试队列。</p><p>消费者主要核对消息期望状态，不把它描述成数据库原子状态比较交换。定时扫描分别按 10 / 5 / 1 分钟运行；发送失败与 MQ 关闭时依赖扫描兜底。</p><p>队列：homestay.order.timeout.delay.queue → homestay.order.timeout.queue。TTL 队列可能有队首阻塞，图中不宣称精确到点执行。</p></section><footer>代码核对入口：<a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/config/RabbitMQConfig.java">RabbitMQConfig.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/mq/OrderTimeoutConsumer.java">OrderTimeoutConsumer.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/OrderLifecycleServiceImpl.java">OrderLifecycleServiceImpl.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/OrderTimeoutService.java">OrderTimeoutService.java</a><br>diagram-design · 默认浅色 · slide-16x9 · 静态代码核对：2026-10-09；图示不等于真实外部服务联调证明。</footer></main></body></html>

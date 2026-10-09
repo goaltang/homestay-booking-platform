@@ -14,6 +14,7 @@ import com.homestay3.homestaybackend.service.DisputeRecordService;
 import com.homestay3.homestaybackend.service.DisputeService;
 import com.homestay3.homestaybackend.service.OrderNotificationService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,6 +68,11 @@ class DisputeServiceImplTest {
 
     private User currentUser;
     private Order testOrder;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @BeforeEach
     void setUp() {

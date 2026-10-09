@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>房源审核 · 提交、撤回与重新审核</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+SC:wght@400;600&amp;family=Noto+Serif+SC:wght@400&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { --paper:#f5f5f5; --ink:#2d3142; --muted:#4f5d75; --accent:#eb6c36; --link:#2e5aa8; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist','Noto Sans SC','Microsoft YaHei','WenQuanYi Zen Hei',sans-serif; }
+    main { max-width:1392px; margin:auto; padding:48px 32px 32px; min-width:0; }
+    .eyebrow { color:var(--muted); font:500 11px 'Geist Mono',monospace; letter-spacing:.16em; }
+    h1 { margin:12px 0; font:400 40px 'Instrument Serif','Noto Serif SC','Songti SC',serif; }
+    .intro { margin:0 0 28px; font-size:14px; line-height:1.8; color:var(--muted); }
+    .diagram-container { width:100%; overflow-x:auto; border:1px solid #d7d9df; border-radius:8px; }
+    svg { display:block; width:100%; min-width:1280px; }
+    svg .name { font-size:16px; font-weight:600; }
+    svg .body { font-size:12px; fill:var(--muted); }
+    svg .mono { font:400 12px 'Geist Mono',monospace; fill:var(--muted); }
+    svg .tag { font:500 8px 'Geist Mono',monospace; letter-spacing:.12em; fill:var(--muted); }
+    svg .heading { font-size:14px; font-weight:600; }
+    svg .wire { fill:none; stroke:var(--muted); stroke-width:1.5;  }
+    svg .http { stroke:var(--link);  }
+    svg .async { stroke-dasharray:5 4; }
+    svg .edge-label { font:400 12px 'Geist Mono',monospace; fill:var(--muted); text-anchor:middle; }
+    .notes { display:grid; grid-template-columns:1.2fr 1fr; gap:32px; margin:28px 0; }
+    .notes h2 { font-size:16px; margin:0 0 8px; }
+    .notes p { margin:0; color:var(--muted); font-size:13px; line-height:1.9; }
+    footer { border-top:1px solid #d7d9df; padding-top:16px; font-size:12px; line-height:1.8; color:var(--muted); }
+    @media(max-width:640px) { main { padding:24px 16px; } h1 { font-size:30px; } .notes { grid-template-columns:1fr; gap:20px; } }
+    @media print { main { padding:0; max-width:none; } .diagram-container { overflow-x:visible; } svg { min-width:0; } .notes,footer { break-inside:avoid; } }
+  </style>
+<style>
+svg text { fill:#2d3142; }
+svg .name { font-size:16px; font-weight:600; }
+svg .detail { font-size:12px; fill:#4f5d75; }
+svg .code { font:400 12px 'Geist Mono','WenQuanYi Zen Hei',monospace; fill:#4f5d75; }
+svg .small { font-size:12px; fill:#4f5d75; }
+svg .label { font-size:12px; fill:#4f5d75; }
+svg .wire { stroke:#4f5d75; fill:none; stroke-width:1.5; }
+.notes { display:block; } .notes p { margin-bottom:10px; }
+nav { margin:16px 0; font-size:13px; } a { color:#2e5aa8; }
+</style></head><body><main><div class="eyebrow">HOMESTAY / STATE / DETAIL</div><h1>房源审核 · 提交、撤回与重新审核</h1><p class="intro">聚焦审核服务的核心状态迁移：所属房东提交或撤回，管理员审核后上架或驳回。</p><nav><a href="index.html">全部架构图</a> · <a href="homestay-audit.png">高清 PNG</a></nav><div class="diagram-container" tabindex="0" aria-label="房源审核 · 提交、撤回与重新审核，窄屏可横向滚动"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="homestay-audit-title homestay-audit-desc"><title id="homestay-audit-title">房源审核 · 提交、撤回与重新审核</title><desc id="homestay-audit-desc">聚焦审核服务的核心状态迁移：所属房东提交或撤回，管理员审核后上架或驳回。</desc><defs><marker id="homestay-audit-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="#4f5d75"/></marker><marker id="homestay-audit-open" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs><rect width="1280" height="720" fill="#f5f5f5"/><text x="48" y="604" class="detail">状态变更写审核日志；下架、暂停等运营迁移见图下说明。</text><path class="wire" d="M288 216L416 216" marker-end="url(#homestay-audit-arrow)"/><path class="wire" d="M656 208L784 208" marker-end="url(#homestay-audit-arrow)"/><path class="wire" d="M536 264L536 456" marker-end="url(#homestay-audit-arrow)"/><path class="wire" d="M496 168L496 96Q496 88 488 88L176 88Q168 88 168 96L168 168" stroke-dasharray="5 4" marker-end="url(#homestay-audit-arrow)"/><path class="wire" d="M656 504L704 504Q712 504 712 496L712 248Q712 240 704 240L656 240" marker-end="url(#homestay-audit-arrow)"/><rect x="320" y="188" width="64" height="20" fill="#f5f5f5"/><text x="352" y="204" class="label" text-anchor="middle">房东提交</text><rect x="682" y="180" width="76" height="20" fill="#f5f5f5"/><text x="720" y="196" class="label" text-anchor="middle">管理员批准</text><rect x="562" y="344" width="76" height="20" fill="#f5f5f5"/><text x="600" y="360" class="label" text-anchor="middle">管理员驳回</text><rect x="300" y="60" width="64" height="20" fill="#f5f5f5"/><text x="332" y="76" class="label" text-anchor="middle">房东撤回</text><rect x="724" y="368" width="64" height="20" fill="#f5f5f5"/><text x="756" y="384" class="label" text-anchor="middle">再次提交</text><g data-node="draft"><rect x="48" y="168" width="240" height="96" rx="8" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="68" y="196" class="name">草稿</text><text x="68" y="220" class="code">DRAFT</text></g><g data-node="pending"><rect x="416" y="168" width="240" height="96" rx="8" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="436" y="196" class="name">待审核</text><text x="436" y="220" class="code">PENDING</text></g><g data-node="active"><rect x="784" y="168" width="240" height="96" rx="8" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="804" y="196" class="name">已上架</text><text x="804" y="220" class="code">ACTIVE</text></g><g data-node="rejected"><rect x="416" y="456" width="240" height="96" rx="8" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="436" y="484" class="name">审核驳回</text><text x="436" y="508" class="code">REJECTED</text></g><path d="M40 660H1240" stroke="#d7d9df"/><text x="40" y="692" class="detail">实线：提交与审核    虚线：撤回审核    橙色：待审核与上架</text></svg></div><section class="notes"><h2>阅读说明与范围</h2><p>提交审核只允许所属房东对 DRAFT 或 REJECTED 房源操作；两者均转 PENDING。撤回只允许所属房东对 PENDING 操作，回到 DRAFT。</p><p>管理员审核由 Controller 的 ROLE_ADMIN 限制；APPROVE 目标为 ACTIVE，REJECT 目标为 REJECTED，最终仍通过 HomestayStatus.canTransitionTo 检查。本图选择待审核的典型审核路径，不表示 approve 只在 PENDING 可用。</p><p>状态更新与审核日志在同一服务事务内执行，通知调用及其异常处理另有实现；日志和通知折叠为节点说明，不宣称客户端一定收到通知。</p><p>INACTIVE、SUSPENDED 运营状态没有在核心审核图展开：枚举还允许 ACTIVE 下架/暂停、INACTIVE 上架/转待审核、SUSPENDED 恢复/下架，以及 REJECTED 转草稿等。枚举允许不等于每个房东接口都允许该操作，例如 submit-review 不接受 INACTIVE。</p><p>重新提交的箭头表示再次调用审核提交接口；是否完善资料依编辑流程完成，图中没有虚构强制自动复核或定时自动上架。</p></section><footer>代码核对入口：<a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/model/HomestayStatus.java">HomestayStatus.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/HomestayAuditServiceImpl.java">HomestayAuditServiceImpl.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/controller/HomestayAuditController.java">HomestayAuditController.java</a><br>diagram-design · 默认浅色 · slide-16x9 · 静态代码核对：2026-10-09；图示不等于真实外部服务联调证明。</footer></main></body></html>

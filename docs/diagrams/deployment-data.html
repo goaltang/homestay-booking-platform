@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker 配置拓扑 · 数据服务</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+SC:wght@400;600&amp;family=Noto+Serif+SC:wght@400&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { --paper:#f5f5f5; --ink:#2d3142; --muted:#4f5d75; --accent:#eb6c36; --link:#2e5aa8; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist','Noto Sans SC','Microsoft YaHei','WenQuanYi Zen Hei',sans-serif; }
+    main { max-width:1392px; margin:auto; padding:48px 32px 32px; min-width:0; }
+    .eyebrow { color:var(--muted); font:500 11px 'Geist Mono',monospace; letter-spacing:.16em; }
+    h1 { margin:12px 0; font:400 40px 'Instrument Serif','Noto Serif SC','Songti SC',serif; }
+    .intro { margin:0 0 28px; font-size:14px; line-height:1.8; color:var(--muted); }
+    .diagram-container { width:100%; overflow-x:auto; border:1px solid #d7d9df; border-radius:8px; }
+    svg { display:block; width:100%; min-width:1280px; }
+    svg .name { font-size:16px; font-weight:600; }
+    svg .body { font-size:12px; fill:var(--muted); }
+    svg .mono { font:400 12px 'Geist Mono',monospace; fill:var(--muted); }
+    svg .tag { font:500 8px 'Geist Mono',monospace; letter-spacing:.12em; fill:var(--muted); }
+    svg .heading { font-size:14px; font-weight:600; }
+    svg .wire { fill:none; stroke:var(--muted); stroke-width:1.5;  }
+    svg .http { stroke:var(--link);  }
+    svg .async { stroke-dasharray:5 4; }
+    svg .edge-label { font:400 12px 'Geist Mono',monospace; fill:var(--muted); text-anchor:middle; }
+    .notes { display:grid; grid-template-columns:1.2fr 1fr; gap:32px; margin:28px 0; }
+    .notes h2 { font-size:16px; margin:0 0 8px; }
+    .notes p { margin:0; color:var(--muted); font-size:13px; line-height:1.9; }
+    footer { border-top:1px solid #d7d9df; padding-top:16px; font-size:12px; line-height:1.8; color:var(--muted); }
+    @media(max-width:640px) { main { padding:24px 16px; } h1 { font-size:30px; } .notes { grid-template-columns:1fr; gap:20px; } }
+    @media print { main { padding:0; max-width:none; } .diagram-container { overflow-x:visible; } svg { min-width:0; } .notes,footer { break-inside:avoid; } }
+  </style>
+<style>
+svg text { fill:#2d3142; }
+svg .name { font-size:16px; font-weight:600; }
+svg .detail { font-size:12px; fill:#4f5d75; }
+svg .code { font:400 12px 'Geist Mono','WenQuanYi Zen Hei',monospace; fill:#4f5d75; }
+svg .small { font-size:12px; fill:#4f5d75; }
+svg .label { font-size:12px; fill:#4f5d75; }
+svg .wire { stroke:#4f5d75; fill:none; stroke-width:1.5; }
+.notes { display:block; } .notes p { margin-bottom:10px; }
+nav { margin:16px 0; font-size:13px; } a { color:#2e5aa8; }
+</style></head><body><main><div class="eyebrow">HOMESTAY / DEPLOYMENT / DETAIL</div><h1>Docker 配置拓扑 · 数据服务</h1><p class="intro">与应用入口图属于同一个 Compose 配置，展示后端连接、版本和配置的存储挂载。</p><nav><a href="index.html">全部架构图</a> · <a href="deployment-data.png">高清 PNG</a></nav><div class="diagram-container" tabindex="0" aria-label="Docker 配置拓扑 · 数据服务，窄屏可横向滚动"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="deployment-data-title deployment-data-desc"><title id="deployment-data-title">Docker 配置拓扑 · 数据服务</title><desc id="deployment-data-desc">与应用入口图属于同一个 Compose 配置，展示后端连接、版本和配置的存储挂载。</desc><defs><marker id="deployment-data-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="#4f5d75"/></marker><marker id="deployment-data-open" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs><rect width="1280" height="720" fill="#f5f5f5"/><rect x="40" y="64" width="1200" height="568" rx="8" fill="#ececec" stroke="#bfc0c0"/><text x="64" y="98" class="heading">同一宿主机 / Compose 默认网络 · 配置视图</text><path class="wire" d="M344 328L392 328Q400 328 400 320L400 206Q400 198 408 198L528 198" marker-end="url(#deployment-data-arrow)"/><path class="wire" d="M344 352L856 352Q864 352 864 344L864 206Q864 198 872 198L904 198" marker-end="url(#deployment-data-arrow)"/><path class="wire" d="M344 408L392 408Q400 408 400 416L400 530Q400 538 408 538L528 538" marker-end="url(#deployment-data-arrow)"/><path class="wire" d="M344 384L856 384Q864 384 864 392L864 530Q864 538 872 538L904 538" marker-end="url(#deployment-data-arrow)"/><rect x="422" y="170" width="84" height="20" fill="#f5f5f5"/><text x="464" y="186" class="label" text-anchor="middle">SQL :3306</text><rect x="642" y="324" width="92" height="20" fill="#f5f5f5"/><text x="688" y="340" class="label" text-anchor="middle">RESP :6379</text><rect x="418" y="510" width="92" height="20" fill="#f5f5f5"/><text x="464" y="526" class="label" text-anchor="middle">HTTP :9200</text><rect x="642" y="356" width="92" height="20" fill="#f5f5f5"/><text x="688" y="372" class="label" text-anchor="middle">AMQP :5672</text><g data-node="api"><rect x="64" y="304" width="280" height="128" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="84" y="332" class="name">后端 API</text><text x="84" y="356" class="code">Spring Boot / prod</text><text x="84" y="376" class="detail">容器服务名连接数据设施</text></g><g data-node="mysql"><rect x="528" y="128" width="288" height="140" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="548" y="156" class="name">MySQL</text><text x="548" y="180" class="code">mysql:8.0 / mysql:3306</text><text x="548" y="200" class="detail">mysql-data → /var/lib/mysql</text><text x="548" y="220" class="detail">schema.sql 初始化挂载</text></g><g data-node="redis"><rect x="904" y="128" width="288" height="140" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="924" y="156" class="name">Redis</text><text x="924" y="180" class="code">redis:7-alpine / redis:6379</text><text x="924" y="200" class="detail">redis-data → /data</text></g><g data-node="es"><rect x="528" y="468" width="288" height="140" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="548" y="496" class="name">Elasticsearch + IK</text><text x="548" y="520" class="code">homestay-es-ik:test</text><text x="548" y="540" class="code">elasticsearch:9200</text><text x="548" y="560" class="detail">es-data → ES data 目录</text></g><g data-node="mq"><rect x="904" y="468" width="288" height="140" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="924" y="496" class="name">RabbitMQ</text><text x="924" y="520" class="code">rabbitmq:3.13-management</text><text x="924" y="540" class="code">rabbitmq:5672 / UI :15672</text><text x="924" y="560" class="detail">未配置持久化卷</text></g><path d="M40 660H1240" stroke="#d7d9df"/><text x="40" y="692" class="detail">实线：业务动作 / 关系    虚线：返回、异步或补偿路径    橙色：本图重点</text></svg></div><section class="notes"><h2>阅读说明与范围</h2><p>MySQL、Redis、Elasticsearch、RabbitMQ 与后端位于同一个 Compose 默认网络；容器内部使用服务名连接，不使用宿主机映射端口访问彼此。</p><p>MySQL、Redis、ES 配有命名卷；RabbitMQ 当前未配置存储卷。ES 使用本地镜像 homestay-es-ik:test，标签不能证明具体 ES / IK 版本。</p><p>图上端口同时存在宿主机映射：3306、6379、9200、5672，RabbitMQ 管理台为 15672。用户名、密码和密钥不列入图中。</p><p>Compose 还包含 Prometheus 9090 和 Grafana 3000，本图为控制阅读密度未展开。当前没有运行验证，不宣称高可用、备份或公网隔离已实现。</p></section><footer>代码核对入口：<a href="../../docker-compose.yml">docker-compose.yml</a> · <a href="../../homestay-backend/src/main/resources/application-prod.properties">application-prod.properties</a><br>diagram-design · 默认浅色 · slide-16x9 · 静态代码核对：2026-10-09；图示不等于真实外部服务联调证明。</footer></main></body></html>

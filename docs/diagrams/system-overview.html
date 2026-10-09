@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homestay · 系统架构总览</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+SC:wght@400;600&amp;family=Noto+Serif+SC:wght@400&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { --paper:#f5f5f5; --ink:#2d3142; --muted:#4f5d75; --accent:#eb6c36; --link:#2e5aa8; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist','Noto Sans SC','Microsoft YaHei','WenQuanYi Zen Hei',sans-serif; }
+    main { max-width:1392px; margin:auto; padding:48px 32px 32px; min-width:0; }
+    .eyebrow { color:var(--muted); font:500 11px 'Geist Mono',monospace; letter-spacing:.16em; }
+    h1 { margin:12px 0; font:400 40px 'Instrument Serif','Noto Serif SC','Songti SC',serif; }
+    .intro { margin:0 0 28px; font-size:14px; line-height:1.8; color:var(--muted); }
+    .diagram-container { width:100%; overflow-x:auto; border:1px solid #d7d9df; border-radius:8px; }
+    svg { display:block; width:100%; min-width:1280px; }
+    svg .name { font-size:16px; font-weight:600; }
+    svg .body { font-size:12px; fill:var(--muted); }
+    svg .mono { font:400 12px 'Geist Mono',monospace; fill:var(--muted); }
+    svg .tag { font:500 8px 'Geist Mono',monospace; letter-spacing:.12em; fill:var(--muted); }
+    svg .heading { font-size:14px; font-weight:600; }
+    svg .wire { fill:none; stroke:var(--muted); stroke-width:1.5; marker-end:url(#overview-arrow); }
+    svg .http { stroke:var(--link); marker-end:url(#overview-http); }
+    svg .async { stroke-dasharray:5 4; }
+    svg .edge-label { font:400 12px 'Geist Mono',monospace; fill:var(--muted); text-anchor:middle; }
+    .notes { display:grid; grid-template-columns:1.2fr 1fr; gap:32px; margin:28px 0; }
+    .notes h2 { font-size:16px; margin:0 0 8px; }
+    .notes p { margin:0; color:var(--muted); font-size:13px; line-height:1.9; }
+    footer { border-top:1px solid #d7d9df; padding-top:16px; font-size:12px; line-height:1.8; color:var(--muted); }
+    @media(max-width:640px) { main { padding:24px 16px; } h1 { font-size:30px; } .notes { grid-template-columns:1fr; gap:20px; } }
+    @media print { main { padding:0; max-width:none; } .diagram-container { overflow-x:visible; } svg { min-width:0; } .notes,footer { break-inside:avoid; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">HOMESTAY / SYSTEM ARCHITECTURE / 01</div>
+  <h1>民宿预订系统 · 架构总览</h1>
+  <p class="intro">两个前端应用，一个 Spring Boot 后端。围绕预订与支付，串联搜索、营销、异步消息与 AI 客服。</p>
+  <div class="diagram-container" tabindex="0" aria-label="系统架构图，窄屏可横向滚动">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="system-overview-title system-overview-desc">
+      <title id="system-overview-title">民宿预订系统架构总览</title>
+      <desc id="system-overview-desc">房客与房东共用 C 端，管理端独立，两个前端调用同一 Spring Boot 后端，后端使用 MySQL、Redis、Elasticsearch、RabbitMQ、支付宝和外部大模型服务，并通过 WebSocket 向 C 端推送消息。</desc>
+      <defs>
+        <marker id="overview-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="#4f5d75"/></marker>
+        <marker id="overview-http" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="#2e5aa8"/></marker>
+      </defs>
+      <rect width="1280" height="720" fill="#f5f5f5"/>
+      <text x="40" y="48" class="heading">访问端</text>
+      <text x="360" y="48" class="heading">应用边界</text>
+      <text x="956" y="48" class="heading">数据设施与外部服务</text>
+      <rect x="40" y="80" width="220" height="560" rx="8" fill="#2d3142" fill-opacity=".02" stroke="#d7d9df"/>
+      <text x="60" y="116" class="body">Vue 3 · TypeScript · Pinia</text>
+      <text x="60" y="140" class="body">Element Plus · Vite</text>
+      <!-- Connections precede component boxes; each route has its own port. -->
+      <path class="wire http" d="M260 232H288Q296 232 296 240V240Q296 248 304 248H360"/>
+      <path class="wire http" d="M260 428H304Q312 428 312 436V436Q312 444 320 444H360"/>
+      <path class="wire async" d="M360 356H224Q216 356 216 348V304"/>
+      <path class="wire" d="M788 184H832Q840 184 840 176V120Q840 112 848 112H956"/>
+      <path class="wire" d="M788 240H852Q860 240 860 232V220Q860 212 868 212H956"/>
+      <path class="wire" d="M788 296H932Q940 296 940 304V304Q940 312 948 312H956"/>
+      <path class="wire async" d="M788 352H912Q920 352 920 360V404Q920 412 928 412H956"/>
+      <path class="wire http" d="M788 408H892Q900 408 900 416V504Q900 512 908 512H956"/>
+      <path class="wire http" d="M788 464H872Q880 464 880 472V604Q880 612 888 612H956"/>
+      <!-- Labels are offset above the stroke, with opaque background masks. -->
+      <g class="edge-label">
+        <rect x="268" y="204" width="80" height="20" fill="#f5f5f5"/><text x="308" y="218">HTTP API</text>
+        <rect x="268" y="400" width="80" height="20" fill="#f5f5f5"/><text x="308" y="414">HTTP API</text>
+        <rect x="252" y="324" width="96" height="24" fill="#f5f5f5"/><text x="300" y="340">WEBSOCKET</text>
+        <rect x="796" y="156" width="36" height="20" fill="#f5f5f5"/><text x="814" y="170">JPA</text>
+        <rect x="796" y="212" width="56" height="20" fill="#f5f5f5"/><text x="824" y="226">REDIS</text>
+        <rect x="796" y="268" width="64" height="20" fill="#f5f5f5"/><text x="828" y="282">SEARCH</text>
+        <rect x="796" y="324" width="64" height="20" fill="#f5f5f5"/><text x="828" y="338">AMQP</text>
+        <rect x="796" y="380" width="80" height="20" fill="#f5f5f5"/><text x="836" y="394">HTTPS</text>
+        <rect x="796" y="436" width="72" height="20" fill="#f5f5f5"/><text x="832" y="450">LLM API</text>
+      </g>
+      <g data-node="front">
+        <rect x="40" y="184" width="220" height="120" rx="6" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="60" y="208" class="tag">HOMESTAY-FRONT</text>
+        <text x="60" y="240" class="name">C 端 · 房客 / 房东</text>
+        <text x="60" y="268" class="body">搜索预订 · 房源经营 · 会话通知</text>
+        <text x="60" y="288" class="mono">:5173</text>
+      </g>
+      <g data-node="admin">
+        <rect x="40" y="380" width="220" height="120" rx="6" fill="#f5f5f5" stroke="#2d3142"/>
+        <text x="60" y="404" class="tag">HOMESTAY-ADMIN</text>
+        <text x="60" y="436" class="name">管理端 · 管理员</text>
+        <text x="60" y="464" class="body">审核仲裁 · 营销运营 · 统计管理</text>
+        <text x="60" y="484" class="mono">:5174</text>
+      </g>
+      <g data-node="backend">
+        <rect x="360" y="148" width="428" height="396" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/>
+        <rect x="360" y="148" width="428" height="88" rx="6" fill="#eb6c36" fill-opacity=".08"/>
+        <text x="384" y="172" class="tag">HOMESTAY-BACKEND / SINGLE APPLICATION</text>
+        <text x="384" y="204" class="name">Spring Boot 3 · Java 17</text>
+        <text x="700" y="204" class="mono">:8081</text>
+        <text x="384" y="264" class="heading">统一接入与认证</text>
+        <text x="384" y="288" class="body">Controller / DTO · Spring Security / JWT</text>
+        <path d="M384 308H764" stroke="#d7d9df"/>
+        <text x="384" y="336" class="heading">业务服务</text>
+        <text x="384" y="360" class="body">房源 / 搜索 · 订单 / 支付 · 入住 / 退房</text>
+        <text x="384" y="384" class="body">计价 / 营销 · 评价 / 争议 · 聊天 / 通知</text>
+        <path d="M384 404H764" stroke="#d7d9df"/>
+        <text x="384" y="432" class="heading">AI 客服与争议辅助</text>
+        <text x="384" y="456" class="body">工具白名单 · 订单归属校验 · 操作确认</text>
+        <path d="M384 476H764" stroke="#d7d9df"/>
+        <text x="384" y="504" class="body">JPA / Repository · MQ 生产消费 · 定时任务</text>
+        <text x="384" y="528" class="body">以上模块均位于同一个后端应用内</text>
+      </g>
+      <g data-node="mysql">
+        <rect x="956" y="80" width="284" height="64" rx="6" fill="#ececec" stroke="#bfc0c0"/>
+        <text x="976" y="108" class="name">MySQL</text><text x="976" y="132" class="body">业务持久化 · Flyway 管理表结构</text>
+      </g>
+      <g data-node="redis">
+        <rect x="956" y="180" width="284" height="64" rx="6" fill="#ececec" stroke="#bfc0c0"/>
+        <text x="976" y="208" class="name">Redis / Redisson</text><text x="976" y="232" class="body">缓存 · 分布式锁</text>
+      </g>
+      <g data-node="es">
+        <rect x="956" y="280" width="284" height="64" rx="6" fill="#ececec" stroke="#bfc0c0"/>
+        <text x="976" y="308" class="name">Elasticsearch</text><text x="976" y="332" class="body">房源检索 · 地理位置查询</text>
+      </g>
+      <g data-node="rabbitmq">
+        <rect x="956" y="380" width="284" height="64" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/>
+        <text x="976" y="408" class="name">RabbitMQ</text><text x="976" y="432" class="body">订单超时 · 批量发券 · 通知推送</text>
+      </g>
+      <g data-node="alipay">
+        <rect x="956" y="480" width="284" height="64" rx="6" fill="#f5f5f5" stroke="#4f5d75" stroke-dasharray="5 4"/>
+        <text x="976" y="508" class="name">支付宝沙箱</text><text x="976" y="532" class="body">支付网关 · 异步回调验签</text>
+      </g>
+      <g data-node="llm">
+        <rect x="956" y="580" width="284" height="64" rx="6" fill="#f5f5f5" stroke="#4f5d75" stroke-dasharray="5 4"/>
+        <text x="976" y="608" class="name">外部大模型服务</text><text x="976" y="632" class="body">OpenAI 兼容接口 · 对话与建议生成</text>
+      </g>
+      <text x="360" y="584" class="body">MQ：延迟队列 / 重试队列，配合幂等校验与场景兜底。</text>
+      <text x="360" y="608" class="body">Agent：写工具先起草，房客确认后执行；仲裁建议由管理员决策。</text>
+      <path d="M40 660H1240" stroke="#d7d9df"/>
+      <path d="M40 688H72" stroke="#2e5aa8" stroke-width="1.5"/><text x="84" y="692" class="body">HTTP / 外部调用</text>
+      <path d="M260 688H292" stroke="#4f5d75" stroke-width="1.5"/><text x="304" y="692" class="body">数据访问</text>
+      <path d="M436 688H468" stroke="#4f5d75" stroke-width="1.5" stroke-dasharray="5 4"/><text x="480" y="692" class="body">异步消息 / 推送</text>
+      <rect x="660" y="680" width="24" height="16" rx="2" fill="#f5f5f5" stroke="#4f5d75" stroke-dasharray="5 4"/><text x="696" y="692" class="body">外部服务</text>
+      <rect x="848" y="680" width="24" height="16" rx="2" fill="#f5f5f5" stroke="#eb6c36"/><text x="884" y="692" class="body">重点组件</text>
+    </svg>
+  </div>
+  <div class="notes">
+    <section><h2>异步业务的三个落点</h2><p>订单超时使用 TTL + DLX；批量发券与通知推送使用消费队列与重试队列。幂等校验、定时扫描和降级路径按各场景实现，具体路径另见 MQ 详图。</p></section>
+    <section><h2>AI 的权限边界</h2><p>客服通过 10 个白名单工具访问业务，其中 7 个只读、3 个起草待确认操作。争议辅助生成建议草稿，管理员保留最终仲裁权。</p></section>
+  </div>
+  <footer>范围：逻辑架构总览，端口为本地开发端口。高德地图集成、上传目录、具体队列与内部类关系未展开；不表示生产部署拓扑。<br>绘图：diagram-design · 默认浅色风格 · 16:9 · 根据项目代码核对于 2026-10-09。</footer>
+</main>
+</body>
+</html>

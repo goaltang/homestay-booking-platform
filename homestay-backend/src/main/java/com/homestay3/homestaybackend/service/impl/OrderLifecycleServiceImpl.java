@@ -26,6 +26,7 @@ import com.homestay3.homestaybackend.service.EarningService;
 import com.homestay3.homestaybackend.service.OrderLifecycleService;
 import com.homestay3.homestaybackend.service.OrderNotificationService;
 import com.homestay3.homestaybackend.service.PricingService;
+import com.homestay3.homestaybackend.service.RefundPolicyCalculator;
 import com.homestay3.homestaybackend.service.PromotionMatchService;
 import com.homestay3.homestaybackend.service.SystemConfigService;
 import com.homestay3.homestaybackend.service.search.UserBehaviorTrackingService;
@@ -52,7 +53,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -78,6 +78,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
     private final ReviewRepository reviewRepository;
     private final BookingConflictService bookingConflictService;
     private final PricingService pricingService;
+    private final RefundPolicyCalculator refundPolicyCalculator;
     private final CouponService couponService;
     private final PromotionMatchService promotionMatchService;
     private final PromotionUsageRepository promotionUsageRepository;
@@ -1271,7 +1272,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
             if (OrderStatus.CANCELLED_SYSTEM.name().equals(originalCancelType)
                     || OrderStatus.CANCELLED.name().equals(originalCancelType)) {
                 // 管理员取消，直接执行退款（不需要审批流程）
-                BigDecimal calculatedRefund = calculateRefundAmount(order);
+                BigDecimal calculatedRefund = refundPolicyCalculator.calculate(order).amount();
                 String refundTradeNo = "ADMIN_REFUND_" + System.currentTimeMillis();
 
                 orderStatusUpdater.markRefunded(order);
@@ -1306,7 +1307,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
                 order.setRefundType(refundType);
                 order.setRefundReason(reason != null && !reason.isEmpty() ? reason : "订单取消导致退款");
 
-                BigDecimal calculatedRefund = calculateRefundAmount(order);
+                BigDecimal calculatedRefund = refundPolicyCalculator.calculate(order).amount();
                 order.setRefundAmount(calculatedRefund);
 
                 order.setRefundInitiatedBy(actorId);
@@ -1437,76 +1438,6 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
 
         // 直接调用 processCancelOrder 方法处理取消逻辑
         return processCancelOrder(order, cancelType, reason);
-    }
-
-    /**
-     * 计算退款金额（优先使用价格快照中的 payableAmount）
-     */
-    private BigDecimal calculateRefundAmount(Order order) {
-        if (order.getCheckInDate() == null || order.getTotalAmount() == null) {
-            return BigDecimal.ZERO;
-        }
-
-        // 优先读取价格快照中的实付金额
-        BigDecimal baseAmount = order.getTotalAmount();
-        try {
-            PricingResult snapshot = pricingService.getPriceSnapshot(order.getId());
-            if (snapshot != null && snapshot.getPayableAmount() != null) {
-                baseAmount = snapshot.getPayableAmount();
-                log.info("退款计算使用价格快照金额: orderId={}, payableAmount={}", order.getId(), baseAmount);
-            }
-        } catch (Exception e) {
-            log.warn("读取价格快照失败，回退到订单总金额: {}", e.getMessage());
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime checkInTime = order.getCheckInDate().atTime(14, 0);
-        long hoursBetween = java.time.Duration.between(now, checkInTime).toHours();
-
-        int policyType = 2;
-        if (order.getHomestay() != null && order.getHomestay().getCancelPolicyType() != null) {
-            policyType = order.getHomestay().getCancelPolicyType();
-        }
-
-        BigDecimal refundAmt;
-
-        if (policyType == 1) {
-            if (hoursBetween >= 24) {
-                refundAmt = baseAmount;
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                } else {
-                    BigDecimal perNight = baseAmount.divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = baseAmount.subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                }
-            }
-        } else if (policyType == 3) {
-            if (hoursBetween >= 72) {
-                refundAmt = baseAmount;
-            } else {
-                refundAmt = baseAmount.multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-            }
-        } else {
-            if (hoursBetween >= 48) {
-                refundAmt = baseAmount;
-            } else if (hoursBetween >= 24) {
-                refundAmt = baseAmount.multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                } else {
-                    BigDecimal perNight = baseAmount.divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = baseAmount.subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                }
-            }
-        }
-
-        return refundAmt;
     }
 
     /**
