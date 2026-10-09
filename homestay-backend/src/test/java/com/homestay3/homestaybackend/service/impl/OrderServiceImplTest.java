@@ -16,12 +16,8 @@ import com.homestay3.homestaybackend.repository.HomestayRepository;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.repository.ReviewRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
-import com.homestay3.homestaybackend.service.BookingConflictService;
-import com.homestay3.homestaybackend.service.EarningService;
-import com.homestay3.homestaybackend.service.NotificationService;
 import com.homestay3.homestaybackend.service.OrderLifecycleService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
-import com.homestay3.homestaybackend.service.PaymentService;
 import com.homestay3.homestaybackend.service.SystemConfigService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,19 +59,7 @@ class OrderServiceImplTest {
     private HomestayRepository homestayRepository;
 
     @Mock
-    private NotificationService notificationService;
-
-    @Mock
-    private EarningService earningService;
-
-    @Mock
     private ReviewRepository reviewRepository;
-
-    @Mock
-    private BookingConflictService bookingConflictService;
-
-    @Mock
-    private PaymentService paymentService;
 
     @Mock
     private OrderLifecycleService orderLifecycleService;

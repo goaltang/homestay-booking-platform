@@ -39,16 +39,6 @@ public class HomestayRecommendationServiceImpl implements HomestayRecommendation
     private final HomestayDtoAssembler homestayDtoAssembler;
     private final UserProfileService userProfileService;
 
-    // 算法权重配置
-    private static final double WEIGHT_BOOKING_COUNT = 0.4; // 预订量权重
-    private static final double WEIGHT_RATING = 0.3; // 评分权重
-    private static final double WEIGHT_REVIEW_COUNT = 0.2; // 评论数权重
-    private static final double WEIGHT_RECENCY = 0.1; // 时间衰减权重
-
-    // 时间范围配置
-    private static final int POPULAR_DAYS_RANGE = 30; // 热门统计天数
-    private static final int RECENT_DAYS_RANGE = 7; // 近期活跃天数
-
     @Autowired
     public HomestayRecommendationServiceImpl(
             HomestayRepository homestayRepository,
@@ -579,38 +569,6 @@ public class HomestayRecommendationServiceImpl implements HomestayRecommendation
             "recommendedHomestaysPage" }, allEntries = true)
     public void refreshRecommendationCache() {
         log.info("刷新推荐缓存");
-    }
-
-    /**
-     * 计算热门度评分 - 强化预订量和活跃度权重
-     */
-    private PopularityScore calculatePopularityScore(Homestay homestay) {
-        LocalDateTime cutoffDate = LocalDateTime.now().minus(POPULAR_DAYS_RANGE, ChronoUnit.DAYS);
-        LocalDateTime recentCutoff = LocalDateTime.now().minus(7, ChronoUnit.DAYS); // 最近一周
-
-        // 近期预订数 (30天) - 热门算法主要关注预订量
-        long recentBookings = orderRepository.countByHomestayIdAndCreatedAtAfter(homestay.getId(), cutoffDate);
-
-        // 最近一周的预订数 (热度加权) - 权重更高
-        long weeklyBookings = orderRepository.countByHomestayIdAndCreatedAtAfter(homestay.getId(), recentCutoff);
-
-        // 评分和评论数
-        Double avgRatingObj = reviewRepository.getAverageRatingByHomestayId(homestay.getId());
-        double avgRating = avgRatingObj != null ? avgRatingObj : 3.0; // 默认评分3.0避免新房源劣势
-        long reviewCount = reviewRepository.countByHomestayId(homestay.getId());
-
-        // 热门度算法：70%关注预订活跃度，30%关注评价质量
-        double hotScore = weeklyBookings * 5.0 + // 最近一周预订数 x5 (大幅提升权重)
-                recentBookings * 2.0 + // 近30天预订数 x2
-                avgRating * 0.3 + // 评分权重降低
-                Math.sqrt(Math.min(reviewCount, 100)) * 0.2; // 评论数权重降低
-
-        // 对于没有任何预订的房源，给较低基础分数，热门算法不偏向新房源
-        if (recentBookings == 0 && weeklyBookings == 0) {
-            hotScore = avgRating * 0.1 + Math.sqrt(reviewCount) * 0.05; // 显著降低无预订房源的分数
-        }
-
-        return new PopularityScore(homestay, hotScore);
     }
 
     /**
@@ -1154,15 +1112,6 @@ public class HomestayRecommendationServiceImpl implements HomestayRecommendation
             // 低于要求的评分，按比例减分
             return Math.max(0, rating / minRating);
         }
-    }
-
-    // 保留原有的简单匹配方法作为兼容
-    private double calculateLocationMatch(Homestay homestay, UserPreference preference) {
-        return calculateEnhancedLocationMatch(homestay, preference);
-    }
-
-    private double calculatePriceMatch(Homestay homestay, UserPreference preference) {
-        return calculateEnhancedPriceMatch(homestay, preference);
     }
 
     private HomestaySummaryDTO convertToSummaryDTO(Homestay homestay) {
