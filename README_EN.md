@@ -40,7 +40,7 @@ This workflow lets a single engineer deliver all three frontends (guest / host /
 
 ## Highlights
 
-- **Three frontends, one backend**: Guest, host, and admin apps share a unified API layer covering consumption, operations, and platform governance.
+- **Three roles, two frontend apps**: Guests and hosts share the customer frontend; administrators use a separate admin frontend. Both share one backend for bookings, host operations, and platform governance.
 - **Elasticsearch property search**: Full-text search, faceted filtering, geo-coordinate indexing, similar-property recommendations, and personalized ranking.
 - **Personalized recommendation engine**: Builds user profiles from order history, favorites, and browsing behavior. Four strategies — trending, personalized, location-based, and similar listings — with three-tier graceful degradation and result diversification.
 - **Dynamic pricing engine**: Weekend surcharges, holiday adjustments, multi-night discounts, early-booking discounts. Scope covers global / city / host / property-group / individual listing. Supports make-up workday detection and order price snapshot locking.
@@ -69,23 +69,13 @@ This workflow lets a single engineer deliver all three frontends (guest / host /
 
 ### Message Architecture (RabbitMQ - Three Scenarios)
 
-```mermaid
-flowchart LR
-    subgraph S1["① Order Timeout · DLX Delayed Queue"]
-        direction LR
-        O1[Order created] --> O2[Delayed queue<br/>TTL 2h] --> O3[DLX dead-letter<br/>→ consumer queue] --> O4[Idempotent check<br/>→ auto cancel]
-    end
-    subgraph S2["② Batch Coupon Issuance · Event-driven + Retry Queue"]
-        direction LR
-        C1[Task created] --> C2[Main queue] --> C3[Consumer issues coupons<br/>item by item] --> C4[Failures → retry queue<br/>auto-retry after 60s, max 3]
-    end
-    subgraph S3["③ Notification Push · Reliable Delivery"]
-        direction LR
-        N1[Transaction commit] --> N2[Main queue] --> N3[WebSocket<br/>real-time push] --> N4[No loss on crash<br/>re-push after restart]
-    end
-```
+| Scenario | Implementation focus | Diagram |
+|---|---|---|
+| Order timeout | After-commit publishing, TTL + DLX, expected-state check, scheduled scan | [Timeout](docs/diagrams/mq-order-timeout.png) |
+| Batch coupons | Tasks and items, consumer-exception retries, stale PENDING-task scan | [Batch coupons](docs/diagrams/mq-coupon-batch.png) |
+| Notifications | Persistence, after-commit events, consumer retries, WebSocket and HTTP reads | [Notifications](docs/diagrams/mq-notification.png) |
 
-> Common pattern across all three: main queue + retry/delayed queue (TTL dead-letter back to main), manual consumer ack + idempotency check, `mq-enabled` toggle for graceful degradation, scheduled tasks as fallback. Full diagrams: `obsidian-vault/03-后端/后端-RabbitMQ 消息架构.md`.
+> Retry and fallback paths differ by scenario. Database commits and message publishing have no atomic outbox guarantee; successful WebSocket sends do not prove receipt by a client. See the [diagram notes (Chinese)](docs/diagrams/README.md).
 
 ## Tech Stack
 
@@ -101,9 +91,38 @@ flowchart LR
 
 ## Architecture
 
-![Architecture](docs/architecture.png)
+![Homestay system architecture: two frontend apps, a Spring Boot backend, data infrastructure, and external services](docs/diagrams/system-overview.png)
 
-> Vector version: [docs/architecture.svg](docs/architecture.svg) (local `docs/architecture.drawio` is the editable draw.io source, excluded from git per .gitignore).
+Guests and hosts share the customer frontend, while administrators use a separate admin frontend. Both connect to one Spring Boot application integrating MySQL, Redis, Elasticsearch, RabbitMQ, the Alipay sandbox, and an external LLM service.
+
+> [Full-resolution image](docs/diagrams/system-overview.png) · [Editable HTML source](docs/diagrams/system-overview.html) (download and open in a browser) · [Architecture notes (Chinese)](docs/diagrams/README.md). Labels are in Chinese; ports are for local development.
+
+### Detailed Architecture Diagrams
+
+| Topic | Full-resolution images (Chinese labels) |
+|---|---|
+| Orders and refunds | [Order lifecycle](docs/diagrams/order-lifecycle.png) · [Refunds and disputes](docs/diagrams/refund-dispute.png) |
+| Booking and payment | [Booking transaction](docs/diagrams/booking-sequence.png) · [Alipay callbacks](docs/diagrams/payment-sequence.png) |
+| RabbitMQ | [Timeout](docs/diagrams/mq-order-timeout.png) · [Batch coupons](docs/diagrams/mq-coupon-batch.png) · [Notifications](docs/diagrams/mq-notification.png) |
+| AI support | [Orchestration and confirmation](docs/diagrams/agent-workflow.png) |
+| Pricing | [Pricing and discounts](docs/diagrams/pricing-flow.png) |
+| Data model | [Booking entities](docs/diagrams/er-booking.png) · [Coupon entities](docs/diagrams/er-coupons.png) |
+| Search and recommendations | [Independent pipelines](docs/diagrams/search-recommendation.png) |
+| Pricing rules | [Scope, ordering and stopping](docs/diagrams/pricing-rules.png) |
+| Docker configuration | [Application entry points](docs/diagrams/deployment-apps.png) · [Data services](docs/diagrams/deployment-data.png) |
+| Concurrency and access | [Date locks and transaction boundaries](docs/diagrams/booking-concurrency.png) · [Authentication and permissions](docs/diagrams/auth-permissions.png) |
+| Business roles | [Guest, host and administrator swimlanes](docs/diagrams/business-swimlane.png) |
+| Stay and settlement | [Check-in, deposits and settlement](docs/diagrams/stay-settlement.png) |
+| Chat and moderation | [Chat message sequence](docs/diagrams/chat-sequence.png) · [Property review states](docs/diagrams/homestay-audit.png) |
+| Index and inventory | [Property index synchronization](docs/diagrams/index-sync.png) · [Host calendar and inventory](docs/diagrams/calendar-inventory.png) |
+| Campaigns | [Campaign status, budget and usage](docs/diagrams/campaign-lifecycle.png) |
+| Earnings and frontend | [Host earnings](docs/diagrams/host-earnings.png) · [Frontend collaboration](docs/diagrams/frontend-collaboration.png) |
+| Files | [Upload, storage and access](docs/diagrams/file-upload.png) |
+| Additional views | [Role use cases](docs/diagrams/role-usecases.png) · [Backend dependencies](docs/diagrams/backend-dependencies.png) · [Physical booking schema](docs/diagrams/db-booking-physical.png) |
+| Detailed system views | [End-to-end order collaboration](docs/diagrams/order-end-to-end.png) · [Transaction consistency and compensation](docs/diagrams/transaction-consistency.png) |
+| Cross-module coordination | [Agent orchestration and confirmation](docs/diagrams/agent-control-boundaries.png) · [Order state and resource coordination](docs/diagrams/order-state-coupling.png) |
+
+The [diagram notes](docs/diagrams/README.md) include editable HTML sources. Download the project to open the [browser gallery](docs/diagrams/index.html). The dispute diagram identifies a current status-precondition conflict in the arbitration approval path.
 
 ## User Roles
 

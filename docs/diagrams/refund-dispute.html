@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>退款与争议 · 审批和恢复</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+SC:wght@400;600&amp;family=Noto+Serif+SC:wght@400&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { --paper:#f5f5f5; --ink:#2d3142; --muted:#4f5d75; --accent:#eb6c36; --link:#2e5aa8; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist','Noto Sans SC','Microsoft YaHei','WenQuanYi Zen Hei',sans-serif; }
+    main { max-width:1392px; margin:auto; padding:48px 32px 32px; min-width:0; }
+    .eyebrow { color:var(--muted); font:500 11px 'Geist Mono',monospace; letter-spacing:.16em; }
+    h1 { margin:12px 0; font:400 40px 'Instrument Serif','Noto Serif SC','Songti SC',serif; }
+    .intro { margin:0 0 28px; font-size:14px; line-height:1.8; color:var(--muted); }
+    .diagram-container { width:100%; overflow-x:auto; border:1px solid #d7d9df; border-radius:8px; }
+    svg { display:block; width:100%; min-width:1280px; }
+    svg .name { font-size:16px; font-weight:600; }
+    svg .body { font-size:12px; fill:var(--muted); }
+    svg .mono { font:400 12px 'Geist Mono',monospace; fill:var(--muted); }
+    svg .tag { font:500 8px 'Geist Mono',monospace; letter-spacing:.12em; fill:var(--muted); }
+    svg .heading { font-size:14px; font-weight:600; }
+    svg .wire { fill:none; stroke:var(--muted); stroke-width:1.5;  }
+    svg .http { stroke:var(--link);  }
+    svg .async { stroke-dasharray:5 4; }
+    svg .edge-label { font:400 12px 'Geist Mono',monospace; fill:var(--muted); text-anchor:middle; }
+    .notes { display:grid; grid-template-columns:1.2fr 1fr; gap:32px; margin:28px 0; }
+    .notes h2 { font-size:16px; margin:0 0 8px; }
+    .notes p { margin:0; color:var(--muted); font-size:13px; line-height:1.9; }
+    footer { border-top:1px solid #d7d9df; padding-top:16px; font-size:12px; line-height:1.8; color:var(--muted); }
+    @media(max-width:640px) { main { padding:24px 16px; } h1 { font-size:30px; } .notes { grid-template-columns:1fr; gap:20px; } }
+    @media print { main { padding:0; max-width:none; } .diagram-container { overflow-x:visible; } svg { min-width:0; } .notes,footer { break-inside:avoid; } }
+  </style>
+<style>
+svg text { fill:#2d3142; }
+svg .name { font-size:16px; font-weight:600; }
+svg .detail { font-size:12px; fill:#4f5d75; }
+svg .code { font:400 12px 'Geist Mono','WenQuanYi Zen Hei',monospace; fill:#4f5d75; }
+svg .small { font-size:12px; fill:#4f5d75; }
+svg .label { font-size:12px; fill:#4f5d75; }
+svg .wire { stroke:#4f5d75; fill:none; stroke-width:1.5; }
+.notes { display:block; } .notes p { margin-bottom:10px; }
+nav { margin:16px 0; font-size:13px; } a { color:#2e5aa8; }
+</style></head><body><main><div class="eyebrow">HOMESTAY / STATE / DETAIL</div><h1>退款与争议 · 审批和恢复</h1><p class="intro">展示退款申请、拒绝恢复与争议仲裁，并明确当前仲裁批准路径的状态前置冲突。</p><nav><a href="index.html">全部架构图</a> · <a href="refund-dispute.png">高清 PNG</a></nav><div class="diagram-container" tabindex="0" aria-label="退款与争议 · 审批和恢复，窄屏可横向滚动"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="refund-dispute-title refund-dispute-desc"><title id="refund-dispute-title">退款与争议 · 审批和恢复</title><desc id="refund-dispute-desc">展示退款申请、拒绝恢复与争议仲裁，并明确当前仲裁批准路径的状态前置冲突。</desc><defs><marker id="refund-dispute-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="#4f5d75"/></marker><marker id="refund-dispute-open" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs><rect width="1280" height="720" fill="#f5f5f5"/><path class="wire" d="M320 192L488 192" marker-end="url(#refund-dispute-arrow)"/><path class="wire" d="M728 192L896 192" marker-end="url(#refund-dispute-arrow)"/><path class="wire" d="M608 136L608 88Q608 80 600 80L208 80Q200 80 200 88L200 136" stroke-dasharray="5 4" marker-end="url(#refund-dispute-arrow)"/><path class="wire" d="M568 248L568 440" marker-end="url(#refund-dispute-arrow)"/><path class="wire" d="M488 488L408 488Q400 488 400 480L400 232Q400 224 392 224L320 224" stroke-dasharray="5 4" marker-end="url(#refund-dispute-arrow)"/><path class="wire" d="M728 496L896 496" marker-end="url(#refund-dispute-arrow)"/><rect x="372" y="164" width="64" height="20" fill="#f5f5f5"/><text x="404" y="180" class="label" text-anchor="middle">申请退款</text><rect x="762" y="164" width="100" height="20" fill="#f5f5f5"/><text x="812" y="180" class="label" text-anchor="middle">批准并退款成功</text><rect x="372" y="52" width="64" height="20" fill="#f5f5f5"/><text x="404" y="68" class="label" text-anchor="middle">拒绝退款</text><rect x="596" y="332" width="64" height="20" fill="#f5f5f5"/><text x="628" y="348" class="label" text-anchor="middle">发起争议</text><rect x="328" y="344" width="64" height="20" fill="#f5f5f5"/><text x="360" y="360" class="label" text-anchor="middle">拒绝仲裁</text><rect x="762" y="468" width="100" height="20" fill="#f5f5f5"/><text x="812" y="484" class="label" text-anchor="middle">仲裁批准：调用</text><g data-node="paid"><rect x="80" y="136" width="240" height="112" rx="8" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="100" y="164" class="name">已支付</text><text x="100" y="188" class="code">PAID</text></g><g data-node="refund"><rect x="488" y="136" width="240" height="112" rx="8" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="508" y="164" class="name">退款中</text><text x="508" y="188" class="code">REFUND_PENDING</text></g><g data-node="refunded"><rect x="896" y="136" width="240" height="112" rx="8" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="916" y="164" class="name">已退款</text><text x="916" y="188" class="code">REFUNDED</text></g><g data-node="dispute"><rect x="488" y="440" width="240" height="112" rx="8" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="508" y="468" class="name">争议待处理</text><text x="508" y="492" class="code">DISPUTE_PENDING</text></g><g data-node="approval"><rect x="896" y="440" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="916" y="468" class="name">调用退款审批</text><text x="916" y="492" class="code">approveRefund</text><text x="916" y="512" class="detail">状态前置冲突，不能视为成功</text></g><path d="M40 660H1240" stroke="#d7d9df"/><text x="40" y="692" class="detail">实线：业务动作 / 关系    虚线：返回、异步或补偿路径    橙色：本图重点</text></svg></div><section class="notes"><h2>阅读说明与范围</h2><p>图中 PAID 作为典型入口。申请退款服务按 paymentStatus=PAID 判断；房客发起争议可从其他非终态进入，图中只选取退款处理中这一条入口。房东发起争议还要求处于退款中。</p><p>普通退款审批成功后进入 REFUNDED，拒绝退款会恢复 PAID；网关退款异常不表示已退款。REFUND_FAILED 枚举与通用重试迁移未在本图展开。</p><p>当前已发现：markDisputePending 将支付状态设为 DISPUTED；resolveDispute(APPROVED) 直接调用 approveRefund，而后者要求 REFUND_PENDING。按现有代码该批准路径会遇到前置状态拒绝；因此图中只画调用，不画成已退款。</p><p>现有争议单测 mock 了 approveRefund，未证明该跨服务批准路径可运行。该问题仅记录在图示说明中，本轮未修改业务代码。</p></section><footer>代码核对入口：<a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/PaymentProcessingServiceImpl.java">PaymentProcessingServiceImpl.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/DisputeServiceImpl.java">DisputeServiceImpl.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/OrderStatusUpdater.java">OrderStatusUpdater.java</a><br>diagram-design · 默认浅色 · slide-16x9 · 静态代码核对：2026-10-09；图示不等于真实外部服务联调证明。</footer></main></body></html>

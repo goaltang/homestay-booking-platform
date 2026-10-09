@@ -40,7 +40,7 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 
 ## 项目亮点
 
-- **三端一体**：用户端、房东端、管理员端共用后端能力，分别覆盖消费、经营和平台治理场景。
+- **三角色协作**：房客与房东共用 C 端，管理员使用独立管理端；两个前端应用共用后端能力，覆盖消费、经营和平台治理场景。
 - **Elasticsearch 房源搜索**：支持全文检索、条件筛选、地理坐标索引与搜索、相似房源推荐，搜索结果可个性化排序。
 - **智能个性化推荐引擎**：基于用户历史订单、收藏行为、浏览轨迹构建用户画像，实现热门推荐、个性化推荐、基于位置的推荐和相似房源推荐四种策略，支持三级降级兜底与结果多样化。
 - **动态定价引擎**：支持周末溢价、节假日调价、连住折扣、提前预订优惠等多维度定价规则，作用域覆盖全局/城市/房东/房源组/单个房源，支持调休补班识别与订单价格快照锁定。
@@ -69,23 +69,13 @@ Homestay 是一个**单人独立交付**的全栈项目，覆盖 25 个业务模
 
 ### 消息架构（RabbitMQ 三场景）
 
-```mermaid
-flowchart LR
-    subgraph S1["① 订单超时 · DLX 延迟队列"]
-        direction LR
-        O1[下单] --> O2[延迟队列<br/>TTL 2h] --> O3[DLX 死信<br/>→ 消费队列] --> O4[幂等校验<br/>→ 系统取消]
-    end
-    subgraph S2["② 批量发券 · 消息驱动 + 重试队列"]
-        direction LR
-        C1[创建任务] --> C2[主队列] --> C3[消费者发券<br/>逐条入账] --> C4[失败进重试队列<br/>60s 后自动重试 ≤3 次]
-    end
-    subgraph S3["③ 通知推送 · 可靠投递"]
-        direction LR
-        N1[事务提交] --> N2[主队列] --> N3[WebSocket<br/>实时推送] --> N4[进程崩溃不丢<br/>重启自动补推]
-    end
-```
+| 场景 | 实现重点 | 详图 |
+|---|---|---|
+| 订单超时 | 提交后发布、TTL + DLX、期望状态检查、定时扫描 | [订单超时图](docs/diagrams/mq-order-timeout.png) |
+| 批量发券 | 任务与明细、消费异常重试、超时 PENDING 任务扫描 | [批量发券图](docs/diagrams/mq-coupon-batch.png) |
+| 通知推送 | 通知持久化、提交后事件、消费重试、WebSocket 与 HTTP 读取 | [通知推送图](docs/diagrams/mq-notification.png) |
 
-> 统一模式：主队列 + 重试/延迟队列（TTL 死信回主）、消费者手动 ack + 幂等校验、mq-enabled 开关降级、定时任务兜底。详细图见 `obsidian-vault/03-后端/后端-RabbitMQ 消息架构.md`。
+> 各场景的重试与兜底不同。数据库提交到消息发布不具有 outbox 原子保证；WebSocket 推送成功也不等于客户端已收到并展示。实现范围见[图集说明](docs/diagrams/README.md)。
 
 ## 技术栈
 
@@ -101,9 +91,38 @@ flowchart LR
 
 ## 系统架构
 
-![系统架构](docs/architecture.png)
+![民宿预订系统架构总览：两个前端应用、Spring Boot 后端、数据设施与外部服务](docs/diagrams/system-overview.png)
 
-> 矢量版：[docs/architecture.svg](docs/architecture.svg)（本地 `docs/architecture.drawio` 为 draw.io 可编辑源，按 .gitignore 约定不入库）。
+房客与房东共用 C 端，管理员使用独立管理端；两个前端连接同一个 Spring Boot 后端。后端集成 MySQL、Redis、Elasticsearch、RabbitMQ、支付宝沙箱与大模型服务。
+
+> [查看高清图片](docs/diagrams/system-overview.png) · [HTML 可修改源文件](docs/diagrams/system-overview.html)（下载后用浏览器打开）· [架构说明](docs/diagrams/README.md)。图中端口为本地开发端口。
+
+### 架构详图导航
+
+| 主题 | 高清图片 |
+|---|---|
+| 订单与退款 | [订单生命周期](docs/diagrams/order-lifecycle.png) · [退款与争议](docs/diagrams/refund-dispute.png) |
+| 下单与支付 | [下单事务时序](docs/diagrams/booking-sequence.png) · [支付宝异步回调](docs/diagrams/payment-sequence.png) |
+| RabbitMQ | [订单超时](docs/diagrams/mq-order-timeout.png) · [批量发券](docs/diagrams/mq-coupon-batch.png) · [通知推送](docs/diagrams/mq-notification.png) |
+| AI 客服 | [编排与确认执行](docs/diagrams/agent-workflow.png) |
+| 计价优惠 | [统一计价顺序](docs/diagrams/pricing-flow.png) |
+| 数据模型 | [预订与支付实体](docs/diagrams/er-booking.png) · [优惠券实体](docs/diagrams/er-coupons.png) |
+| 搜索与推荐 | [独立检索与推荐链路](docs/diagrams/search-recommendation.png) |
+| 定价规则 | [作用域、执行顺序与停止条件](docs/diagrams/pricing-rules.png) |
+| Docker 配置 | [应用入口](docs/diagrams/deployment-apps.png) · [数据服务](docs/diagrams/deployment-data.png) |
+| 并发与权限 | [日期锁与事务边界](docs/diagrams/booking-concurrency.png) · [认证与权限分层](docs/diagrams/auth-permissions.png) |
+| 三方业务 | [房客、房东与管理员泳道](docs/diagrams/business-swimlane.png) |
+| 入住与结算 | [入住、押金和退房结算](docs/diagrams/stay-settlement.png) |
+| 聊天与审核 | [聊天消息时序](docs/diagrams/chat-sequence.png) · [房源审核状态](docs/diagrams/homestay-audit.png) |
+| 索引与库存 | [房源索引同步](docs/diagrams/index-sync.png) · [房东日历与库存](docs/diagrams/calendar-inventory.png) |
+| 营销活动 | [活动状态、预算与优惠流水](docs/diagrams/campaign-lifecycle.png) |
+| 收益与前端 | [房东收益流转](docs/diagrams/host-earnings.png) · [前端模块协作](docs/diagrams/frontend-collaboration.png) |
+| 文件管理 | [上传、存储与访问](docs/diagrams/file-upload.png) |
+| 补充视角 | [三角色用例](docs/diagrams/role-usecases.png) · [后端依赖](docs/diagrams/backend-dependencies.png) · [核心物理表结构](docs/diagrams/db-booking-physical.png) |
+| 复杂总图 | [订单全链路协作](docs/diagrams/order-end-to-end.png) · [交易一致性与补偿](docs/diagrams/transaction-consistency.png) |
+| 复杂联动 | [AI 客服权限与确认](docs/diagrams/agent-control-boundaries.png) · [订单状态与资源联动](docs/diagrams/order-state-coupling.png) |
+
+[图集与代码核对说明](docs/diagrams/README.md)提供各图 HTML 源文件；下载后可打开[浏览器图集](docs/diagrams/index.html)。退款与争议图标注了当前仲裁批准路径的状态前置冲突。
 
 ## 系统角色
 

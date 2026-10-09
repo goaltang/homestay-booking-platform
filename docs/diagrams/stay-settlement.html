@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>入住与退房 · 押金和结算边界</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+SC:wght@400;600&amp;family=Noto+Serif+SC:wght@400&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { --paper:#f5f5f5; --ink:#2d3142; --muted:#4f5d75; --accent:#eb6c36; --link:#2e5aa8; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist','Noto Sans SC','Microsoft YaHei','WenQuanYi Zen Hei',sans-serif; }
+    main { max-width:1392px; margin:auto; padding:48px 32px 32px; min-width:0; }
+    .eyebrow { color:var(--muted); font:500 11px 'Geist Mono',monospace; letter-spacing:.16em; }
+    h1 { margin:12px 0; font:400 40px 'Instrument Serif','Noto Serif SC','Songti SC',serif; }
+    .intro { margin:0 0 28px; font-size:14px; line-height:1.8; color:var(--muted); }
+    .diagram-container { width:100%; overflow-x:auto; border:1px solid #d7d9df; border-radius:8px; }
+    svg { display:block; width:100%; min-width:1280px; }
+    svg .name { font-size:16px; font-weight:600; }
+    svg .body { font-size:12px; fill:var(--muted); }
+    svg .mono { font:400 12px 'Geist Mono',monospace; fill:var(--muted); }
+    svg .tag { font:500 8px 'Geist Mono',monospace; letter-spacing:.12em; fill:var(--muted); }
+    svg .heading { font-size:14px; font-weight:600; }
+    svg .wire { fill:none; stroke:var(--muted); stroke-width:1.5;  }
+    svg .http { stroke:var(--link);  }
+    svg .async { stroke-dasharray:5 4; }
+    svg .edge-label { font:400 12px 'Geist Mono',monospace; fill:var(--muted); text-anchor:middle; }
+    .notes { display:grid; grid-template-columns:1.2fr 1fr; gap:32px; margin:28px 0; }
+    .notes h2 { font-size:16px; margin:0 0 8px; }
+    .notes p { margin:0; color:var(--muted); font-size:13px; line-height:1.9; }
+    footer { border-top:1px solid #d7d9df; padding-top:16px; font-size:12px; line-height:1.8; color:var(--muted); }
+    @media(max-width:640px) { main { padding:24px 16px; } h1 { font-size:30px; } .notes { grid-template-columns:1fr; gap:20px; } }
+    @media print { main { padding:0; max-width:none; } .diagram-container { overflow-x:visible; } svg { min-width:0; } .notes,footer { break-inside:avoid; } }
+  </style>
+<style>
+svg text { fill:#2d3142; }
+svg .name { font-size:16px; font-weight:600; }
+svg .detail { font-size:12px; fill:#4f5d75; }
+svg .code { font:400 12px 'Geist Mono','WenQuanYi Zen Hei',monospace; fill:#4f5d75; }
+svg .small { font-size:12px; fill:#4f5d75; }
+svg .label { font-size:12px; fill:#4f5d75; }
+svg .wire { stroke:#4f5d75; fill:none; stroke-width:1.5; }
+.notes { display:block; } .notes p { margin-bottom:10px; }
+nav { margin:16px 0; font-size:13px; } a { color:#2e5aa8; }
+</style></head><body><main><div class="eyebrow">HOMESTAY / FLOWCHART / DETAIL</div><h1>入住与退房 · 押金和结算边界</h1><p class="intro">展示凭证准备、实际入住、退房记录和结算前押金检查；记录状态不代表实际资金已退还。</p><nav><a href="index.html">全部架构图</a> · <a href="stay-settlement.png">高清 PNG</a></nav><div class="diagram-container" tabindex="0" aria-label="入住与退房 · 押金和结算边界，窄屏可横向滚动"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="stay-settlement-title stay-settlement-desc"><title id="stay-settlement-title">入住与退房 · 押金和结算边界</title><desc id="stay-settlement-desc">展示凭证准备、实际入住、退房记录和结算前押金检查；记录状态不代表实际资金已退还。</desc><defs><marker id="stay-settlement-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="#4f5d75"/></marker><marker id="stay-settlement-open" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs><rect width="1280" height="720" fill="#f5f5f5"/><text x="48" y="532" class="detail">额外费用由房东另行更新；结算完成不等于提现到账。</text><path class="wire" d="M288 184L356 184" marker-end="url(#stay-settlement-arrow)"/><path class="wire" d="M596 184L664 184" marker-end="url(#stay-settlement-arrow)"/><path class="wire" d="M904 184L972 184" marker-end="url(#stay-settlement-arrow)"/><path class="wire" d="M1092 232L1092 352" marker-end="url(#stay-settlement-arrow)"/><path class="wire" d="M972 408L816 408" marker-end="url(#stay-settlement-arrow)"/><path class="wire" d="M1092 464L1092 552" marker-end="url(#stay-settlement-arrow)"/><path class="wire" d="M672 464L672 588Q672 596 680 596L972 596" marker-end="url(#stay-settlement-arrow)"/><rect x="290" y="156" width="64" height="20" fill="#f5f5f5"/><text x="322.0" y="172" class="label" text-anchor="middle">房东准备</text><rect x="598" y="156" width="64" height="20" fill="#f5f5f5"/><text x="630.0" y="172" class="label" text-anchor="middle">办理入住</text><rect x="906" y="156" width="64" height="20" fill="#f5f5f5"/><text x="938.0" y="172" class="label" text-anchor="middle">实际退房</text><rect x="878" y="380" width="28" height="20" fill="#f5f5f5"/><text x="892" y="396" class="label" text-anchor="middle">是</text><rect x="1118" y="492" width="28" height="20" fill="#f5f5f5"/><text x="1132" y="508" class="label" text-anchor="middle">否</text><rect x="774" y="568" width="100" height="20" fill="#f5f5f5"/><text x="824" y="584" class="label" text-anchor="middle">处理后满足条件</text><g data-node="paid"><rect x="48" y="136" width="240" height="96" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="68" y="164" class="name">已支付</text><text x="68" y="188" class="code">PAID</text></g><g data-node="ready"><rect x="356" y="136" width="240" height="96" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="376" y="164" class="name">准备入住凭证</text><text x="376" y="188" class="code">READY_FOR_CHECKIN</text></g><g data-node="in"><rect x="664" y="136" width="240" height="96" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="684" y="164" class="name">办理入住</text><text x="684" y="188" class="code">CHECKED_IN</text></g><g data-node="out"><rect x="972" y="136" width="240" height="96" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="992" y="164" class="name">办理退房</text><text x="992" y="188" class="code">CHECKED_OUT</text></g><g data-node="pending"><path d="M1092.0 352L1212 408.0L1092.0 464L972 408.0Z" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1.5"/><text x="1092.0" y="404.0" class="name" text-anchor="middle">正数押金待处理？</text><text x="1092.0" y="428.0" class="detail" text-anchor="middle">PENDING 且金额 &gt; 0</text></g><g data-node="deposit"><rect x="528" y="352" width="288" height="112" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="548" y="380" class="name">房东处理押金</text><text x="548" y="404" class="detail">收取 / 退还 / 扣押 / 免除</text><text x="548" y="424" class="detail">退还网关调用仍为 TODO</text></g><g data-node="complete"><rect x="972" y="552" width="240" height="88" rx="20" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="992" y="580" class="name">确认结算</text><text x="992" y="604" class="detail">记录与订单 COMPLETED</text></g><path d="M40 660H1240" stroke="#d7d9df"/><text x="40" y="692" class="detail">实线：履约与结算步骤    菱形：结算前置判断    橙色：退房与押金处理</text></svg></div><section class="notes"><h2>阅读说明与范围</h2><p>本图选择准备凭证后办理入住的典型路径；已支付订单还可直接办理入住，自助入住、房客确认到达及取消准备等分支未展开。准备凭证只允许所属房东；手动入住由房东或有权限管理员办理。</p><p>退房要求 CHECKED_IN，按实际入住日期计算住宿晚数且至少一晚，创建退房记录并将订单标记 CHECKED_OUT。自助退房和其他角色路径依具体接口的权限与归属条件执行。</p><p>有正数押金时初始 depositStatus=PENDING，否则 WAIVED。确认结算只阻止 PENDING 且金额大于零的押金记录；图中的判断精确表达这一条件，不表示系统验证了银行资金到账。</p><p>所属房东可收取、退还、扣押或免除押金，也可更新额外费用。REFUND 当前只改押金状态并清除订单押金金额，实际支付网关退款仍是 TODO；不能将 REFUNDED 记录等同真实退款成功。</p><p>确认结算由房东或有权限管理员操作；退房记录与订单标 COMPLETED。生成待结算收益异常会被捕获记录，订单仍可完成；图中不把完成视为收益生成或提现必然成功。</p></section><footer>代码核对入口：<a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/CheckInServiceImpl.java">CheckInServiceImpl.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/CheckOutServiceImpl.java">CheckOutServiceImpl.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/controller/CheckInController.java">CheckInController.java</a><br>diagram-design · 默认浅色 · slide-16x9 · 静态代码核对：2026-10-09；图示不等于真实外部服务联调证明。</footer></main></body></html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文件上传 · 本地存储与访问路径</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+SC:wght@400;600&amp;family=Noto+Serif+SC:wght@400&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { --paper:#f5f5f5; --ink:#2d3142; --muted:#4f5d75; --accent:#eb6c36; --link:#2e5aa8; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist','Noto Sans SC','Microsoft YaHei','WenQuanYi Zen Hei',sans-serif; }
+    main { max-width:1392px; margin:auto; padding:48px 32px 32px; min-width:0; }
+    .eyebrow { color:var(--muted); font:500 11px 'Geist Mono',monospace; letter-spacing:.16em; }
+    h1 { margin:12px 0; font:400 40px 'Instrument Serif','Noto Serif SC','Songti SC',serif; }
+    .intro { margin:0 0 28px; font-size:14px; line-height:1.8; color:var(--muted); }
+    .diagram-container { width:100%; overflow-x:auto; border:1px solid #d7d9df; border-radius:8px; }
+    svg { display:block; width:100%; min-width:1280px; }
+    svg .name { font-size:16px; font-weight:600; }
+    svg .body { font-size:12px; fill:var(--muted); }
+    svg .mono { font:400 12px 'Geist Mono',monospace; fill:var(--muted); }
+    svg .tag { font:500 8px 'Geist Mono',monospace; letter-spacing:.12em; fill:var(--muted); }
+    svg .heading { font-size:14px; font-weight:600; }
+    svg .wire { fill:none; stroke:var(--muted); stroke-width:1.5;  }
+    svg .http { stroke:var(--link);  }
+    svg .async { stroke-dasharray:5 4; }
+    svg .edge-label { font:400 12px 'Geist Mono',monospace; fill:var(--muted); text-anchor:middle; }
+    .notes { display:grid; grid-template-columns:1.2fr 1fr; gap:32px; margin:28px 0; }
+    .notes h2 { font-size:16px; margin:0 0 8px; }
+    .notes p { margin:0; color:var(--muted); font-size:13px; line-height:1.9; }
+    footer { border-top:1px solid #d7d9df; padding-top:16px; font-size:12px; line-height:1.8; color:var(--muted); }
+    @media(max-width:640px) { main { padding:24px 16px; } h1 { font-size:30px; } .notes { grid-template-columns:1fr; gap:20px; } }
+    @media print { main { padding:0; max-width:none; } .diagram-container { overflow-x:visible; } svg { min-width:0; } .notes,footer { break-inside:avoid; } }
+  </style>
+<style>
+svg text { fill:#2d3142; }
+svg .name { font-size:16px; font-weight:600; }
+svg .detail { font-size:12px; fill:#4f5d75; }
+svg .code { font:400 12px 'Geist Mono','WenQuanYi Zen Hei',monospace; fill:#4f5d75; }
+svg .small { font-size:12px; fill:#4f5d75; }
+svg .label { font-size:12px; fill:#4f5d75; }
+svg .wire { stroke:#4f5d75; fill:none; stroke-width:1.5; }
+.notes { display:block; } .notes p { margin-bottom:10px; }
+nav { margin:16px 0; font-size:13px; } a { color:#2e5aa8; }
+</style></head><body><main><div class="eyebrow">HOMESTAY / ARCHITECTURE / DETAIL</div><h1>文件上传 · 本地存储与访问路径</h1><p class="intro">登录用户上传文件，后端检查文件元信息并写入本地目录，再返回可访问 URL；不额外引入对象存储。</p><nav><a href="index.html">全部架构图</a> · <a href="file-upload.png">高清 PNG</a></nav><div class="diagram-container" tabindex="0" aria-label="文件上传 · 本地存储与访问路径，窄屏可横向滚动"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="file-upload-title file-upload-desc"><title id="file-upload-title">文件上传 · 本地存储与访问路径</title><desc id="file-upload-desc">登录用户上传文件，后端检查文件元信息并写入本地目录，再返回可访问 URL；不额外引入对象存储。</desc><defs><marker id="file-upload-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="#4f5d75"/></marker><marker id="file-upload-open" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs><rect width="1280" height="720" fill="#f5f5f5"/><text x="48" y="624" class="detail">上传成功不保证业务引用保存成功；静态 /static/uploads/ 是另一条已配置访问路径。</text><path class="wire" d="M288 184L416 184" marker-end="url(#file-upload-arrow)"/><path class="wire" d="M656 184L784 184" marker-end="url(#file-upload-arrow)"/><path class="wire" d="M904 240L904 352" marker-end="url(#file-upload-arrow)"/><path class="wire" d="M784 408L656 408" stroke-dasharray="5 4" marker-end="url(#file-upload-arrow)"/><path class="wire" d="M416 408L288 408" stroke-dasharray="5 4" marker-end="url(#file-upload-arrow)"/><path class="wire" d="M168 464L168 544Q168 552 176 552L896 552Q904 552 904 544L904 464" marker-end="url(#file-upload-arrow)"/><rect x="328" y="156" width="48" height="20" fill="#f5f5f5"/><text x="352" y="172" class="label" text-anchor="middle">POST</text><rect x="692" y="156" width="56" height="20" fill="#f5f5f5"/><text x="720" y="172" class="label" text-anchor="middle">STORE</text><rect x="930" y="280" width="92" height="20" fill="#f5f5f5"/><text x="976" y="296" class="label" text-anchor="middle">FILES COPY</text><rect x="688" y="380" width="64" height="20" fill="#f5f5f5"/><text x="720" y="396" class="label" text-anchor="middle">存储结果</text><rect x="316" y="380" width="72" height="20" fill="#f5f5f5"/><text x="352" y="396" class="label" text-anchor="middle">返回 URL</text><rect x="500" y="524" width="72" height="20" fill="#f5f5f5"/><text x="536" y="540" class="label" text-anchor="middle">GET 读取</text><g data-node="client"><rect x="48" y="128" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="68" y="156" class="name">浏览器上传</text><text x="68" y="180" class="code">multipart/form-data</text><text x="68" y="200" class="code">file + type</text></g><g data-node="controller"><rect x="416" y="128" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="436" y="156" class="name">上传入口</text><text x="436" y="180" class="detail">登录检查 / 拒绝空文件</text></g><g data-node="storage"><rect x="784" y="128" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="804" y="156" class="name">文件存储服务</text><text x="804" y="180" class="detail">MIME / 大小检查</text><text x="804" y="200" class="detail">UUID 文件名</text></g><g data-node="disk"><rect x="784" y="352" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#eb6c36" stroke-width="2"/><text x="804" y="380" class="name">本地 uploads 目录</text><text x="804" y="404" class="code">avatar / homestay</text><text x="804" y="424" class="code">review / common</text></g><g data-node="response"><rect x="416" y="352" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="436" y="380" class="name">上传响应与 URL</text><text x="436" y="404" class="code">/api/files/{type}/{name}</text><text x="436" y="424" class="detail">头像另尝试更新用户记录</text></g><g data-node="read"><rect x="48" y="352" width="240" height="112" rx="6" fill="#f5f5f5" stroke="#bfc0c0" stroke-width="1"/><text x="68" y="380" class="name">浏览器读取文件</text><text x="68" y="404" class="detail">公开 GET 文件 URL</text></g><path d="M40 660H1240" stroke="#d7d9df"/><text x="40" y="692" class="detail">实线：业务动作 / 关系    虚线：返回、异步或补偿路径    橙色：本图重点</text></svg></div><section class="notes"><h2>阅读说明与范围</h2><p>本图选择 POST /api/files/upload：要求已登录，Controller 拒绝空文件，调用 storeFile 检查配置允许的 MIME 和大小上限。MIME 来自上传元信息，不等于真实文件内容检测、病毒扫描或完整安全审计。</p><p>原始文件名取扩展名，使用 UUID 生成新文件名；按 avatar / homestay / review / common 分目录写到 file.upload-dir。存储方式是本地文件系统；Docker 的目录挂载另见部署图。</p><p>这个 Controller 返回 /api/files/{type}/{filename}，GET 文件接口公开可读。FileService.uploadFile 另有 /static/uploads/ URL 构造，WebConfig 配有对应静态映射；不能把两种路径强行画成同一响应。</p><p>头像上传会尝试更新当前用户头像 URL，数据库更新失败会记录日志但仍可返回文件上传成功。其他业务图片的引用保存由各业务接口承担，不宣称文件与所有业务记录在一个原子事务中。</p><p>批量上传、删除、旧头像清理与其他房源图片接口在此图折叠或省略。图中不添加未实现的 CDN、S3、签名访问或自动文件回收服务。</p></section><footer>代码核对入口：<a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/controller/FileController.java">FileController.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/service/impl/FileServiceImpl.java">FileServiceImpl.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/config/FileStorageConfig.java">FileStorageConfig.java</a> · <a href="../../homestay-backend/src/main/java/com/homestay3/homestaybackend/config/WebConfig.java">WebConfig.java</a><br>diagram-design · 默认浅色 · slide-16x9 · 静态代码核对：2026-10-09；图示不等于真实外部服务联调证明。</footer></main></body></html>
