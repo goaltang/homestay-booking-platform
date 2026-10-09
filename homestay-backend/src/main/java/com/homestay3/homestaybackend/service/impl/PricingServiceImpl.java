@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -305,7 +306,8 @@ public class PricingServiceImpl implements PricingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    // 快照是可降级的只读数据；读取失败不能把外层退款事务标记为回滚。
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public PricingResult getPriceSnapshot(Long orderId) {
         OrderPriceSnapshot snapshot = snapshotRepository.findByOrderId(orderId).orElse(null);
         if (snapshot == null) {

@@ -18,12 +18,14 @@ import com.homestay3.homestaybackend.repository.ReviewRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
 import com.homestay3.homestaybackend.service.OrderLifecycleService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
+import com.homestay3.homestaybackend.service.PricingService;
+import com.homestay3.homestaybackend.service.RefundPolicyCalculator;
 import com.homestay3.homestaybackend.service.SystemConfigService;
 import org.springframework.beans.factory.ObjectProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -33,6 +35,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
@@ -68,9 +71,11 @@ class OrderServiceImplTest {
     private PaymentProcessingService paymentProcessingService;
 
     @Mock
+    private PricingService pricingService;
+
+    @Mock
     private ObjectProvider<SystemConfigService> systemConfigServiceProvider;
 
-    @InjectMocks
     private OrderServiceImpl orderService;
 
     private User currentUser;
@@ -79,8 +84,17 @@ class OrderServiceImplTest {
     private Order order;
     private OrderDTO orderDTO;
 
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
     @BeforeEach
     void setUp() {
+        orderService = new OrderServiceImpl(orderRepository, userRepository, homestayRepository,
+                reviewRepository, paymentProcessingService, orderLifecycleService, pricingService,
+                new RefundPolicyCalculator(pricingService, Clock.systemDefaultZone()), systemConfigServiceProvider);
+
         // 设置当前用户
         currentUser = new User();
         currentUser.setId(1L);

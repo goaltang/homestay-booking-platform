@@ -21,6 +21,7 @@ import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
 import com.homestay3.homestaybackend.service.OrderLifecycleService;
 import com.homestay3.homestaybackend.service.PricingService;
+import com.homestay3.homestaybackend.service.RefundPolicyCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -52,6 +53,7 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentProcessingService paymentProcessingService;
     private final OrderLifecycleService orderLifecycleService;
     private final PricingService pricingService;
+    private final RefundPolicyCalculator refundPolicyCalculator;
     private final ObjectProvider<SystemConfigService> systemConfigServiceProvider;
 
     public OrderServiceImpl(OrderRepository orderRepository,
@@ -61,6 +63,7 @@ public class OrderServiceImpl implements OrderService {
                             PaymentProcessingService paymentProcessingService,
                             OrderLifecycleService orderLifecycleService,
                             PricingService pricingService,
+                            RefundPolicyCalculator refundPolicyCalculator,
                             ObjectProvider<SystemConfigService> systemConfigServiceProvider) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
@@ -69,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
         this.paymentProcessingService = paymentProcessingService;
         this.orderLifecycleService = orderLifecycleService;
         this.pricingService = pricingService;
+        this.refundPolicyCalculator = refundPolicyCalculator;
         this.systemConfigServiceProvider = systemConfigServiceProvider;
     }
     private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
@@ -126,84 +130,6 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO updateOrderStatus(Long id, String status) {
         // 委托给OrderLifecycleService处理核心生命周期逻辑
         return orderLifecycleService.updateOrderStatus(id, status);
-    }
-
-    /**
-     * 根据政策类型和距离入住时间，计算退款金额和对应说明（纯查询，不修改 order 备注）
-     */
-    private Map<String, Object> buildRefundPreviewInfo(Order order) {
-        if (order.getCheckInDate() == null || order.getTotalAmount() == null) {
-            return Map.of(
-                "estimatedRefundAmount", BigDecimal.ZERO,
-                "policyDescription", "无法计算退款金额（缺少入住日期或订单金额）"
-            );
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime checkInTime = order.getCheckInDate().atTime(14, 0);
-        // 修复：如果已超过入住时间，hoursBetween会为负数，取绝对值后按"已过入住时间"处理
-        long hoursBetween = Math.abs(java.time.Duration.between(now, checkInTime).toHours());
-
-        int policyType = 2;
-        if (order.getHomestay() != null && order.getHomestay().getCancelPolicyType() != null) {
-            policyType = order.getHomestay().getCancelPolicyType();
-        }
-
-        BigDecimal refundAmt;
-        String policyDescription;
-
-        if (policyType == 1) {
-            if (hoursBetween >= 24) {
-                refundAmt = order.getTotalAmount();
-                policyDescription = "宽松政策：距离入住超过24小时，可获得全额退款 ¥" + refundAmt;
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                    policyDescription = "宽松政策：距离入住不足24小时（仅1晚），不予退款";
-                } else {
-                    BigDecimal perNight = order.getTotalAmount().divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = order.getTotalAmount().subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                    policyDescription = "宽松政策：距离入住不足24小时，扣除首晚房费，可退 ¥" + refundAmt;
-                }
-            }
-        } else if (policyType == 3) {
-            if (hoursBetween >= 72) {
-                refundAmt = order.getTotalAmount();
-                policyDescription = "严格政策：距离入住超过72小时，可获得全额退款 ¥" + refundAmt;
-            } else {
-                refundAmt = order.getTotalAmount().multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-                policyDescription = "严格政策：距离入住不足72小时，退款50%，预计退款 ¥" + refundAmt;
-            }
-        } else {
-            if (hoursBetween >= 48) {
-                refundAmt = order.getTotalAmount();
-                policyDescription = "普通政策：距离入住超过48小时，可获得全额退款 ¥" + refundAmt;
-            } else if (hoursBetween >= 24) {
-                refundAmt = order.getTotalAmount().multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-                policyDescription = "普通政策：距离入住24-48小时，退款50%，预计退款 ¥" + refundAmt;
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                    policyDescription = "普通政策：距离入住不足24小时（仅1晚），不予退款";
-                } else {
-                    BigDecimal perNight = order.getTotalAmount().divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = order.getTotalAmount().subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                    policyDescription = "普通政策：距离入住不足24小时，扣除首晚房费，预计退款 ¥" + refundAmt;
-                }
-            }
-        }
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("estimatedRefundAmount", refundAmt);
-        result.put("totalAmount", order.getTotalAmount());
-        result.put("policyDescription", policyDescription);
-        result.put("policyType", policyType);
-        result.put("hoursBeforeCheckIn", hoursBetween);
-        return result;
     }
 
     @Override
@@ -801,7 +727,15 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        Map<String, Object> preview = new HashMap<>(buildRefundPreviewInfo(order));
+        RefundPolicyCalculator.Quote quote = refundPolicyCalculator.calculate(order);
+        Map<String, Object> preview = new HashMap<>();
+        preview.put("estimatedRefundAmount", quote.amount());
+        preview.put("policyDescription", quote.description());
+        if (quote.hoursBeforeCheckIn() != null) {
+            preview.put("totalAmount", order.getTotalAmount());
+            preview.put("policyType", quote.policyType());
+            preview.put("hoursBeforeCheckIn", quote.hoursBeforeCheckIn());
+        }
         preview.put("eligible", true);
         preview.put("orderId", orderId);
         preview.put("orderNumber", order.getOrderNumber());

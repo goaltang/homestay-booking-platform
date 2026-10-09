@@ -20,6 +20,7 @@ import com.homestay3.homestaybackend.service.EarningService;
 import com.homestay3.homestaybackend.service.OrderNotificationService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
 import com.homestay3.homestaybackend.service.PaymentService;
+import com.homestay3.homestaybackend.service.RefundPolicyCalculator;
 import com.homestay3.homestaybackend.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -46,6 +47,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
     private final EarningService earningService;
     private final OrderNotificationService orderNotificationService;
     private final PaymentService paymentService;
+    private final RefundPolicyCalculator refundPolicyCalculator;
     private final CouponService couponService;
     private final PromotionUsageRepository promotionUsageRepository;
     private final com.homestay3.homestaybackend.repository.UserCouponRepository userCouponRepository;
@@ -187,7 +189,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
         order.setRefundReason(reason != null && !reason.isEmpty() ? reason : "管理员直接退款");
 
         // 计算退款金额
-        BigDecimal calculatedRefund = calculateRefundAmount(order);
+        BigDecimal calculatedRefund = refundPolicyCalculator.calculate(order).amount();
         order.setRefundAmount(calculatedRefund);
 
         order.setRefundInitiatedBy(currentUser.getId());
@@ -416,8 +418,8 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
         order.setRefundType(RefundType.USER_REQUESTED);
         order.setRefundReason(reason != null && !reason.isEmpty() ? reason : "用户申请退款");
 
-        // 使用计算退款金额方法
-        BigDecimal calculatedRefund = calculateRefundAmount(order);
+        // 固定本次申请金额，审批时沿用。
+        BigDecimal calculatedRefund = refundPolicyCalculator.calculate(order).amount();
         order.setRefundAmount(calculatedRefund);
 
         order.setRefundInitiatedBy(currentUser.getId());
@@ -521,72 +523,6 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
         }
         log.info("EarningService 调用结束，订单 {} 的支付流程完成。", order.getOrderNumber());
         // --- 收益生成结束 ---
-    }
-
-    // 辅助方法：计算退款金额（纯计算，不修改order）
-    private BigDecimal calculateRefundAmount(Order order) {
-        if (order.getCheckInDate() == null || order.getTotalAmount() == null) {
-            return BigDecimal.ZERO;
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime checkInTime = order.getCheckInDate().atTime(14, 0); // 假设14:00入住
-        // 修复：如果已超过入住时间，hoursBetween会为负数，取绝对值后按"已过入住时间"处理
-        long hoursBetween = Math.abs(java.time.Duration.between(now, checkInTime).toHours());
-
-        // 读取房源取消政策类型（1=宽松，2=普通，3=严格），默认为2
-        int policyType = 2;
-        try {
-            if (order.getHomestay() != null && order.getHomestay().getCancelPolicyType() != null) {
-                policyType = order.getHomestay().getCancelPolicyType();
-            }
-        } catch (jakarta.persistence.EntityNotFoundException e) {
-            // homestay已被删除，使用默认的普通政策
-            log.warn("订单 {} 关联的homestay已被删除，使用默认取消政策", order.getId());
-        }
-
-        BigDecimal refundAmt;
-
-        if (policyType == 1) {
-            // 宽松政策：入住24小时前取消 → 全额退款；24小时内 → 扣除首晚
-            if (hoursBetween >= 24) {
-                refundAmt = order.getTotalAmount();
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                } else {
-                    BigDecimal perNight = order.getTotalAmount().divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = order.getTotalAmount().subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                }
-            }
-        } else if (policyType == 3) {
-            // 严格政策：入住72小时前取消 → 全额退款；72小时内 → 退款50%
-            if (hoursBetween >= 72) {
-                refundAmt = order.getTotalAmount();
-            } else {
-                refundAmt = order.getTotalAmount().multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-            }
-        } else {
-            // 普通政策（默认policyType=2）：48h前全额退；24-48h退50%；24h内扣首晚
-            if (hoursBetween >= 48) {
-                refundAmt = order.getTotalAmount();
-            } else if (hoursBetween >= 24) {
-                refundAmt = order.getTotalAmount().multiply(new BigDecimal("0.5")).setScale(2, java.math.RoundingMode.HALF_UP);
-            } else {
-                int nights = order.getNights() != null ? order.getNights() : 1;
-                if (nights <= 1) {
-                    refundAmt = BigDecimal.ZERO;
-                } else {
-                    BigDecimal perNight = order.getTotalAmount().divide(new BigDecimal(nights), 2, java.math.RoundingMode.HALF_UP);
-                    refundAmt = order.getTotalAmount().subtract(perNight);
-                    if (refundAmt.compareTo(BigDecimal.ZERO) < 0) refundAmt = BigDecimal.ZERO;
-                }
-            }
-        }
-
-        return refundAmt;
     }
 
     // 辅助方法：检查用户是否为订单的客户
