@@ -2,13 +2,11 @@ package com.homestay3.homestaybackend.service.impl;
 
 import com.homestay3.homestaybackend.dto.AppliedPromotionDTO;
 import com.homestay3.homestaybackend.dto.OrderDTO;
-import com.homestay3.homestaybackend.dto.ReviewDTO;
 import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.exception.ResourceNotFoundException;
 import com.homestay3.homestaybackend.entity.Homestay;
 import com.homestay3.homestaybackend.entity.Order;
 import com.homestay3.homestaybackend.entity.PromotionUsage;
-import com.homestay3.homestaybackend.entity.Review;
 import com.homestay3.homestaybackend.entity.User;
 import com.homestay3.homestaybackend.entity.UserCoupon;
 import com.homestay3.homestaybackend.model.OrderStatus;
@@ -19,7 +17,6 @@ import com.homestay3.homestaybackend.repository.HomestayRepository;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.repository.PromotionUsageRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
-import com.homestay3.homestaybackend.repository.ReviewRepository;
 import com.homestay3.homestaybackend.service.BookingConflictService;
 import com.homestay3.homestaybackend.service.CouponService;
 import com.homestay3.homestaybackend.service.EarningService;
@@ -28,7 +25,6 @@ import com.homestay3.homestaybackend.service.OrderNotificationService;
 import com.homestay3.homestaybackend.service.PricingService;
 import com.homestay3.homestaybackend.service.RefundPolicyCalculator;
 import com.homestay3.homestaybackend.service.PromotionMatchService;
-import com.homestay3.homestaybackend.service.SystemConfigService;
 import com.homestay3.homestaybackend.service.search.UserBehaviorTrackingService;
 import com.homestay3.homestaybackend.dto.PricingResult;
 import com.homestay3.homestaybackend.mq.OrderTimeoutMessage;
@@ -75,7 +71,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
     private final HomestayRepository homestayRepository;
     private final OrderNotificationService orderNotificationService;
     private final EarningService earningService;
-    private final ReviewRepository reviewRepository;
+    private final OrderDtoAssembler orderDtoAssembler;
     private final BookingConflictService bookingConflictService;
     private final PricingService pricingService;
     private final RefundPolicyCalculator refundPolicyCalculator;
@@ -85,7 +81,6 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
     private final com.homestay3.homestaybackend.repository.UserCouponRepository userCouponRepository;
     private final com.homestay3.homestaybackend.repository.CouponTemplateRepository couponTemplateRepository;
     private final com.homestay3.homestaybackend.service.CouponAnalyticsService couponAnalyticsService;
-    private final ObjectProvider<SystemConfigService> systemConfigServiceProvider;
     private final UserBehaviorTrackingService userBehaviorTrackingService;
     private final com.homestay3.homestaybackend.service.PaymentProcessingService paymentProcessingService;
     private final OrderStatusUpdater orderStatusUpdater;
@@ -317,7 +312,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
 
             trackBookingAfterCommit(currentUser.getId(), homestay);
 
-            return convertToDTO(savedOrder);
+            return orderDtoAssembler.toLifecycleResult(savedOrder);
 
         } catch (DataIntegrityViolationException e) {
             log.error("订单创建失败，可能存在日期冲突: {}", e.getMessage());
@@ -425,7 +420,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
             throw new AccessDeniedException("您无权访问此订单");
         }
 
-        return convertToDTO(order);
+        return orderDtoAssembler.toLifecycleResult(order);
     }
 
     @Override
@@ -440,7 +435,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
             throw new AccessDeniedException("您无权访问此订单");
         }
 
-        return convertToDTO(order);
+        return orderDtoAssembler.toLifecycleResult(order);
     }
 
     @Override
@@ -448,7 +443,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
     public Page<OrderDTO> getMyOrders(Map<String, String> params, Pageable pageable) {
         User currentUser = getCurrentUser();
         Specification<Order> spec = buildMyOrdersSpec(params, currentUser);
-        return orderRepository.findAll(spec, pageable).map(this::convertToDTO);
+        return orderRepository.findAll(spec, pageable).map(orderDtoAssembler::toLifecycleResult);
     }
 
     /**
@@ -574,7 +569,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return orderRepository.findAll(spec, pageable).map(this::convertToDTO);
+        return orderRepository.findAll(spec, pageable).map(orderDtoAssembler::toLifecycleResult);
     }
 
     @Override
@@ -633,7 +628,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
 
         sendTimeoutDelayMessageAfterCommit(updatedOrder.getId(), updatedOrder.getStatus());
 
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toLifecycleResult(updatedOrder);
     }
 
     @Override
@@ -676,7 +671,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
                     e.getMessage(), e);
         }
 
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toLifecycleResult(updatedOrder);
     }
 
     @Override
@@ -717,7 +712,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
 
         // 保存更新后的订单
         Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toLifecycleResult(updatedOrder);
     }
 
     @Override
@@ -776,7 +771,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
 
         // 保存更新后的订单
         Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toLifecycleResult(updatedOrder);
     }
 
     @Override
@@ -950,7 +945,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
 
         sendTimeoutDelayMessageAfterCommit(updatedOrder.getId(), updatedOrder.getStatus());
 
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toLifecycleResult(updatedOrder);
     }
 
     @Override
@@ -1082,19 +1077,6 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
             return false;
         }
         return user.getRole().contains("ADMIN");
-    }
-
-    /**
-     * 获取定价配置
-     */
-    private BigDecimal getPricingConfig(String key, String defaultValue) {
-        String value = systemConfigServiceProvider.getObject().getConfigValue(key, defaultValue);
-        try {
-            return new BigDecimal(value);
-        } catch (NumberFormatException e) {
-            log.warn("定价配置 {} 格式错误，使用默认值 {}", key, defaultValue);
-            return new BigDecimal(defaultValue);
-        }
     }
 
     /**
@@ -1426,7 +1408,7 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
             log.error("发送订单处理通知失败: {}", e.getMessage(), e);
         }
 
-        return convertToDTO(cancelledOrder);
+        return orderDtoAssembler.toLifecycleResult(cancelledOrder);
     }
 
     @Override
@@ -1465,130 +1447,4 @@ public class OrderLifecycleServiceImpl implements OrderLifecycleService {
         }
     }
 
-    /**
-     * 将 Order 实体转换为 OrderDTO
-     */
-    private OrderDTO convertToDTO(Order order) {
-        if (order == null) {
-            return null;
-        }
-
-        boolean isReviewed = reviewRepository.existsByOrder(order);
-        ReviewDTO reviewDTO = null;
-
-        if (OrderStatus.COMPLETED.name().equals(order.getStatus()) && isReviewed) {
-            Optional<Review> reviewOpt = reviewRepository.findByOrder(order);
-            if (reviewOpt.isPresent()) {
-                reviewDTO = convertReviewToDTO(reviewOpt.get());
-            }
-        }
-
-        User host = order.getHomestay() != null ? order.getHomestay().getOwner() : null;
-        String hostName = host != null ? (host.getNickname() != null ? host.getNickname() : host.getUsername()) : null;
-        Long hostId = host != null ? host.getId() : null;
-
-        User guest = order.getGuest();
-        String guestName = guest != null ? (guest.getNickname() != null ? guest.getNickname() : guest.getUsername())
-                : null;
-        Long guestId = guest != null ? guest.getId() : null;
-
-        String refundInitiatedByName = null;
-        String refundProcessedByName = null;
-
-        if (order.getRefundInitiatedBy() != null) {
-            Optional<User> initiatorOpt = userRepository.findById(order.getRefundInitiatedBy());
-            if (initiatorOpt.isPresent()) {
-                User initiator = initiatorOpt.get();
-                refundInitiatedByName = initiator.getNickname() != null ? initiator.getNickname()
-                        : initiator.getUsername();
-            }
-        }
-
-        if (order.getRefundProcessedBy() != null) {
-            Optional<User> processorOpt = userRepository.findById(order.getRefundProcessedBy());
-            if (processorOpt.isPresent()) {
-                User processor = processorOpt.get();
-                refundProcessedByName = processor.getNickname() != null ? processor.getNickname()
-                        : processor.getUsername();
-            }
-        }
-
-        BigDecimal baseAmount = order.getPrice() != null ? order.getPrice().multiply(BigDecimal.valueOf(order.getNights())) : BigDecimal.ZERO;
-        // 清洁费：固定金额 = 单晚价格 × 配置比例
-        BigDecimal cleaningFeeAmount = getPricingConfig("pricing.cleaning_fee", "0.1");
-        BigDecimal serviceFeeRate = getPricingConfig("pricing.service_fee", "0.15");
-        BigDecimal cleaningFee = order.getPrice() != null ? order.getPrice().multiply(cleaningFeeAmount) : BigDecimal.ZERO;
-        BigDecimal serviceFee = baseAmount.multiply(serviceFeeRate);
-
-        return OrderDTO.builder()
-                .id(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .homestayId(order.getHomestay() != null ? order.getHomestay().getId() : null)
-                .homestayTitle(order.getHomestay() != null ? order.getHomestay().getTitle() : null)
-                .guestId(guestId)
-                .guestName(guestName)
-                .guestPhone(order.getGuestPhone())
-                .checkInDate(order.getCheckInDate())
-                .checkOutDate(order.getCheckOutDate())
-                .nights(order.getNights())
-                .guestCount(order.getGuestCount())
-                .price(order.getPrice())
-                .cleaningFee(cleaningFee)
-                .serviceFee(serviceFee)
-                .totalAmount(order.getTotalAmount())
-                .status(order.getStatus())
-                .paymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus().name() : null)
-                .paymentMethod(order.getPaymentMethod())
-                .remark(order.getRemark())
-                .hostId(hostId)
-                .hostName(hostName)
-                .imageUrl(order.getHomestay() != null ? order.getHomestay().getCoverImage() : null)
-                .createTime(order.getCreatedAt())
-                .updateTime(order.getUpdatedAt())
-                .completedAt(order.getCompletedAt())
-                .isReviewed(isReviewed)
-                .review(reviewDTO)
-                .refundType(order.getRefundType() != null ? order.getRefundType().name() : null)
-                .refundReason(order.getRefundReason())
-                .refundAmount(order.getRefundAmount())
-                .refundInitiatedBy(order.getRefundInitiatedBy())
-                .refundInitiatedByName(refundInitiatedByName)
-                .refundInitiatedAt(order.getRefundInitiatedAt())
-                .refundProcessedBy(order.getRefundProcessedBy())
-                .refundProcessedByName(refundProcessedByName)
-                .refundProcessedAt(order.getRefundProcessedAt())
-                .refundTransactionId(order.getRefundTransactionId())
-                .refundRejectionReason(order.getRefundRejectionReason())
-                .build();
-    }
-
-    /**
-     * 将 Review 实体转换为 ReviewDTO
-     */
-    private ReviewDTO convertReviewToDTO(Review review) {
-        if (review == null) {
-            return null;
-        }
-        return ReviewDTO.builder()
-                .id(review.getId())
-                .userId(review.getUser() != null ? review.getUser().getId() : null)
-                .userName(review.getUser() != null ? review.getUser().getUsername() : null)
-                .userAvatar(review.getUser() != null ? review.getUser().getAvatar() : null)
-                .homestayId(review.getHomestay() != null ? review.getHomestay().getId() : null)
-                .homestayTitle(review.getHomestay() != null ? review.getHomestay().getTitle() : null)
-                .orderId(review.getOrder() != null ? review.getOrder().getId() : null)
-                .rating(review.getRating())
-                .content(review.getContent())
-                .cleanlinessRating(review.getCleanlinessRating())
-                .accuracyRating(review.getAccuracyRating())
-                .communicationRating(review.getCommunicationRating())
-                .locationRating(review.getLocationRating())
-                .checkInRating(review.getCheckInRating())
-                .valueRating(review.getValueRating())
-                .response(review.getResponse())
-                .responseTime(review.getResponseTime())
-                .createTime(review.getCreateTime())
-                .isPublic(review.getIsPublic())
-                .build();
-    }
 }

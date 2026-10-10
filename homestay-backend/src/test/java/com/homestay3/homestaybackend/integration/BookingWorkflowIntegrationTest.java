@@ -2,19 +2,26 @@ package com.homestay3.homestaybackend.integration;
 
 import com.homestay3.homestaybackend.dto.OrderDTO;
 import com.homestay3.homestaybackend.entity.Homestay;
+import com.homestay3.homestaybackend.entity.Order;
+import com.homestay3.homestaybackend.entity.Review;
 import com.homestay3.homestaybackend.entity.User;
+import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.model.HomestayStatus;
 import com.homestay3.homestaybackend.model.OrderStatus;
 import com.homestay3.homestaybackend.model.PaymentStatus;
 import com.homestay3.homestaybackend.repository.HomestayRepository;
 import com.homestay3.homestaybackend.repository.OrderRepository;
+import com.homestay3.homestaybackend.repository.ReviewRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
 import com.homestay3.homestaybackend.service.OrderService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,7 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,6 +53,12 @@ public class BookingWorkflowIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private Homestay autoConfirmHomestay;
     private Homestay manualConfirmHomestay;
@@ -149,6 +164,81 @@ public class BookingWorkflowIntegrationTest {
         OrderDTO paidOrder = orderService.payOrder(createdOrder.getId());
         assertEquals(OrderStatus.PAID.name(), paidOrder.getStatus());
         assertEquals(PaymentStatus.PAID.name(), paidOrder.getPaymentStatus());
+    }
+
+    @Test
+    public void testOrderResponseContractsAcrossPaymentDetailAndAdminList() {
+        setMockAuthentication(guestUser);
+        autoConfirmHomestay.setCoverImage("/integration-cover.jpg");
+        homestayRepository.save(autoConfirmHomestay);
+        LocalDate checkIn = LocalDate.now().plusDays(25);
+        OrderDTO created = orderService.createOrder(OrderDTO.builder()
+                .homestayId(autoConfirmHomestay.getId()).checkInDate(checkIn).checkOutDate(checkIn.plusDays(2))
+                .guestCount(2).guestPhone("13800000000").build());
+        assertEquals("/integration-cover.jpg", created.getImageUrl());
+
+        // 真支付服务的测试支付路径仍返回精简投影；不触发外部支付网关。
+        OrderDTO paid = orderService.payOrder(created.getId());
+        assertEquals(PaymentStatus.PAID.name(), paid.getPaymentStatus());
+        assertNull(paid.getImageUrl());
+        assertFalse(paid.isReviewed());
+        assertNull(paid.getRefundAmount());
+        assertEquals(0, created.getTotalAmount().compareTo(paid.getTotalAmount()));
+        assertEquals(0, created.getCleaningFee().compareTo(paid.getCleaningFee()));
+        assertEquals(0, created.getServiceFee().compareTo(paid.getServiceFee()));
+
+        // 建立完成评价与历史退款信息，再清空一级缓存，覆盖数据库关联的实际读取。
+        Order stored = orderRepository.findById(created.getId()).orElseThrow();
+        stored.setStatus(OrderStatus.COMPLETED.name());
+        stored.setCompletedAt(LocalDateTime.now());
+        stored.setRefundAmount(new BigDecimal("12.34"));
+        stored.setRefundInitiatedBy(guestUser.getId());
+        stored.setRefundProcessedBy(hostUser.getId());
+        stored.setCheckInCode("private-code");
+        stored.setDoorPassword("private-password");
+        orderRepository.save(stored);
+        reviewRepository.save(Review.builder().order(stored).user(guestUser).homestay(autoConfirmHomestay)
+                .rating(5).content("共享订单响应回归评价").build());
+        entityManager.flush();
+        entityManager.clear();
+
+        OrderDTO detail = orderService.getOrderById(created.getId());
+        assertTrue(detail.isReviewed());
+        assertEquals("共享订单响应回归评价", detail.getReview().getContent());
+        assertEquals("/integration-cover.jpg", detail.getImageUrl());
+        assertEquals(0, new BigDecimal("12.34").compareTo(detail.getRefundAmount()));
+        assertEquals(hostUser.getUsername(), detail.getRefundProcessedByName());
+        assertNull(detail.getCheckInCode());
+        assertNull(detail.getDoorPassword());
+
+        User admin = new User();
+        admin.setUsername("dto_admin_" + UUID.randomUUID());
+        admin.setEmail(admin.getUsername() + "@test.com");
+        admin.setPassword("password");
+        admin.setRole("ROLE_ADMIN");
+        admin = userRepository.save(admin);
+        setMockAuthentication(admin);
+        Page<OrderDTO> page = orderService.getAdminOrders(PageRequest.of(0, 10), created.getOrderNumber(),
+                null, null, null, null, null, null, null, null, null, null);
+        assertEquals(1, page.getTotalElements());
+        OrderDTO listed = page.getContent().get(0);
+        assertTrue(listed.isReviewed());
+        assertEquals(detail.getReview().getContent(), listed.getReview().getContent());
+        assertEquals(0, detail.getTotalAmount().compareTo(listed.getTotalAmount()));
+        assertEquals(0, detail.getCleaningFee().compareTo(listed.getCleaningFee()));
+        assertEquals(0, detail.getServiceFee().compareTo(listed.getServiceFee()));
+        assertEquals(0, detail.getRefundAmount().compareTo(listed.getRefundAmount()));
+        assertNull(listed.getImageUrl());
+
+        // 无关客人依然无法通过详情服务绕过订单访问权限。
+        User unrelatedGuest = new User();
+        unrelatedGuest.setUsername("dto_outsider_" + UUID.randomUUID());
+        unrelatedGuest.setEmail(unrelatedGuest.getUsername() + "@test.com");
+        unrelatedGuest.setPassword("password");
+        unrelatedGuest.setRole("ROLE_USER");
+        unrelatedGuest = userRepository.save(unrelatedGuest);
+        setMockAuthentication(unrelatedGuest);
+        assertThrows(AccessDeniedException.class, () -> orderService.getOrderById(created.getId()));
     }
 
     @Test
