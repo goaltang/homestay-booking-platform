@@ -33,11 +33,7 @@ const DEFAULT_TIMEOUT_MS: Record<string, number> = {
 const DEFAULT_WARNING_MS: Record<string, number[]> = {
   [OrderStatus.PENDING]: [60 * 60 * 1000, 30 * 60 * 1000],
   [OrderStatus.CONFIRMED]: [30 * 60 * 1000, 10 * 60 * 1000, 5 * 60 * 1000],
-  [OrderStatus.PAYMENT_PENDING]: [
-    30 * 60 * 1000,
-    10 * 60 * 1000,
-    5 * 60 * 1000,
-  ],
+  [OrderStatus.PAYMENT_PENDING]: [30 * 60 * 1000, 10 * 60 * 1000, 5 * 60 * 1000],
 };
 
 // 全局状态管理
@@ -109,8 +105,8 @@ export function calculateRemainingTime(
       startTime = confirmTime
         ? new Date(confirmTime).getTime()
         : updateTime
-        ? new Date(updateTime).getTime()
-        : new Date(createTime).getTime();
+          ? new Date(updateTime).getTime()
+          : new Date(createTime).getTime();
       break;
 
     default:
@@ -135,8 +131,13 @@ export function isOrderTimedOut(
   customTimeoutConfig?: Record<string, number>
 ): boolean {
   return (
-    calculateRemainingTime(orderStatus, createTime, confirmTime, updateTime, customTimeoutConfig) ===
-    0
+    calculateRemainingTime(
+      orderStatus,
+      createTime,
+      confirmTime,
+      updateTime,
+      customTimeoutConfig
+    ) === 0
   );
 }
 
@@ -145,10 +146,7 @@ export function isOrderTimedOut(
  * @param remainingTime 剩余时间（毫秒）
  * @param showSeconds 是否显示秒数
  */
-export function getTimeoutCountdownText(
-  remainingTime: number,
-  showSeconds = false
-): string {
+export function getTimeoutCountdownText(remainingTime: number, showSeconds = false): string {
   if (remainingTime === Infinity) {
     return "无时间限制";
   }
@@ -158,18 +156,14 @@ export function getTimeoutCountdownText(
   }
 
   const days = Math.floor(remainingTime / (24 * 60 * 60 * 1000));
-  const hours = Math.floor(
-    (remainingTime % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)
-  );
+  const hours = Math.floor((remainingTime % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
   const minutes = Math.floor((remainingTime % (60 * 60 * 1000)) / (60 * 1000));
   const seconds = Math.floor((remainingTime % (60 * 1000)) / 1000);
 
   if (days > 0) {
     return `${days}天${hours}小时`;
   } else if (hours > 0) {
-    return showSeconds
-      ? `${hours}小时${minutes}分钟${seconds}秒`
-      : `${hours}小时${minutes}分钟`;
+    return showSeconds ? `${hours}小时${minutes}分钟${seconds}秒` : `${hours}小时${minutes}分钟`;
   } else if (minutes > 0) {
     return showSeconds ? `${minutes}分钟${seconds}秒` : `${minutes}分钟`;
   } else {

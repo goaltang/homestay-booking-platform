@@ -10,21 +10,30 @@
         <p class="subtitle">请输入您的邮箱地址，我们将向您发送重置密码的链接</p>
 
         <el-card class="form-card" shadow="never">
-          <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="handleSubmit">
+          <el-form
+            ref="formRef"
+            :model="form"
+            :rules="rules"
+            label-position="top"
+            @submit.prevent="handleSubmit"
+          >
             <el-form-item label="邮箱地址" prop="email">
-              <el-input v-model="form.email" type="email" placeholder="请输入邮箱地址" prefix-icon="Message"
-                :disabled="loading" />
+              <el-input
+                v-model="form.email"
+                type="email"
+                placeholder="请输入邮箱地址"
+                prefix-icon="Message"
+                :disabled="loading"
+              />
             </el-form-item>
 
             <el-button type="primary" class="submit-btn" :loading="loading" @click="handleSubmit">
-              {{ loading ? '发送中...' : '发送重置链接' }}
+              {{ loading ? "发送中..." : "发送重置链接" }}
             </el-button>
 
             <div class="back-to-login">
               记起密码了？
-              <el-button type="link" @click="router.push('/login')">
-                返回登录
-              </el-button>
+              <el-button type="link" @click="router.push('/login')"> 返回登录 </el-button>
             </div>
           </el-form>
         </el-card>
@@ -34,12 +43,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import type { FormInstance } from 'element-plus';
-import { useUserStore } from '@/stores/user';
-import Logo from '@/components/common/Logo.vue';
+import { ref, reactive } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import type { FormInstance } from "element-plus";
+import { useUserStore } from "@/stores/user";
+import Logo from "@/components/common/Logo.vue";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -47,14 +56,14 @@ const formRef = ref<FormInstance>();
 const loading = ref(false);
 
 const form = reactive({
-  email: ''
+  email: "",
 });
 
 const rules = {
   email: [
-    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-  ]
+    { required: true, message: "请输入邮箱地址", trigger: "blur" },
+    { type: "email", message: "请输入正确的邮箱地址", trigger: "blur" },
+  ],
 };
 
 const handleSubmit = async () => {
@@ -64,16 +73,16 @@ const handleSubmit = async () => {
     await formRef.value.validate();
     loading.value = true;
 
-    console.log('发送忘记密码请求:', {
-      email: form.email
+    console.log("发送忘记密码请求:", {
+      email: form.email,
     });
 
     await userStore.forgotPassword(form.email);
 
-    ElMessage.success('重置密码链接已发送到您的邮箱，请查收');
+    ElMessage.success("重置密码链接已发送到您的邮箱，请查收");
   } catch (error: any) {
     // 拦截器已统一弹出后端返回的错误信息
-    console.error('发送重置链接失败:', error);
+    console.error("发送重置链接失败:", error);
   } finally {
     loading.value = false;
   }

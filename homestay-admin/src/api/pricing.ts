@@ -3,10 +3,7 @@ import { normalizeArrayResponse, normalizePageResponse, unwrapApiData } from "@/
 
 // ========== 节假日管理 ==========
 
-export function getHolidays(params?: {
-  year?: number;
-  regionCode?: string;
-}) {
+export function getHolidays(params?: { year?: number; regionCode?: string }) {
   return request({
     url: "/api/admin/holidays",
     method: "get",
@@ -39,11 +36,7 @@ export function deleteHoliday(id: number) {
 
 // ========== 价格规则管理 ==========
 
-export function getPricingRules(params?: {
-  page?: number;
-  size?: number;
-  ruleType?: string;
-}) {
+export function getPricingRules(params?: { page?: number; size?: number; ruleType?: string }) {
   return request({
     url: "/api/admin/pricing-rules",
     method: "get",

@@ -120,10 +120,7 @@ export function formatApiErrorMessage(
  * @param defaultMsg 默认错误消息
  * @returns 格式化后的错误消息
  */
-export function handleApiError(
-  error: AxiosError,
-  defaultMsg = "操作失败，请稍后再试"
-): string {
+export function handleApiError(error: AxiosError, defaultMsg = "操作失败，请稍后再试"): string {
   return formatApiErrorMessage(error, defaultMsg);
 }
 
@@ -151,8 +148,7 @@ export function normalizeApiError(error: any): {
 
   return {
     code: data.code || data.errorCode || "UNKNOWN_ERROR",
-    message:
-      data.message || data.error || data.msg || error.message || "未知错误",
+    message: data.message || data.error || data.msg || error.message || "未知错误",
     status: response.status || 500,
     details: data.details || data,
   };

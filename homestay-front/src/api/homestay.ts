@@ -1,9 +1,9 @@
 /**
  * @deprecated 此文件已被拆分，请使用新的模块化导入方式
- * 
+ *
  * 旧用法:
  *   import { getHomestays, createHomestay } from '@/api/homestay'
- * 
+ *
  * 新用法（推荐）:
  *   import { getHomestays, createHomestay } from '@/api/homestay'
  *   或按需导入:

@@ -4,11 +4,7 @@ import request from "@/utils/request";
  * 获取房东的订单列表
  * @param params 分页和过滤参数
  */
-export function getHostOrders(params?: {
-  page?: number;
-  size?: number;
-  status?: string;
-}) {
+export function getHostOrders(params?: { page?: number; size?: number; status?: string }) {
   return request({
     url: "/api/orders/host",
     method: "get",
@@ -177,13 +173,16 @@ export function hostRaiseDispute(orderId: number, reason: string) {
  * @param orderId 订单ID
  * @param data 入住凭证信息
  */
-export function prepareCheckIn(orderId: number, data: {
-  checkInMethod?: string;
-  doorPassword?: string;
-  lockboxCode?: string;
-  locationDescription?: string;
-  remark?: string;
-}) {
+export function prepareCheckIn(
+  orderId: number,
+  data: {
+    checkInMethod?: string;
+    doorPassword?: string;
+    lockboxCode?: string;
+    locationDescription?: string;
+    remark?: string;
+  }
+) {
   return request({
     url: `/api/orders/${orderId}/prepare-checkin`,
     method: "put",

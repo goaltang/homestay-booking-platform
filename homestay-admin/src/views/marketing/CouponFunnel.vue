@@ -9,13 +9,13 @@
 
       <el-form :model="query" inline>
         <el-form-item label="优惠券模板">
-          <el-select v-model="query.templateId" placeholder="选择模板" clearable style="width: 240px">
-            <el-option
-              v-for="t in templates"
-              :key="t.id"
-              :label="t.name"
-              :value="t.id"
-            />
+          <el-select
+            v-model="query.templateId"
+            placeholder="选择模板"
+            clearable
+            style="width: 240px"
+          >
+            <el-option v-for="t in templates" :key="t.id" :label="t.name" :value="t.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="时间范围">
@@ -66,51 +66,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
+import { ref, reactive, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import request from "@/utils/request";
 
-const templates = ref<any[]>([])
+const templates = ref<any[]>([]);
 const query = reactive({
   templateId: null as number | null,
-})
-const dateRange = ref<[string, string] | null>(null)
-const funnelData = ref<any>(null)
-const channelData = ref<any>(null)
+});
+const dateRange = ref<[string, string] | null>(null);
+const funnelData = ref<any>(null);
+const channelData = ref<any>(null);
 
 const fetchTemplates = async () => {
   try {
-    const res: any = await request({ url: '/api/admin/promotions/templates', method: 'get', params: { page: 0, size: 100 } })
-    const data = res.data || res
-    templates.value = data.content || data || []
+    const res: any = await request({
+      url: "/api/admin/promotions/templates",
+      method: "get",
+      params: { page: 0, size: 100 },
+    });
+    const data = res.data || res;
+    templates.value = data.content || data || [];
   } catch (e) {
-    console.error('获取模板失败', e)
+    console.error("获取模板失败", e);
   }
-}
+};
 
 const loadData = async () => {
   if (!query.templateId) {
-    ElMessage.warning('请选择优惠券模板')
-    return
+    ElMessage.warning("请选择优惠券模板");
+    return;
   }
-  const params: any = { templateId: query.templateId }
+  const params: any = { templateId: query.templateId };
   if (dateRange.value) {
-    params.startDate = dateRange.value[0]
-    params.endDate = dateRange.value[1]
+    params.startDate = dateRange.value[0];
+    params.endDate = dateRange.value[1];
   }
   try {
     const [funnelRes, channelRes] = await Promise.all([
-      request({ url: '/api/admin/promotions/analytics/funnel', method: 'get', params }),
-      request({ url: '/api/admin/promotions/analytics/channels', method: 'get', params }),
-    ])
-    funnelData.value = funnelRes.data || funnelRes
-    channelData.value = channelRes.data || channelRes
+      request({ url: "/api/admin/promotions/analytics/funnel", method: "get", params }),
+      request({ url: "/api/admin/promotions/analytics/channels", method: "get", params }),
+    ]);
+    funnelData.value = funnelRes.data || funnelRes;
+    channelData.value = channelRes.data || channelRes;
   } catch (e) {
-    ElMessage.error('加载数据失败')
+    ElMessage.error("加载数据失败");
   }
-}
+};
 
-onMounted(fetchTemplates)
+onMounted(fetchTemplates);
 </script>
 
 <style scoped>

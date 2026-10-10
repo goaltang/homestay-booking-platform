@@ -19,10 +19,7 @@ export function useMap() {
   const showMapModal = ref(false);
 
   const setDefaultLocation = async (cityCode?: string) => {
-    const defaultLocations: Record<
-      string,
-      { lat: number; lng: number; name: string }
-    > = {
+    const defaultLocations: Record<string, { lat: number; lng: number; name: string }> = {
       "1101": { lat: 39.9042, lng: 116.4074, name: "北京市" },
       "3101": { lat: 31.2304, lng: 121.4737, name: "上海市" },
       "4403": { lat: 22.5431, lng: 114.0579, name: "深圳市" },
@@ -38,10 +35,7 @@ export function useMap() {
       mapData.value.lng = defaultLocation.lng;
       mapData.value.hasLocation = true;
 
-      const offsetLocation = addPrivacyOffset(
-        defaultLocation.lat,
-        defaultLocation.lng
-      );
+      const offsetLocation = addPrivacyOffset(defaultLocation.lat, defaultLocation.lng);
       mapData.value.staticMapUrl = generateStaticMapUrl(
         offsetLocation.lat,
         offsetLocation.lng,
@@ -56,24 +50,14 @@ export function useMap() {
       mapData.value.hasLocation = true;
 
       // 使用真实的高德地图静态图
-      mapData.value.staticMapUrl = generateStaticMapUrl(
-        39.9042,
-        116.4074,
-        800,
-        400,
-        12
-      );
+      mapData.value.staticMapUrl = generateStaticMapUrl(39.9042, 116.4074, 800, 400, 12);
     }
   };
 
   const searchNearbyFacilities = async (lat: number, lng: number) => {
     try {
       console.log("搜索周边设施...");
-      const facilities = await searchNearbyPlaces(lat, lng, [
-        "地铁站",
-        "商场",
-        "医院",
-      ]);
+      const facilities = await searchNearbyPlaces(lat, lng, ["地铁站", "商场", "医院"]);
       nearbyPlaces.value = facilities;
       console.log("周边设施:", facilities);
     } catch (error) {
@@ -114,10 +98,7 @@ export function useMap() {
       if (geocodeResult) {
         console.log("地理编码成功，原始坐标:", geocodeResult);
 
-        const offsetLocation = addPrivacyOffset(
-          geocodeResult.lat,
-          geocodeResult.lng
-        );
+        const offsetLocation = addPrivacyOffset(geocodeResult.lat, geocodeResult.lng);
         console.log("添加隐私偏移后的坐标:", offsetLocation);
 
         mapData.value.lat = offsetLocation.lat;
@@ -135,14 +116,8 @@ export function useMap() {
         mapData.value.staticMapUrl = generatedMapUrl;
 
         console.log("生成的静态地图URL:", generatedMapUrl);
-        console.log(
-          "mapData.value.staticMapUrl 设置后:",
-          mapData.value.staticMapUrl
-        );
-        console.log(
-          "mapData.value.hasLocation 设置后:",
-          mapData.value.hasLocation
-        );
+        console.log("mapData.value.staticMapUrl 设置后:", mapData.value.staticMapUrl);
+        console.log("mapData.value.hasLocation 设置后:", mapData.value.hasLocation);
         await searchNearbyFacilities(offsetLocation.lat, offsetLocation.lng);
       } else {
         console.warn("地理编码失败，使用默认位置");

@@ -3,8 +3,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useUserStore } from '@/stores/user';
+import { onMounted } from "vue";
+import { useUserStore } from "@/stores/user";
 
 const userStore = useUserStore();
 
@@ -27,6 +27,7 @@ body {
 #app {
   width: 100vw;
   height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 </style>

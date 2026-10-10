@@ -26,7 +26,8 @@ export const detailedAuthCheck = async () => {
   // 2. 检查用户信息
   let userInfo = null;
   try {
-    const storedUserInfo = (localStorage.getItem("homestay_user") || localStorage.getItem("userInfo"));
+    const storedUserInfo =
+      localStorage.getItem("homestay_user") || localStorage.getItem("userInfo");
     if (storedUserInfo) {
       userInfo = JSON.parse(storedUserInfo);
       console.log("localStorage中的用户信息: ", {
@@ -136,7 +137,7 @@ export function removeToken(): void {
 
 // 获取当前用户信息
 export function getCurrentUser(): any {
-  const userString = (localStorage.getItem("homestay_user") || localStorage.getItem("user"));
+  const userString = localStorage.getItem("homestay_user") || localStorage.getItem("user");
   if (!userString) return null;
 
   try {
@@ -240,7 +241,7 @@ export async function ensureUserLoggedIn(
   // 获取本地角色信息
   let localUserRole = "";
   try {
-    const userInfoStr = (localStorage.getItem("homestay_user") || localStorage.getItem("userInfo"));
+    const userInfoStr = localStorage.getItem("homestay_user") || localStorage.getItem("userInfo");
     if (userInfoStr) {
       const userInfo = JSON.parse(userInfoStr);
       if (userInfo.role) {
@@ -250,7 +251,7 @@ export async function ensureUserLoggedIn(
     }
 
     if (!localUserRole) {
-      const userStr = (localStorage.getItem("homestay_user") || localStorage.getItem("user"));
+      const userStr = localStorage.getItem("homestay_user") || localStorage.getItem("user");
       if (!userStr) {
         console.warn("localStorage中没有找到user信息");
       } else {
@@ -274,8 +275,7 @@ export async function ensureUserLoggedIn(
   // 特殊处理：检查是否在编辑房源页面，如果是，自动授予ROLE_HOST权限
   const currentPath = window.location.pathname;
   const isHomestayEditPage =
-    currentPath.includes("/host/homestay/edit/") ||
-    currentPath.includes("/host/homestay/create");
+    currentPath.includes("/host/homestay/edit/") || currentPath.includes("/host/homestay/create");
 
   if (isHomestayEditPage && user) {
     console.log("检测到用户在房源编辑页面，临时授予ROLE_HOST权限");
@@ -285,20 +285,19 @@ export async function ensureUserLoggedIn(
       // 在localStorage中更新角色信息
       try {
         // 更新userInfo
-        const userInfoStr = (localStorage.getItem("homestay_user") || localStorage.getItem("userInfo"));
+        const userInfoStr =
+          localStorage.getItem("homestay_user") || localStorage.getItem("userInfo");
         if (userInfoStr) {
           const userInfo = JSON.parse(userInfoStr);
           if (!userInfo.role || !userInfo.role.includes("HOST")) {
-            userInfo.role = userInfo.role
-              ? `${userInfo.role},ROLE_HOST`
-              : "ROLE_HOST";
+            userInfo.role = userInfo.role ? `${userInfo.role},ROLE_HOST` : "ROLE_HOST";
             localStorage.setItem("homestay_user", JSON.stringify(userInfo));
             console.log("已更新userInfo中的角色:", userInfo.role);
           }
         }
 
         // 更新user
-        const userStr = (localStorage.getItem("homestay_user") || localStorage.getItem("user"));
+        const userStr = localStorage.getItem("homestay_user") || localStorage.getItem("user");
         if (userStr) {
           const user = JSON.parse(userStr);
           // 检查authorities数组
@@ -307,10 +306,7 @@ export async function ensureUserLoggedIn(
             !user.authorities.some(
               (a: { authority?: string } | string) =>
                 (typeof a === "string" && a.includes("HOST")) ||
-                (a &&
-                  typeof a === "object" &&
-                  a.authority &&
-                  a.authority.includes("HOST"))
+                (a && typeof a === "object" && a.authority && a.authority.includes("HOST"))
             )
           ) {
             if (!user.authorities) {
@@ -363,9 +359,7 @@ export async function ensureUserLoggedIn(
       } else if (userData.authorities) {
         if (Array.isArray(userData.authorities)) {
           userRole = userData.authorities
-            .map((auth: any) =>
-              typeof auth === "string" ? auth : auth.authority || ""
-            )
+            .map((auth: any) => (typeof auth === "string" ? auth : auth.authority || ""))
             .filter(Boolean)
             .join(",");
         } else {
@@ -417,9 +411,7 @@ export async function ensureUserLoggedIn(
 
       // 检查用户是否拥有所需角色
       const hasRequiredRole = userRoles.some((ur) =>
-        requiredRolesNormalized.some(
-          (rr) => ur.toLowerCase() === rr.toLowerCase()
-        )
+        requiredRolesNormalized.some((rr) => ur.toLowerCase() === rr.toLowerCase())
       );
 
       if (!hasRequiredRole) {
@@ -429,9 +421,7 @@ export async function ensureUserLoggedIn(
           "所需角色:",
           requiredRolesNormalized.join(",")
         );
-        ElMessage.error(
-          `您没有所需的角色权限 (${requiredRolesNormalized.join(",")})`
-        );
+        ElMessage.error(`您没有所需的角色权限 (${requiredRolesNormalized.join(",")})`);
         return false;
       }
 
@@ -516,8 +506,12 @@ export class AuthManager {
    * 获取用户角色
    */
   getUserRole(): string {
-    const userInfo = JSON.parse((localStorage.getItem("homestay_user") || localStorage.getItem("userInfo")) || "null");
-    const user = JSON.parse((localStorage.getItem("homestay_user") || localStorage.getItem("user")) || "null");
+    const userInfo = JSON.parse(
+      localStorage.getItem("homestay_user") || localStorage.getItem("userInfo") || "null"
+    );
+    const user = JSON.parse(
+      localStorage.getItem("homestay_user") || localStorage.getItem("user") || "null"
+    );
     return userInfo?.role || user?.role || "";
   }
 
@@ -597,10 +591,7 @@ export class AuthManager {
   /**
    * 处理权限不足的情况
    */
-  async handleAccessDenied(
-    result: AuthCheckResult,
-    currentPath?: string
-  ): Promise<void> {
+  async handleAccessDenied(result: AuthCheckResult, currentPath?: string): Promise<void> {
     if (result.reason) {
       if (result.redirectPath === "/login") {
         // 需要登录的情况，显示登录提示
@@ -629,9 +620,7 @@ export class AuthManager {
   /**
    * 简化的权限检查方法，直接处理权限不足的情况
    */
-  async requireAuth(
-    requiredLevel: AccessLevel = AccessLevel.AUTHENTICATED
-  ): Promise<boolean> {
+  async requireAuth(requiredLevel: AccessLevel = AccessLevel.AUTHENTICATED): Promise<boolean> {
     const result = this.checkAccess(requiredLevel);
 
     if (!result.hasAccess) {
@@ -648,15 +637,11 @@ export class AuthManager {
   async requireAuthForAction(actionName: string): Promise<boolean> {
     if (!this.isAuthenticated()) {
       try {
-        await ElMessageBox.confirm(
-          `请先登录后再进行${actionName}操作`,
-          "需要登录",
-          {
-            confirmButtonText: "去登录",
-            cancelButtonText: "取消",
-            type: "info",
-          }
-        );
+        await ElMessageBox.confirm(`请先登录后再进行${actionName}操作`, "需要登录", {
+          confirmButtonText: "去登录",
+          cancelButtonText: "取消",
+          type: "info",
+        });
 
         router.push("/login");
         return false;
@@ -676,8 +661,7 @@ export const authManager = AuthManager.getInstance();
 export const isAuthenticated = () => authManager.isAuthenticated();
 export const isHost = () => authManager.isHost();
 export const isAdmin = () => authManager.isAdmin();
-export const requireAuth = (level?: AccessLevel) =>
-  authManager.requireAuth(level);
+export const requireAuth = (level?: AccessLevel) => authManager.requireAuth(level);
 export const requireAuthForAction = (actionName: string) =>
   authManager.requireAuthForAction(actionName);
 

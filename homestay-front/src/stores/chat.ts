@@ -48,7 +48,7 @@ export const useChatStore = defineStore("chat", () => {
     try {
       const response = await api.post("/api/chat/conversations", {
         homestayId,
-        hostId
+        hostId,
       });
       return response.data.data;
     } catch (error) {
@@ -72,7 +72,7 @@ export const useChatStore = defineStore("chat", () => {
   const sendMessage = async (conversationId: number, content: string) => {
     try {
       const response = await api.post(`/api/chat/conversations/${conversationId}/messages`, {
-        content
+        content,
       });
       const newMessage = response.data.data;
       messages.value.unshift(newMessage);
@@ -128,9 +128,7 @@ export const useChatStore = defineStore("chat", () => {
         markAsRead(chatMessage.conversationId);
       }
     }
-    const convIndex = conversations.value.findIndex(
-      (c) => c.id === chatMessage.conversationId
-    );
+    const convIndex = conversations.value.findIndex((c) => c.id === chatMessage.conversationId);
     if (convIndex !== -1) {
       const conv = conversations.value[convIndex];
       conv.lastMessageContent = chatMessage.message.content;

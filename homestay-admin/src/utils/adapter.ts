@@ -44,10 +44,7 @@ export function adaptPageParams(params: any) {
 }
 
 // 分页响应转换 - 后端返回{content,totalElements} 转为前端需要的 {list,total}
-export function adaptPageResponse<T>(
-  response: any,
-  itemAdapter?: (item: any) => T
-) {
+export function adaptPageResponse<T>(response: any, itemAdapter?: (item: any) => T) {
   if (!response) return { list: [], total: 0 };
 
   let list = response.content || [];
@@ -94,10 +91,7 @@ export function adaptHomestayStatus(
 */
 
 // 订单状态转换
-export function adaptOrderStatus(
-  status: string | undefined,
-  toFrontend = true
-) {
+export function adaptOrderStatus(status: string | undefined, toFrontend = true) {
   if (toFrontend) {
     // 后端 -> 前端
     switch (status) {
@@ -154,9 +148,7 @@ export function adaptUserStatus(
 // 房源数据适配器
 export function adaptHomestayItem(item: any): Homestay {
   if (!item) {
-    console.warn(
-      "adaptHomestayItem received invalid item, returning default object."
-    );
+    console.warn("adaptHomestayItem received invalid item, returning default object.");
     return {
       id: 0,
       title: "无效房源",
@@ -166,10 +158,7 @@ export function adaptHomestayItem(item: any): Homestay {
 
   const originalImages = Array.isArray(item.images)
     ? item.images.filter(
-        (img: any) =>
-          typeof img === "string" &&
-          img.trim() !== "" &&
-          img !== item.coverImage
+        (img: any) => typeof img === "string" && img.trim() !== "" && img !== item.coverImage
       )
     : [];
 
@@ -185,40 +174,27 @@ export function adaptHomestayItem(item: any): Homestay {
       item.hostName ||
       item.owner?.username ||
       item.user?.username,
-    ownerUsername:
-      item.ownerUsername || item.owner?.username || item.user?.username,
+    ownerUsername: item.ownerUsername || item.owner?.username || item.user?.username,
     ownerPhone: item.ownerPhone || item.owner?.phone || item.user?.phone,
     ownerEmail: item.ownerEmail || item.owner?.email || item.user?.email,
-    ownerRealName:
-      item.ownerRealName || item.owner?.realName || item.user?.realName,
-    ownerNickname:
-      item.ownerNickname || item.owner?.nickname || item.user?.nickname,
-    ownerOccupation:
-      item.ownerOccupation || item.owner?.occupation || item.user?.occupation,
+    ownerRealName: item.ownerRealName || item.owner?.realName || item.user?.realName,
+    ownerNickname: item.ownerNickname || item.owner?.nickname || item.user?.nickname,
+    ownerOccupation: item.ownerOccupation || item.owner?.occupation || item.user?.occupation,
     ownerIntroduction:
-      item.ownerIntroduction ||
-      item.owner?.introduction ||
-      item.user?.introduction,
+      item.ownerIntroduction || item.owner?.introduction || item.user?.introduction,
     ownerJoinDate:
       item.ownerJoinDate ||
       item.owner?.createdAt ||
       item.user?.createdAt ||
       item.owner?.createTime ||
       item.user?.createTime,
-    ownerHostSince:
-      item.ownerHostSince || item.owner?.hostSince || item.user?.hostSince,
+    ownerHostSince: item.ownerHostSince || item.owner?.hostSince || item.user?.hostSince,
     ownerHomestayCount:
-      item.ownerHomestayCount ||
-      item.owner?.homestayCount ||
-      item.user?.homestayCount,
-    ownerHostRating:
-      item.ownerHostRating || item.owner?.hostRating || item.user?.hostRating,
+      item.ownerHomestayCount || item.owner?.homestayCount || item.user?.homestayCount,
+    ownerHostRating: item.ownerHostRating || item.owner?.hostRating || item.user?.hostRating,
     ownerAvatar: item.ownerAvatar || item.owner?.avatar || item.user?.avatar,
     ownerRating:
-      item.ownerRating ||
-      item.owner?.rating ||
-      item.user?.rating ||
-      item.ownerHostRating,
+      item.ownerRating || item.owner?.rating || item.user?.rating || item.ownerHostRating,
   };
 
   return {
@@ -296,13 +272,9 @@ export function adaptUserItem(item: any) {
     status: frontendStatus, // Convert boolean to string for frontend
     createTime: item.createdAt ? new Date(item.createdAt).toLocaleString() : "", // 格式化创建时间
     userType: item.role || "", // 后端字段是 role
-    verificationStatus: item.verificationStatus
-      ? item.verificationStatus.toString()
-      : "UNVERIFIED",
+    verificationStatus: item.verificationStatus ? item.verificationStatus.toString() : "UNVERIFIED",
     realName: item.realName || "",
     avatar: item.avatar || "",
-    lastLoginTime: item.lastLogin
-      ? new Date(item.lastLogin).toLocaleString()
-      : "", // 修复：后端字段是 lastLogin，格式化时间显示
+    lastLoginTime: item.lastLogin ? new Date(item.lastLogin).toLocaleString() : "", // 修复：后端字段是 lastLogin，格式化时间显示
   };
 }

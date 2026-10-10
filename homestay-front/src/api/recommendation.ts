@@ -16,19 +16,8 @@ export interface UserRecommendationRequest {
   minRating?: number;
   instantBookingOnly?: boolean;
   recommendationType?:
-    | "POPULAR"
-    | "PERSONALIZED"
-    | "LOCATION_BASED"
-    | "SIMILAR"
-    | "TRENDING"
-    | "VALUE_FOR_MONEY";
-  sortType?:
-    | "POPULARITY"
-    | "PRICE_LOW_HIGH"
-    | "PRICE_HIGH_LOW"
-    | "RATING"
-    | "NEWEST"
-    | "DISTANCE";
+    "POPULAR" | "PERSONALIZED" | "LOCATION_BASED" | "SIMILAR" | "TRENDING" | "VALUE_FOR_MONEY";
+  sortType?: "POPULARITY" | "PRICE_LOW_HIGH" | "PRICE_HIGH_LOW" | "RATING" | "NEWEST" | "DISTANCE";
 }
 
 // 分页参数接口
@@ -72,13 +61,8 @@ export function getRecommendedHomestaysPage(pagination: PaginationParams) {
 /**
  * 获取个性化推荐民宿
  */
-export function getPersonalizedRecommendations(
-  userId: number,
-  limit: number = 6
-) {
-  return request.get(
-    `/api/recommendations/personalized/${userId}?limit=${limit}`
-  );
+export function getPersonalizedRecommendations(userId: number, limit: number = 6) {
+  return request.get(`/api/recommendations/personalized/${userId}?limit=${limit}`);
 }
 
 export function getMyPersonalizedRecommendations(limit: number = 6) {
@@ -102,17 +86,13 @@ export function getLocationBasedRecommendations(
  * 获取相似民宿推荐
  */
 export function getSimilarHomestays(homestayId: number, limit: number = 6) {
-  return request.get(
-    `/api/recommendations/similar/${homestayId}?limit=${limit}`
-  );
+  return request.get(`/api/recommendations/similar/${homestayId}?limit=${limit}`);
 }
 
 /**
  * 根据用户请求获取推荐
  */
-export function getRecommendationsByRequest(
-  requestData: UserRecommendationRequest
-) {
+export function getRecommendationsByRequest(requestData: UserRecommendationRequest) {
   return request.post("/api/recommendations/custom", requestData);
 }
 

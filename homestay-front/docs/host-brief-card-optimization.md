@@ -106,10 +106,7 @@
 - **判断逻辑**：基于 `HostUtils.isVerified()` 方法
 
 ```vue
-<div
-  class="verification-badge"
-  v-if="hostDetailInfo && HostUtils.isVerified(hostDetailInfo)"
->
+<div class="verification-badge" v-if="hostDetailInfo && HostUtils.isVerified(hostDetailInfo)">
     <el-icon><Check /></el-icon>
 </div>
 ```
@@ -154,9 +151,7 @@
 #### 徽章类型映射
 
 ```typescript
-const getBadgeType = (
-  badge: string
-): "primary" | "success" | "warning" | "info" => {
+const getBadgeType = (badge: string): "primary" | "success" | "warning" | "info" => {
   switch (badge) {
     case "资深房东":
       return "primary";

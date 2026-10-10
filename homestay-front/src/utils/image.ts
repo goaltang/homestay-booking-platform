@@ -61,10 +61,7 @@ export function addTimestampToUrl(url: string): string {
  * @param preventCache 是否添加防缓存参数
  * @returns 完整的头像URL
  */
-export const getAvatarUrl = (
-  filename: string,
-  preventCache: boolean = true
-): string => {
+export const getAvatarUrl = (filename: string, preventCache: boolean = true): string => {
   if (!filename) {
     console.error("尝试获取空文件名的头像URL");
     return PATH_CONFIG?.avatar?.default || "/assets/default-avatar.png";
@@ -166,10 +163,7 @@ export function handleImageError(
     console.error(`图片加载失败: ${img.src}`);
 
     // 检查type是否为有效的类型
-    if (
-      typeof type === "string" &&
-      !["avatar", "homestay", "review", "common"].includes(type)
-    ) {
+    if (typeof type === "string" && !["avatar", "homestay", "review", "common"].includes(type)) {
       console.error(`无效的图片类型: ${type}，使用默认类型'avatar'`);
       type = "avatar"; // 默认使用avatar类型
     }

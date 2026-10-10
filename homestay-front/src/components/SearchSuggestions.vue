@@ -4,9 +4,7 @@
     <div v-if="showRecentSearches" class="suggestion-section">
       <div class="suggestion-header">
         <span class="suggestion-title">最近搜索</span>
-        <button type="button" class="clear-btn" @click="handleClearRecent">
-          清除
-        </button>
+        <button type="button" class="clear-btn" @click="handleClearRecent">清除</button>
       </div>
       <div class="suggestion-items">
         <div
@@ -15,7 +13,18 @@
           class="suggestion-item recent-item"
           @click="$emit('select', item)"
         >
-          <svg class="item-icon recent-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg
+            class="item-icon recent-icon"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="10" />
             <polyline points="12 6 12 12 16 14" />
           </svg>
@@ -26,7 +35,16 @@
             aria-label="删除此搜索记录"
             @click.stop="handleRemoveRecent(item)"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           </button>
@@ -44,8 +62,21 @@
           class="suggestion-item"
           @click="$emit('select', suggestion)"
         >
-          <svg class="item-icon hot-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          <svg
+            class="item-icon hot-icon"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polygon
+              points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+            />
           </svg>
           <span>{{ suggestion.label }}</span>
         </div>
@@ -55,11 +86,11 @@
 </template>
 
 <script setup lang="ts">
-import { useSearchSuggestions } from '@/composables/useSearchSuggestions'
+import { useSearchSuggestions } from "@/composables/useSearchSuggestions";
 
 const emit = defineEmits<{
-  select: [suggestion: { label: string; value: string[] }]
-}>()
+  select: [suggestion: { label: string; value: string[] }];
+}>();
 
 const {
   popularDestinations,
@@ -67,16 +98,16 @@ const {
   showRecentSearches,
   hasPopularDestinations,
   clearRecentSearches,
-  removeRecentSearch
-} = useSearchSuggestions()
+  removeRecentSearch,
+} = useSearchSuggestions();
 
 const handleClearRecent = () => {
-  clearRecentSearches()
-}
+  clearRecentSearches();
+};
 
 const handleRemoveRecent = (item: { label: string; value: string[] }) => {
-  removeRecentSearch(item)
-}
+  removeRecentSearch(item);
+};
 </script>
 
 <style scoped>

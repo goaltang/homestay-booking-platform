@@ -19,65 +19,70 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import { useRoute } from 'vue-router' // 移除 useRouter, ElMessage, Menu 等 Header 相关的导入
-import { useUserStore } from './stores/user'
-import { useFavoritesStore } from './stores/favorites'
+import { computed, onMounted, watch } from "vue";
+import zhCn from "element-plus/es/locale/lang/zh-cn";
+import { useRoute } from "vue-router"; // 移除 useRouter, ElMessage, Menu 等 Header 相关的导入
+import { useUserStore } from "./stores/user";
+import { useFavoritesStore } from "./stores/favorites";
 // import { useAuthStore } from './stores/auth' // authStore 现在由 AppHeader 使用
 // import { getAvatarUrl, handleImageError } from './utils/image' // 这些现在由 AppHeader 处理
-import AppHeader from '@/components/common/AppHeader.vue';
-import AppFooter from '@/components/common/AppFooter.vue';
-import SupportAgentDialog from '@/components/chat/SupportAgentDialog.vue';
+import AppHeader from "@/components/common/AppHeader.vue";
+import AppFooter from "@/components/common/AppFooter.vue";
+import SupportAgentDialog from "@/components/chat/SupportAgentDialog.vue";
 
 // const router = useRouter() // router 现在由 AppHeader 使用
-const route = useRoute()
-const userStore = useUserStore()
-const favoritesStore = useFavoritesStore()
+const route = useRoute();
+const userStore = useUserStore();
+const favoritesStore = useFavoritesStore();
 // const authStore = useAuthStore() // authStore 现在由 AppHeader 使用
 
 // onMounted 获取用户信息的逻辑可以保留在 App.vue，因为它关系到整个应用的状态
 onMounted(async () => {
   if (userStore.isAuthenticated && (!userStore.userInfo || !userStore.userInfo.avatar)) {
-    console.log('App.vue: 已登录但信息不完整，尝试获取完整用户信息');
+    console.log("App.vue: 已登录但信息不完整，尝试获取完整用户信息");
     try {
       await userStore.fetchUserInfo();
-      console.log('App.vue: 成功获取用户信息:', userStore.userInfo);
+      console.log("App.vue: 成功获取用户信息:", userStore.userInfo);
     } catch (error) {
-      console.error('App.vue: 获取用户信息失败:', error);
+      console.error("App.vue: 获取用户信息失败:", error);
     }
   }
 });
 
 // 监听用户认证状态变化，更新收藏数据
-watch(() => userStore.isAuthenticated, (newAuthState, oldAuthState) => {
-  console.log('App.vue: 用户认证状态发生变化:', {
-    old: oldAuthState,
-    new: newAuthState
-  });
+watch(
+  () => userStore.isAuthenticated,
+  (newAuthState, oldAuthState) => {
+    console.log("App.vue: 用户认证状态发生变化:", {
+      old: oldAuthState,
+      new: newAuthState,
+    });
 
-  // 当认证状态发生变化时，重新加载收藏数据
-  favoritesStore.loadFavorites();
-}, { immediate: true });
+    // 当认证状态发生变化时，重新加载收藏数据
+    favoritesStore.loadFavorites();
+  },
+  { immediate: true }
+);
 
 // isLoggedIn, userAvatar, goToHome, handleCommand, handleAvatarError 这些逻辑都移到了 AppHeader.vue
 
 // isHostCenterRoute 仍然需要，因为它控制 Header 和 Footer 的显示
 const isHostCenterRoute = computed(() => {
-  return route.path.startsWith('/host');
+  return route.path.startsWith("/host");
 });
 
 // 控制 Header 和 Footer 的显示
 const showHeader = computed(() => {
   const path = route.path;
-  return !path.startsWith('/host') && path !== '/login' && path !== '/register';
+  return !path.startsWith("/host") && path !== "/login" && path !== "/register";
 });
 
 const showFooter = computed(() => {
   const path = route.path;
-  return !path.startsWith('/host') && path !== '/login' && path !== '/register' && path !== '/map-search';
+  return (
+    !path.startsWith("/host") && path !== "/login" && path !== "/register" && path !== "/map-search"
+  );
 });
-
 </script>
 
 <style>
@@ -98,7 +103,7 @@ const showFooter = computed(() => {
 }
 
 body {
-  font-family: var(--font-body, 'Helvetica Neue', Helvetica, Arial, sans-serif);
+  font-family: var(--font-body, "Helvetica Neue", Helvetica, Arial, sans-serif);
   color: var(--text-color);
   line-height: 1.5;
 }

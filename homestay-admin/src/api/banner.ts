@@ -20,11 +20,7 @@ export function getBannerList() {
   });
 }
 
-export function getBannerPage(params: {
-  page?: number;
-  size?: number;
-  keyword?: string;
-}) {
+export function getBannerPage(params: { page?: number; size?: number; keyword?: string }) {
   return request({
     url: "/api/admin/banners/page",
     method: "get",

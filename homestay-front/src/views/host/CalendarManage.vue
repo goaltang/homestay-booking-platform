@@ -6,10 +6,7 @@ import { Calendar, User, Document, InfoFilled, Search } from "@element-plus/icon
 import CalendarStats from "@/components/host-calendar/CalendarStats.vue";
 import CalendarToolbar from "@/components/host-calendar/CalendarToolbar.vue";
 import HostCalendarGrid from "@/components/host-calendar/HostCalendarGrid.vue";
-import {
-  addCalendarDays,
-  useHostCalendar,
-} from "@/composables/useHostCalendar";
+import { addCalendarDays, useHostCalendar } from "@/composables/useHostCalendar";
 import { exportHostCalendar, updateHostCalendarPrice } from "@/api/hostCalendar";
 import type { HostCalendarDay, HostCalendarStatus } from "@/api/hostCalendar";
 
@@ -67,7 +64,10 @@ const statusLabels: Record<HostCalendarStatus, string> = {
   LOCKED: "锁定中",
 };
 
-const statusTagType: Record<HostCalendarStatus, "success" | "warning" | "danger" | "info" | "primary"> = {
+const statusTagType: Record<
+  HostCalendarStatus,
+  "success" | "warning" | "danger" | "info" | "primary"
+> = {
   AVAILABLE: "success",
   PENDING_CONFIRM: "warning",
   BOOKED: "primary",
@@ -127,9 +127,14 @@ function openDrawer(date: string, entries: HostCalendarDay[], range: [string, st
   selectedDate.value = date;
   selectedEntries.value = entries;
   activeTab.value = "status";
-  form.homestayIds = selectedHomestayId.value !== null
-    ? [selectedHomestayId.value]
-    : (entries.length > 0 ? [entries[0].homestayId] : (homestayOptions.value[0]?.id ? [homestayOptions.value[0].id] : []));
+  form.homestayIds =
+    selectedHomestayId.value !== null
+      ? [selectedHomestayId.value]
+      : entries.length > 0
+        ? [entries[0].homestayId]
+        : homestayOptions.value[0]?.id
+          ? [homestayOptions.value[0].id]
+          : [];
   form.dateRange = range;
   form.status = "UNAVAILABLE";
   form.reason = selectedEntry.value?.reason ?? "";
@@ -145,7 +150,11 @@ function handleDayClick(payload: { date: string; entries: HostCalendarDay[] }) {
   openDrawer(payload.date, payload.entries, [payload.date, payload.date]);
 }
 
-function handleRangeSelect(payload: { startDate: string; endDate: string; entries: HostCalendarDay[] }) {
+function handleRangeSelect(payload: {
+  startDate: string;
+  endDate: string;
+  entries: HostCalendarDay[];
+}) {
   openDrawer(payload.startDate, payload.entries, [payload.startDate, payload.endDate]);
 }
 
@@ -171,8 +180,7 @@ async function handleExport() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     ElMessage.success("导出成功");
-  } catch {
-  }
+  } catch {}
 }
 
 function daysBetween(start: string, end: string): number {
@@ -250,7 +258,10 @@ async function doPriceUpdate(clearMode: boolean) {
     ElMessage.warning("请选择日期范围");
     return;
   }
-  if (!clearMode && (form.customPrice === undefined || form.customPrice === null || Number.isNaN(form.customPrice))) {
+  if (
+    !clearMode &&
+    (form.customPrice === undefined || form.customPrice === null || Number.isNaN(form.customPrice))
+  ) {
     ElMessage.warning("请输入价格");
     return;
   }
@@ -278,11 +289,17 @@ async function doPriceUpdate(clearMode: boolean) {
   batchProgress.value = null;
 
   if (failCount === 0) {
-    ElMessage.success(clearMode ? `已成功清除 ${successCount} 套房源的自定义价格` : `已成功更新 ${successCount} 套房源的价格`);
+    ElMessage.success(
+      clearMode
+        ? `已成功清除 ${successCount} 套房源的自定义价格`
+        : `已成功更新 ${successCount} 套房源的价格`
+    );
     await loadCalendar();
     drawerVisible.value = false;
   } else if (successCount === 0) {
-    ElMessage.error(clearMode ? `清除价格失败，共 ${failCount} 套房源` : `价格更新失败，共 ${failCount} 套房源`);
+    ElMessage.error(
+      clearMode ? `清除价格失败，共 ${failCount} 套房源` : `价格更新失败，共 ${failCount} 套房源`
+    );
   } else {
     ElMessage.warning(`部分成功：${successCount} 套成功，${failCount} 套失败`);
     await loadCalendar();
@@ -352,7 +369,10 @@ onMounted(() => {
         <!-- 日期范围摘要 -->
         <div class="date-header">
           <el-icon><Calendar /></el-icon>
-          <span v-if="form.dateRange.length === 2 && form.dateRange[0] === form.dateRange[1]" class="date-text">
+          <span
+            v-if="form.dateRange.length === 2 && form.dateRange[0] === form.dateRange[1]"
+            class="date-text"
+          >
             {{ form.dateRange[0] }}
           </span>
           <span v-else-if="form.dateRange.length === 2" class="date-text">
@@ -397,7 +417,10 @@ onMounted(() => {
             <div class="card-body">
               <div v-if="entry.finalPrice" class="card-price">
                 ¥{{ entry.finalPrice }}
-                <span v-if="entry.basePrice && entry.finalPrice !== entry.basePrice" class="price-original">
+                <span
+                  v-if="entry.basePrice && entry.finalPrice !== entry.basePrice"
+                  class="price-original"
+                >
                   原价 ¥{{ entry.basePrice }}
                 </span>
               </div>
@@ -454,16 +477,35 @@ onMounted(() => {
 
               <template v-if="form.status === 'UNAVAILABLE'">
                 <el-form-item label="原因">
-                  <el-input v-model="form.reason" maxlength="80" show-word-limit placeholder="例如：维修、自住" />
+                  <el-input
+                    v-model="form.reason"
+                    maxlength="80"
+                    show-word-limit
+                    placeholder="例如：维修、自住"
+                  />
                 </el-form-item>
                 <el-form-item label="备注">
-                  <el-input v-model="form.note" type="textarea" :rows="3" maxlength="300" show-word-limit placeholder="可选填" />
+                  <el-input
+                    v-model="form.note"
+                    type="textarea"
+                    :rows="3"
+                    maxlength="300"
+                    show-word-limit
+                    placeholder="可选填"
+                  />
                 </el-form-item>
               </template>
 
               <el-form-item>
-                <el-button type="primary" :loading="saving" class="submit-btn" @click="submitAvailability">
-                  <template v-if="batchProgress">保存中 ({{ batchProgress.current }}/{{ batchProgress.total }})</template>
+                <el-button
+                  type="primary"
+                  :loading="saving"
+                  class="submit-btn"
+                  @click="submitAvailability"
+                >
+                  <template v-if="batchProgress"
+                    >保存中 ({{ batchProgress.current }}/{{ batchProgress.total }})</template
+                  >
                   <template v-else>保存状态</template>
                 </el-button>
               </el-form-item>
@@ -509,12 +551,21 @@ onMounted(() => {
 
               <el-form-item>
                 <div class="price-actions">
-                  <el-button type="success" :loading="saving" class="submit-btn" @click="submitPrice">
-                    <template v-if="batchProgress">保存中 ({{ batchProgress.current }}/{{ batchProgress.total }})</template>
+                  <el-button
+                    type="success"
+                    :loading="saving"
+                    class="submit-btn"
+                    @click="submitPrice"
+                  >
+                    <template v-if="batchProgress"
+                      >保存中 ({{ batchProgress.current }}/{{ batchProgress.total }})</template
+                    >
                     <template v-else>保存价格</template>
                   </el-button>
                   <el-button :loading="saving" class="submit-btn" @click="submitClearPrice">
-                    <template v-if="batchProgress">保存中 ({{ batchProgress.current }}/{{ batchProgress.total }})</template>
+                    <template v-if="batchProgress"
+                      >保存中 ({{ batchProgress.current }}/{{ batchProgress.total }})</template
+                    >
                     <template v-else>清除价格</template>
                   </el-button>
                 </div>
@@ -693,13 +744,27 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.entry-card.status-available { border-left-color: #16a34a; }
-.entry-card.status-pending-confirm { border-left-color: #d97706; }
-.entry-card.status-booked { border-left-color: #2563eb; }
-.entry-card.status-checked-in { border-left-color: #16a34a; }
-.entry-card.status-checked-out { border-left-color: #64748b; }
-.entry-card.status-unavailable { border-left-color: #dc2626; }
-.entry-card.status-locked { border-left-color: #64748b; }
+.entry-card.status-available {
+  border-left-color: #16a34a;
+}
+.entry-card.status-pending-confirm {
+  border-left-color: #d97706;
+}
+.entry-card.status-booked {
+  border-left-color: #2563eb;
+}
+.entry-card.status-checked-in {
+  border-left-color: #16a34a;
+}
+.entry-card.status-checked-out {
+  border-left-color: #64748b;
+}
+.entry-card.status-unavailable {
+  border-left-color: #dc2626;
+}
+.entry-card.status-locked {
+  border-left-color: #64748b;
+}
 
 .entry-empty {
   padding: 20px 0;

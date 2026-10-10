@@ -27,8 +27,7 @@ export function extractRole(
   const authorities = data.authorities;
   if (Array.isArray(authorities)) {
     for (const auth of authorities) {
-      const authority =
-        typeof auth === "string" ? auth : (auth as AuthorityLike)?.authority;
+      const authority = typeof auth === "string" ? auth : (auth as AuthorityLike)?.authority;
       if (authority && authority.startsWith("ROLE_")) {
         return authority;
       }
@@ -46,10 +45,7 @@ export function normalizeAvatarUrl(avatar?: string | null): string {
     // 完整 URL：转换为相对 API 路径
     if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
       const url = new URL(avatar);
-      if (
-        url.pathname.includes("/uploads/avatars/") ||
-        url.pathname.includes("/uploads/avatar/")
-      ) {
+      if (url.pathname.includes("/uploads/avatars/") || url.pathname.includes("/uploads/avatar/")) {
         return `/api/files/avatar/${url.pathname.split("/").pop()}`;
       }
       if (url.pathname.includes("/uploads/")) {
@@ -59,10 +55,7 @@ export function normalizeAvatarUrl(avatar?: string | null): string {
     }
 
     // 旧格式：/uploads/avatars/{filename}
-    if (
-      avatar.startsWith("/uploads/avatars/") ||
-      avatar.startsWith("/uploads/avatar/")
-    ) {
+    if (avatar.startsWith("/uploads/avatars/") || avatar.startsWith("/uploads/avatar/")) {
       return `/api/files/avatar/${avatar.split("/").pop()}`;
     }
 

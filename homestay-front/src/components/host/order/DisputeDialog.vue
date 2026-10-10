@@ -8,14 +8,20 @@
     <div v-if="order" class="refund-dialog-content">
       <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 20px">
         <template #title>
-          <span>对订单 <strong>#{{ order.id }}</strong> 的退款有异议？</span>
+          <span
+            >对订单 <strong>#{{ order.id }}</strong> 的退款有异议？</span
+          >
         </template>
         <div>发起争议后，订单将进入争议处理流程，需要管理员进行仲裁。</div>
       </el-alert>
 
       <el-descriptions :column="1" border size="small" class="refund-order-info">
-        <el-descriptions-item label="订单号">{{ order.orderNumber || order.id }}</el-descriptions-item>
-        <el-descriptions-item label="退款原因">{{ order.refundReason || "无" }}</el-descriptions-item>
+        <el-descriptions-item label="订单号">{{
+          order.orderNumber || order.id
+        }}</el-descriptions-item>
+        <el-descriptions-item label="退款原因">{{
+          order.refundReason || "无"
+        }}</el-descriptions-item>
         <el-descriptions-item label="退款金额">
           <span class="refund-amount-highlight">
             ¥{{ formatAmount(order.refundAmount || order.totalAmount) }}

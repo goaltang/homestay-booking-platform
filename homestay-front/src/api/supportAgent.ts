@@ -26,7 +26,7 @@ export function chatWithAgent(req: AgentChatRequest): Promise<AgentChatResponse>
   return request
     .post<{ success: boolean; code: number; message: string; data: AgentChatResponse }>(
       "/api/support/agent/chat",
-      req,
+      req
     )
     .then((response) => response.data.data);
 }
@@ -35,7 +35,7 @@ export function confirmAgentAction(pending: AgentPendingAction): Promise<AgentCh
   return request
     .post<{ success: boolean; code: number; message: string; data: AgentChatResponse }>(
       "/api/support/agent/confirm",
-      pending,
+      pending
     )
     .then((response) => response.data.data);
 }

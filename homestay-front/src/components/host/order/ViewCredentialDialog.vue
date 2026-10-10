@@ -16,12 +16,24 @@
             {{ credential.checkInCode }}
           </span>
         </el-descriptions-item>
-        <el-descriptions-item label="门锁密码" v-if="credential.doorPassword">{{ credential.doorPassword }}</el-descriptions-item>
-        <el-descriptions-item label="密钥箱密码" v-if="credential.lockboxCode">{{ credential.lockboxCode }}</el-descriptions-item>
-        <el-descriptions-item label="位置描述" :span="2" v-if="credential.locationDescription">{{ credential.locationDescription }}</el-descriptions-item>
-        <el-descriptions-item label="有效起始" v-if="credential.validFrom">{{ credential.validFrom }}</el-descriptions-item>
-        <el-descriptions-item label="有效截止" v-if="credential.validUntil">{{ credential.validUntil }}</el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2" v-if="credential.remark">{{ credential.remark }}</el-descriptions-item>
+        <el-descriptions-item label="门锁密码" v-if="credential.doorPassword">{{
+          credential.doorPassword
+        }}</el-descriptions-item>
+        <el-descriptions-item label="密钥箱密码" v-if="credential.lockboxCode">{{
+          credential.lockboxCode
+        }}</el-descriptions-item>
+        <el-descriptions-item label="位置描述" :span="2" v-if="credential.locationDescription">{{
+          credential.locationDescription
+        }}</el-descriptions-item>
+        <el-descriptions-item label="有效起始" v-if="credential.validFrom">{{
+          credential.validFrom
+        }}</el-descriptions-item>
+        <el-descriptions-item label="有效截止" v-if="credential.validUntil">{{
+          credential.validUntil
+        }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2" v-if="credential.remark">{{
+          credential.remark
+        }}</el-descriptions-item>
       </el-descriptions>
     </div>
     <template #footer>

@@ -20,12 +20,12 @@
 
 <script setup lang="ts">
 interface Props {
-  count?: number
+  count?: number;
 }
 
 withDefaults(defineProps<Props>(), {
-  count: 6
-})
+  count: 6,
+});
 </script>
 
 <style scoped>

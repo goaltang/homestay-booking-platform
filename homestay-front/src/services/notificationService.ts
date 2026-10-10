@@ -1,8 +1,5 @@
 import request from "@/utils/request"; // 导入封装好的 axios 实例
-import type {
-  NotificationPageData,
-  NotificationDto,
-} from "@/types/notification";
+import type { NotificationPageData, NotificationDto } from "@/types/notification";
 import { normalizeNotification } from "@/types/notification";
 
 // 定义通用的分页参数类型 (如果项目中还没有)
@@ -87,7 +84,9 @@ export const markMultipleAsRead = (notificationIds: number[]): Promise<{ markedC
  * 批量删除通知
  * @param notificationIds - 通知 ID 数组
  */
-export const deleteMultipleNotifications = (notificationIds: number[]): Promise<{ deletedCount: number }> => {
+export const deleteMultipleNotifications = (
+  notificationIds: number[]
+): Promise<{ deletedCount: number }> => {
   return request({
     url: "/api/notifications/delete-multiple",
     method: "post",
@@ -120,10 +119,7 @@ export const getNotificationPreferences = (): Promise<Record<string, boolean>> =
  * @param domain - 业务域名称（小写）
  * @param enabled - 是否开启
  */
-export const updateNotificationPreference = (
-  domain: string,
-  enabled: boolean
-): Promise<void> => {
+export const updateNotificationPreference = (domain: string, enabled: boolean): Promise<void> => {
   return request({
     url: `/api/notifications/preferences/${domain}`,
     method: "put",

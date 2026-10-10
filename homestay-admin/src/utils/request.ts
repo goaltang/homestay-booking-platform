@@ -3,7 +3,10 @@ import type { AxiosInstance, AxiosRequestConfig } from "axios";
 import { ElMessage, ElNotification } from "element-plus";
 import { useUserStore } from "@/stores/user";
 
-interface UnwrappedRequest extends Omit<AxiosInstance, "request" | "get" | "delete" | "head" | "options" | "post" | "put" | "patch"> {
+interface UnwrappedRequest extends Omit<
+  AxiosInstance,
+  "request" | "get" | "delete" | "head" | "options" | "post" | "put" | "patch"
+> {
   <T = any>(config: AxiosRequestConfig): Promise<T>;
   <T = any>(url: string, config?: AxiosRequestConfig): Promise<T>;
   request<T = any>(config: AxiosRequestConfig): Promise<T>;
@@ -34,7 +37,9 @@ const logLevels = {
 // 当前日志级别
 const currentLogLevel = import.meta.env.VITE_LOG_LEVEL
   ? logLevels[import.meta.env.VITE_LOG_LEVEL as keyof typeof logLevels]
-  : import.meta.env.DEV ? logLevels.debug : logLevels.error;
+  : import.meta.env.DEV
+    ? logLevels.debug
+    : logLevels.error;
 
 // 请求拦截器
 request.interceptors.request.use(
@@ -108,23 +113,13 @@ request.interceptors.response.use(
     const httpStatus = response.status; // Get HTTP status code
 
     if (currentLogLevel >= logLevels.debug) {
-      console.log(
-        "Response:",
-        response.config.url,
-        "HTTP Status:",
-        httpStatus,
-        "Data:",
-        res
-      );
+      console.log("Response:", response.config.url, "HTTP Status:", httpStatus, "Data:", res);
     }
 
     // 1. Check for the specific {status: 'success', data: ...} structure first
     if (res && res.status === "success" && res.data !== undefined) {
       if (currentLogLevel >= logLevels.debug) {
-        console.log(
-          "Extracting response.data based on {status: 'success'}:",
-          res.data
-        );
+        console.log("Extracting response.data based on {status: 'success'}:", res.data);
       }
       return res.data; // Return extracted data
     }
@@ -142,10 +137,7 @@ request.interceptors.response.use(
           `Response status is '${res.status}' (not 'success') for ${response.config.url}. Returning raw data.`,
           res
         );
-      } else if (
-        currentLogLevel >= logLevels.warn &&
-        (!res || res.status === undefined)
-      ) {
+      } else if (currentLogLevel >= logLevels.warn && (!res || res.status === undefined)) {
         console.warn(
           `Response data structure does not match {status, data} for ${response.config.url}. Returning raw data.`,
           res

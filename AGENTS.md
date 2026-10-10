@@ -72,7 +72,7 @@
 | Flyway 迁移 | 验证独立数据库上的新库安装及旧版本升级；H2 测试关闭 Flyway，不能证明迁移通过 |
 | 仅文档修改 | 检查路径、链接、命令依据及 `git diff --check`；无需仅为文档修改运行应用测试 |
 
-两端都有 `lint:check`、`format:check`、`quality:changed`。改前端时运行 `lint:check` 和 `quality:changed`；改动格式配置时加跑全量 `format:check`，存量问题单独报告，不夹带全仓格式化。CI 执行后端测试、两端全量 lint、改动文件格式检查、Vitest 和构建。检查范围与工具配置见 [开发检查说明](docs/DEVELOPMENT.md)。
+两端都有 `lint:check`、`format:check`、`quality:changed`。改前端时运行全量 `lint:check`、`format:check` 和相关测试；`quality:changed` 另检查改动的共享配置与工具文件。CI 执行后端测试、两端全量 lint、全量格式检查、改动文件检查、Vitest 和构建。日常任务不夹带全仓格式化，专门的格式整理按用户授权单独提交。检查范围与工具配置见 [开发检查说明](docs/DEVELOPMENT.md)。
 
 ## 测试红线（强制）
 

@@ -1,10 +1,6 @@
 import request from "@/utils/request";
 import type { User, UserSearchParams } from "@/types";
-import {
-  adaptPageParams,
-  adaptPageResponse,
-  adaptUserItem,
-} from "@/utils/adapter";
+import { adaptPageParams, adaptPageResponse, adaptUserItem } from "@/utils/adapter";
 
 // 获取用户列表
 export function getUserList(params: UserSearchParams) {
@@ -87,9 +83,7 @@ export function updateUser(id: number, data: Partial<User>) {
   // Send the boolean `enabled` value directly if present
   if ("enabled" in adaptedData) {
     // Assuming frontend User type uses 'enabled'
-    console.log(
-      `Updating user ${id}, enabled status received: ${adaptedData.enabled}`
-    );
+    console.log(`Updating user ${id}, enabled status received: ${adaptedData.enabled}`);
   } else if ("status" in adaptedData) {
     // Handle legacy 'status' if it exists and convert it
     console.warn("Received legacy 'status' field, converting to 'enabled'");

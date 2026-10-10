@@ -16,9 +16,7 @@ let listenersRegistered = false;
 const isConnected = shallowRef(false);
 
 const getApiBaseUrl = () =>
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:8081";
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
 
 // token 迁移后，JWT 只存内存（供 WebSocket 握手用），httpOnly cookie 用于 HTTP API
 let memoryToken: string | null = null;
@@ -183,12 +181,7 @@ const connect = (userId: number | null) => {
     console.warn("无内存 token，依赖 httpOnly cookie 认证 WebSocket");
   }
 
-  if (
-    stompClient &&
-    isWebSocketConnected() &&
-    activeUserId === userId &&
-    activeToken === token
-  ) {
+  if (stompClient && isWebSocketConnected() && activeUserId === userId && activeToken === token) {
     return;
   }
 

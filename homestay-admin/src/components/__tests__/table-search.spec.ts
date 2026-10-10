@@ -73,16 +73,20 @@ describe("查询组件的数据流", () => {
     ];
     const search = vi.fn(() => ({ ...query, price: [...query.price] }));
     const Parent = defineComponent({
-      setup: () => () => h(TableSearch, {
-        query, options, search,
-        "onUpdate:query": (value: Record<string, unknown>) => Object.assign(query, value),
-      }),
+      setup: () => () =>
+        h(TableSearch, {
+          query,
+          options,
+          search,
+          "onUpdate:query": (value: Record<string, unknown>) => Object.assign(query, value),
+        }),
     });
     const wrapper = mount(Parent, { global: { plugins: [ElementPlus] } });
     wrappers.push(wrapper);
     await wrapper.find('input[placeholder="请输入关键字"]').setValue("新的关键字");
     expect(query.keyword).toBe("新的关键字");
-    const button = (label: string) => wrapper.findAll("button").find((item) => item.text() === label)!;
+    const button = (label: string) =>
+      wrapper.findAll("button").find((item) => item.text() === label)!;
     await button("搜索").trigger("click");
     expect(search.mock.results.at(-1)?.value.keyword).toBe("新的关键字");
     await button("重置").trigger("click");
@@ -91,7 +95,8 @@ describe("查询组件的数据流", () => {
     expect(search).toHaveBeenCalledTimes(2);
     query.keyword = "父页面更新";
     await nextTick();
-    expect((wrapper.find('input[placeholder="请输入关键字"]').element as HTMLInputElement).value)
-      .toBe("父页面更新");
+    expect(
+      (wrapper.find('input[placeholder="请输入关键字"]').element as HTMLInputElement).value
+    ).toBe("父页面更新");
   });
 });

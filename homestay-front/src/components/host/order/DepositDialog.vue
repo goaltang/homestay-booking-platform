@@ -15,12 +15,18 @@
       <el-descriptions :column="2" border size="small" style="margin-bottom: 20px">
         <el-descriptions-item label="押金状态">
           <el-tag :type="getDepositStatusType(record.depositStatus || '')" size="small">
-            {{ getDepositStatusText(record.depositStatus || '') }}
+            {{ getDepositStatusText(record.depositStatus || "") }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="押金金额">¥{{ record.depositAmount || 0 }}</el-descriptions-item>
-        <el-descriptions-item label="结算金额">¥{{ record.settlementAmount || 0 }}</el-descriptions-item>
-        <el-descriptions-item label="额外费用">¥{{ record.extraCharges || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="押金金额"
+          >¥{{ record.depositAmount || 0 }}</el-descriptions-item
+        >
+        <el-descriptions-item label="结算金额"
+          >¥{{ record.settlementAmount || 0 }}</el-descriptions-item
+        >
+        <el-descriptions-item label="额外费用"
+          >¥{{ record.extraCharges || 0 }}</el-descriptions-item
+        >
       </el-descriptions>
 
       <el-form :model="form" label-width="100px">
@@ -33,7 +39,13 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="金额" v-if="form.action === 'COLLECT' || form.action === 'RETAIN'">
-          <el-input-number v-model="form.amount" :min="0" :precision="2" :step="10" style="width: 200px" />
+          <el-input-number
+            v-model="form.amount"
+            :min="0"
+            :precision="2"
+            :step="10"
+            style="width: 200px"
+          />
         </el-form-item>
         <el-form-item label="说明" v-if="form.action === 'RETAIN'">
           <el-input v-model="form.note" type="textarea" :rows="2" placeholder="请输入扣押原因" />
@@ -67,7 +79,12 @@ const emit = defineEmits<{
 }>();
 
 const submitting = ref(false);
-const record = ref<{ depositStatus?: string; depositAmount?: number; settlementAmount?: number; extraCharges?: number } | null>(null);
+const record = ref<{
+  depositStatus?: string;
+  depositAmount?: number;
+  settlementAmount?: number;
+  extraCharges?: number;
+} | null>(null);
 const form = reactive({ action: "REFUND", amount: 0, note: "" });
 
 const loadRecord = async () => {
@@ -84,9 +101,12 @@ const loadRecord = async () => {
   }
 };
 
-watch(() => props.modelValue, (v) => {
-  if (v) loadRecord();
-});
+watch(
+  () => props.modelValue,
+  (v) => {
+    if (v) loadRecord();
+  }
+);
 
 const handleSubmit = async () => {
   if (!props.order?.id) return;

@@ -36,10 +36,7 @@ export const rejectRefund = (orderId: number, rejectReason: string) => {
 };
 
 // 管理员完成退款
-export const completeRefund = (
-  orderId: number,
-  refundTransactionId?: string
-) => {
+export const completeRefund = (orderId: number, refundTransactionId?: string) => {
   return request({
     url: `/api/admin/orders/${orderId}/refund/complete`,
     method: "post",

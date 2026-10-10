@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { UserFilled, Lock, ChatDotRound, RefreshLeft } from '@element-plus/icons-vue'
+import { UserFilled, Lock, ChatDotRound, RefreshLeft } from "@element-plus/icons-vue";
 </script>
 
 <style scoped>

@@ -191,7 +191,7 @@ export function getNotificationBroadcastJob(jobId: number) {
 export function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
-    return '-';
+    return "-";
   }
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);

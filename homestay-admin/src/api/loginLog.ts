@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request from "@/utils/request";
 
 export interface LoginLog {
   id?: number;
@@ -31,5 +31,5 @@ export interface ApiResponse<T = any> {
 }
 
 export function getLoginLogsApi(params: LoginLogQueryParams): Promise<ApiResponse<LoginLog[]>> {
-  return request.get('/api/admin/login-logs', { params });
+  return request.get("/api/admin/login-logs", { params });
 }

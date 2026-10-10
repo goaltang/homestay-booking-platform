@@ -15,7 +15,7 @@
 }
 
 body {
-  font-family: var(--font-body, 'Helvetica Neue', Helvetica, Arial, sans-serif);
+  font-family: var(--font-body, "Helvetica Neue", Helvetica, Arial, sans-serif);
   color: var(--text-color);
   line-height: 1.5;
 }
@@ -25,7 +25,8 @@ a {
   color: inherit;
 }
 
-ul, ol {
+ul,
+ol {
   list-style: none;
 }
 
@@ -103,4 +104,4 @@ button {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
-} 
+}

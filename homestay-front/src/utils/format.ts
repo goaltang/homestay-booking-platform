@@ -4,10 +4,7 @@
  * @param format 格式化模板，例如 'YYYY-MM-DD HH:mm:ss'
  * @returns 格式化后的日期字符串
  */
-export function formatDate(
-  date: string | Date,
-  format: string = "YYYY-MM-DD"
-): string {
+export function formatDate(date: string | Date, format: string = "YYYY-MM-DD"): string {
   if (!date) return "";
 
   const d = typeof date === "string" ? new Date(date) : date;
@@ -74,11 +71,7 @@ export function formatFileSize(bytes: number): string {
  * @param suffix 后缀，默认为 '...'
  * @returns 截断后的文本
  */
-export function truncateText(
-  text: string,
-  length: number,
-  suffix: string = "..."
-): string {
+export function truncateText(text: string, length: number, suffix: string = "..."): string {
   if (!text) return "";
 
   if (text.length <= length) return text;

@@ -15,9 +15,7 @@
         </div>
       </template>
 
-      <div v-if="companions.length === 0" class="empty-text">
-        暂无常用入住人，点击右上角添加。
-      </div>
+      <div v-if="companions.length === 0" class="empty-text">暂无常用入住人，点击右上角添加。</div>
 
       <div v-else class="companion-list">
         <div v-for="(companion, index) in companions" :key="index" class="companion-item">
@@ -29,8 +27,12 @@
             </div>
           </div>
           <div class="companion-actions">
-            <el-button type="primary" link size="small" @click="editCompanion(index)">编辑</el-button>
-            <el-button type="danger" link size="small" @click="removeCompanion(index)">删除</el-button>
+            <el-button type="primary" link size="small" @click="editCompanion(index)"
+              >编辑</el-button
+            >
+            <el-button type="danger" link size="small" @click="removeCompanion(index)"
+              >删除</el-button
+            >
           </div>
         </div>
       </div>
@@ -58,130 +60,136 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
-import { useUserStore } from '@/stores/user'
+import { ref, onMounted, watch } from "vue";
+import { ElMessage } from "element-plus";
+import { Plus } from "@element-plus/icons-vue";
+import { useUserStore } from "@/stores/user";
 
 interface Companion {
-  name: string
-  phone?: string
-  idCard?: string
+  name: string;
+  phone?: string;
+  idCard?: string;
 }
 
-const userStore = useUserStore()
-const saving = ref(false)
-const loading = ref(false)
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const editIndex = ref(-1)
-const formRef = ref()
+const userStore = useUserStore();
+const saving = ref(false);
+const loading = ref(false);
+const dialogVisible = ref(false);
+const isEdit = ref(false);
+const editIndex = ref(-1);
+const formRef = ref();
 
-const form = ref<Companion>({ name: '', phone: '', idCard: '' })
+const form = ref<Companion>({ name: "", phone: "", idCard: "" });
 
 const rules = {
   name: [
-    { required: true, message: '请输入姓名', trigger: 'blur' },
-    { min: 2, max: 20, message: '姓名长度2-20个字符', trigger: 'blur' }
+    { required: true, message: "请输入姓名", trigger: "blur" },
+    { min: 2, max: 20, message: "姓名长度2-20个字符", trigger: "blur" },
   ],
-  phone: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-  ],
+  phone: [{ pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号", trigger: "blur" }],
   idCard: [
-    { pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: '请输入正确的身份证号', trigger: 'blur' }
-  ]
-}
+    {
+      pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/,
+      message: "请输入正确的身份证号",
+      trigger: "blur",
+    },
+  ],
+};
 
-const companions = ref<Companion[]>([])
+const companions = ref<Companion[]>([]);
 
 const parseCompanions = () => {
-  const raw = userStore.userInfo?.frequentGuests
+  const raw = userStore.userInfo?.frequentGuests;
   if (raw) {
     try {
-      const parsed = JSON.parse(raw)
+      const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        companions.value = parsed
-        return
+        companions.value = parsed;
+        return;
       }
     } catch (e) {
-      console.error('解析常用入住人失败', e)
+      console.error("解析常用入住人失败", e);
     }
   }
-  companions.value = []
-}
+  companions.value = [];
+};
 
 const serializeCompanions = () => {
-  return companions.value.length > 0 ? JSON.stringify(companions.value) : ''
-}
+  return companions.value.length > 0 ? JSON.stringify(companions.value) : "";
+};
 
 const maskPhone = (phone: string) => {
-  if (!phone || phone.length !== 11) return phone
-  return phone.substring(0, 3) + '****' + phone.substring(7)
-}
+  if (!phone || phone.length !== 11) return phone;
+  return phone.substring(0, 3) + "****" + phone.substring(7);
+};
 
 const maskIdCard = (id: string) => {
-  if (!id || id.length < 8) return id
-  return id.substring(0, 4) + '********' + id.substring(id.length - 4)
-}
+  if (!id || id.length < 8) return id;
+  return id.substring(0, 4) + "********" + id.substring(id.length - 4);
+};
 
 const showAddDialog = () => {
-  isEdit.value = false
-  editIndex.value = -1
-  form.value = { name: '', phone: '', idCard: '' }
-  dialogVisible.value = true
-}
+  isEdit.value = false;
+  editIndex.value = -1;
+  form.value = { name: "", phone: "", idCard: "" };
+  dialogVisible.value = true;
+};
 
 const editCompanion = (index: number) => {
-  isEdit.value = true
-  editIndex.value = index
-  form.value = { ...companions.value[index] }
-  dialogVisible.value = true
-}
+  isEdit.value = true;
+  editIndex.value = index;
+  form.value = { ...companions.value[index] };
+  dialogVisible.value = true;
+};
 
 const removeCompanion = async (index: number) => {
-  companions.value.splice(index, 1)
-  await saveToServer()
-}
+  companions.value.splice(index, 1);
+  await saveToServer();
+};
 
 const submitForm = async () => {
-  if (!formRef.value) return
+  if (!formRef.value) return;
   try {
-    await formRef.value.validate()
+    await formRef.value.validate();
     if (isEdit.value && editIndex.value >= 0) {
-      companions.value[editIndex.value] = { ...form.value }
+      companions.value[editIndex.value] = { ...form.value };
     } else {
-      companions.value.push({ ...form.value })
+      companions.value.push({ ...form.value });
     }
-    await saveToServer()
-    dialogVisible.value = false
+    await saveToServer();
+    dialogVisible.value = false;
   } catch (e) {
     // validation error
   }
-}
+};
 
 const saveToServer = async () => {
-  saving.value = true
+  saving.value = true;
   try {
     await userStore.updateProfile({
-      username: userStore.userInfo?.username || '',
-      email: userStore.userInfo?.email || '',
-      frequentGuests: serializeCompanions()
-    })
-    ElMessage.success('保存成功')
+      username: userStore.userInfo?.username || "",
+      email: userStore.userInfo?.email || "",
+      frequentGuests: serializeCompanions(),
+    });
+    ElMessage.success("保存成功");
   } catch (e: any) {
-    console.error('保存常用入住人失败', e)
+    console.error("保存常用入住人失败", e);
   } finally {
-    saving.value = false
+    saving.value = false;
   }
-}
+};
 
-watch(() => userStore.userInfo?.frequentGuests, () => {
-  parseCompanions()
-}, { immediate: true })
+watch(
+  () => userStore.userInfo?.frequentGuests,
+  () => {
+    parseCompanions();
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
-  parseCompanions()
-})
+  parseCompanions();
+});
 </script>
 
 <style scoped>

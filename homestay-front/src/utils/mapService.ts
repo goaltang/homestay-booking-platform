@@ -74,7 +74,7 @@ export const searchAmapPoiSuggestions = async (
   }
 
   try {
-    const response = await request.get('/api/map/poi-suggestions', {
+    const response = await request.get("/api/map/poi-suggestions", {
       params: {
         keyword: normalizedKeyword,
         city: options?.city,
@@ -82,17 +82,17 @@ export const searchAmapPoiSuggestions = async (
       },
     });
     return (response.data || []).map((item: any) => ({
-      id: item.id || '',
-      name: item.name || '',
-      address: item.address || '',
-      district: item.district || '',
-      cityName: item.cityName || '',
-      provinceName: item.provinceName || '',
+      id: item.id || "",
+      name: item.name || "",
+      address: item.address || "",
+      district: item.district || "",
+      cityName: item.cityName || "",
+      provinceName: item.provinceName || "",
       latitude: item.latitude,
       longitude: item.longitude,
     }));
   } catch (e) {
-    console.error('[MapService] POI search failed:', e);
+    console.error("[MapService] POI search failed:", e);
     return [];
   }
 };
@@ -146,10 +146,7 @@ export const geocodeAddress = async (
     console.log("使用模拟地理编码数据");
 
     // 根据城市代码返回大概的坐标
-    const mockLocations: Record<
-      string,
-      { lat: number; lng: number; name: string }
-    > = {
+    const mockLocations: Record<string, { lat: number; lng: number; name: string }> = {
       "1101": { lat: 39.9042, lng: 116.4074, name: "北京市" },
       "3101": { lat: 31.2304, lng: 121.4737, name: "上海市" },
       "4403": { lat: 22.5431, lng: 114.0579, name: "深圳市" },
@@ -169,7 +166,7 @@ export const geocodeAddress = async (
   }
 
   try {
-    const response = await request.get('/api/map/geocode', {
+    const response = await request.get("/api/map/geocode", {
       params: { address },
     });
     if (response.data && response.data.latitude != null && response.data.longitude != null) {
@@ -181,7 +178,7 @@ export const geocodeAddress = async (
     }
     return null;
   } catch (e) {
-    console.error('[MapService] Geocode failed:', e);
+    console.error("[MapService] Geocode failed:", e);
     return null;
   }
 };
@@ -224,10 +221,7 @@ export const generateStaticMapUrl = (
 /**
  * 为保护隐私，给坐标添加随机偏移
  */
-export const addPrivacyOffset = (
-  lat: number,
-  lng: number
-): { lat: number; lng: number } => {
+export const addPrivacyOffset = (lat: number, lng: number): { lat: number; lng: number } => {
   // 添加小范围随机偏移（约100-500米）
   const offsetRange = 0.005; // 大约500米的偏移范围
   const latOffset = (Math.random() - 0.5) * offsetRange;

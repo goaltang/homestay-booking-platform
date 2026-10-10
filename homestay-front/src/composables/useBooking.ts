@@ -7,21 +7,18 @@ import {
   formatDateString,
   calculateNights,
   fetchCalculatePrice,
-  type PriceCalculationResult
+  type PriceCalculationResult,
 } from "@/utils/homestayUtils";
 import type { BookingDates, HomestayDetail } from "@/types/homestay";
 
-export function useBooking(
-  homestay: Ref<HomestayDetail | null>,
-  pricePerNight: Ref<number>
-) {
+export function useBooking(homestay: Ref<HomestayDetail | null>, pricePerNight: Ref<number>) {
   const router = useRouter();
   const route = useRoute();
   const userStore = useUserStore();
   const bookingStore = useBookingStore();
 
   // sessionStorage key for preserving booking dates across login redirect
-  const PENDING_BOOKING_KEY = 'pending-booking-dates';
+  const PENDING_BOOKING_KEY = "pending-booking-dates";
 
   const bookingDates = reactive<BookingDates>({
     checkIn: null,
@@ -118,7 +115,7 @@ export function useBooking(
       );
       priceDetails.value = result;
       quoteToken.value = result.quoteToken || null;
-    } catch(e) {
+    } catch (e) {
       console.error("算价失败", e);
       priceDetails.value = null;
       quoteToken.value = null;
@@ -127,15 +124,19 @@ export function useBooking(
     }
   };
 
-  watch([() => bookingDates.checkIn, () => bookingDates.checkOut, () => bookingDates.guests], () => {
-    if (bookingDates.checkIn && bookingDates.checkOut && homestay.value?.id) {
-       if (calcTimer) clearTimeout(calcTimer);
-       calcTimer = window.setTimeout(() => recalculatePrice(), 500);
-    } else {
-       priceDetails.value = null;
-       quoteToken.value = null;
-    }
-  }, { immediate: true });
+  watch(
+    [() => bookingDates.checkIn, () => bookingDates.checkOut, () => bookingDates.guests],
+    () => {
+      if (bookingDates.checkIn && bookingDates.checkOut && homestay.value?.id) {
+        if (calcTimer) clearTimeout(calcTimer);
+        calcTimer = window.setTimeout(() => recalculatePrice(), 500);
+      } else {
+        priceDetails.value = null;
+        quoteToken.value = null;
+      }
+    },
+    { immediate: true }
+  );
 
   const handleDateRangeChange = (dates: [Date, Date] | null) => {
     if (dates && dates.length === 2 && dates[0] && dates[1]) {

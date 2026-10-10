@@ -19,7 +19,7 @@ export interface FormOptionItemEdit {
   /** 对应 form 中的属性名 */
   prop: string;
   /** 表单类型 */
-  type: 'input' | 'number' | 'select' | 'date' | 'switch' | 'upload' | string;
+  type: "input" | "number" | "select" | "date" | "switch" | "upload" | string;
   /** 占位文本 */
   placeholder?: string;
   /** 是否禁用 */
@@ -44,17 +44,17 @@ export interface FormOptionItemEdit {
  * 通用表格筛选组件支持的表单类型
  */
 export type FormOptionType =
-  | 'input'
-  | 'select'
-  | 'date'
-  | 'datetime'
-  | 'daterange'
-  | 'datetimerange'
-  | 'number'
-  | 'number-range'
-  | 'switch'
-  | 'cascader'
-  | 'remote-select';
+  | "input"
+  | "select"
+  | "date"
+  | "datetime"
+  | "daterange"
+  | "datetimerange"
+  | "number"
+  | "number-range"
+  | "switch"
+  | "cascader"
+  | "remote-select";
 
 /**
  * select / cascader / remote-select 的选项结构

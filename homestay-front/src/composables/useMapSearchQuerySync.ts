@@ -1,9 +1,9 @@
-import type { Ref } from 'vue';
-import type { Router, RouteLocationNormalizedLoaded } from 'vue-router';
-import type { MapViewState } from '@/composables/useMapSearch';
+import type { Ref } from "vue";
+import type { Router, RouteLocationNormalizedLoaded } from "vue-router";
+import type { MapViewState } from "@/composables/useMapSearch";
 
 export interface QuerySyncFormState {
-  searchMode: 'normal' | 'nearby' | 'landmark';
+  searchMode: "normal" | "nearby" | "landmark";
   hasResolvedLandmark: boolean;
   selectedRegion: string[];
   minPrice?: number;
@@ -28,7 +28,7 @@ export interface HydratedQueryState {
   checkInDate: string | undefined;
   checkOutDate: string | undefined;
   dateRange: [string, string] | null;
-  searchMode: 'normal' | 'nearby' | 'landmark';
+  searchMode: "normal" | "nearby" | "landmark";
   nearbyRadius: number;
   landmarkKeyword: string;
   landmarkLat: number | undefined;
@@ -56,7 +56,7 @@ export function useMapSearchQuerySync(options: {
   const { router, route, skipNextRouteReplay } = options;
 
   const getQueryString = (value: unknown): string | undefined => {
-    return typeof value === 'string' && value.trim() ? value : undefined;
+    return typeof value === "string" && value.trim() ? value : undefined;
   };
 
   const getQueryNumber = (value: unknown): number | undefined => {
@@ -68,9 +68,7 @@ export function useMapSearchQuerySync(options: {
   };
 
   const getQuerySignature = (query: Record<string, string>) => {
-    return JSON.stringify(
-      Object.entries(query).sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-    );
+    return JSON.stringify(Object.entries(query).sort(([keyA], [keyB]) => keyA.localeCompare(keyB)));
   };
 
   const getTrackedRouteQuery = () => {
@@ -104,7 +102,7 @@ export function useMapSearchQuerySync(options: {
     if (landmarkQuery) nextQuery.landmark = landmarkQuery;
     if (landmarkLatQuery) nextQuery.landmarkLat = landmarkLatQuery;
     if (landmarkLngQuery) nextQuery.landmarkLng = landmarkLngQuery;
-    if (viewportOnlyQuery === '0') nextQuery.viewportOnly = viewportOnlyQuery;
+    if (viewportOnlyQuery === "0") nextQuery.viewportOnly = viewportOnlyQuery;
     if (mapLatQuery) nextQuery.mapLat = mapLatQuery;
     if (mapLngQuery) nextQuery.mapLng = mapLngQuery;
     if (mapZoomQuery) nextQuery.mapZoom = mapZoomQuery;
@@ -115,10 +113,10 @@ export function useMapSearchQuerySync(options: {
 
   const buildQueryFromForm = (state: QuerySyncFormState) => {
     const nextQuery: Record<string, string> = {};
-    const landmarkQueryReady = state.searchMode === 'landmark' && state.hasResolvedLandmark;
+    const landmarkQueryReady = state.searchMode === "landmark" && state.hasResolvedLandmark;
 
     if (state.selectedRegion.length > 0) {
-      nextQuery.region = state.selectedRegion.join(',');
+      nextQuery.region = state.selectedRegion.join(",");
     }
     if (state.minPrice !== undefined) {
       nextQuery.minPrice = String(state.minPrice);
@@ -136,7 +134,7 @@ export function useMapSearchQuerySync(options: {
       nextQuery.checkOut = state.checkOutDate;
     }
 
-    if (state.searchMode === 'nearby' || landmarkQueryReady) {
+    if (state.searchMode === "nearby" || landmarkQueryReady) {
       nextQuery.mode = state.searchMode;
       nextQuery.radiusKm = String(state.nearbyRadius);
     }
@@ -148,7 +146,7 @@ export function useMapSearchQuerySync(options: {
     }
 
     if (!state.viewportSearchEnabled) {
-      nextQuery.viewportOnly = '0';
+      nextQuery.viewportOnly = "0";
     }
     if (state.mapView.centerLat !== undefined) {
       nextQuery.mapLat = state.mapView.centerLat.toFixed(6);
@@ -168,19 +166,20 @@ export function useMapSearchQuerySync(options: {
 
   const hydrateFiltersFromQuery = (): HydratedQueryState => {
     const regionQuery = getQueryString(route.query.region);
-    const selectedRegion = regionQuery ? regionQuery.split(',').filter(Boolean) : [];
+    const selectedRegion = regionQuery ? regionQuery.split(",").filter(Boolean) : [];
     const minPrice = getQueryNumber(route.query.minPrice);
     const maxPrice = getQueryNumber(route.query.maxPrice);
     const guestCount = getQueryNumber(route.query.guestCount);
     const checkInDate = getQueryString(route.query.checkIn);
     const checkOutDate = getQueryString(route.query.checkOut);
-    const dateRange = checkInDate && checkOutDate ? [checkInDate, checkOutDate] as [string, string] : null;
+    const dateRange =
+      checkInDate && checkOutDate ? ([checkInDate, checkOutDate] as [string, string]) : null;
 
     const modeQuery = getQueryString(route.query.mode);
-    const searchMode = modeQuery === 'nearby' || modeQuery === 'landmark' ? modeQuery : 'normal';
+    const searchMode = modeQuery === "nearby" || modeQuery === "landmark" ? modeQuery : "normal";
     const nearbyRadius = getQueryNumber(route.query.radiusKm) ?? 5;
 
-    const queryLandmarkName = getQueryString(route.query.landmark) ?? '';
+    const queryLandmarkName = getQueryString(route.query.landmark) ?? "";
     const queryLandmarkLat = getQueryNumber(route.query.landmarkLat);
     const queryLandmarkLng = getQueryNumber(route.query.landmarkLng);
     const querySearchLabel = getQueryString(route.query.q);
@@ -189,27 +188,27 @@ export function useMapSearchQuerySync(options: {
     const landmarkLat = queryLandmarkLat;
     const landmarkLng = queryLandmarkLng;
     const landmarkSuggestions: any[] = [];
-    const lastLandmarkSuggestionKeyword = '';
+    const lastLandmarkSuggestionKeyword = "";
     const isLandmarkDirty = false;
-    const viewportSearchEnabled = getQueryString(route.query.viewportOnly) !== '0';
+    const viewportSearchEnabled = getQueryString(route.query.viewportOnly) !== "0";
 
-    let resolvedLandmark: HydratedQueryState['resolvedLandmark'] = null;
+    let resolvedLandmark: HydratedQueryState["resolvedLandmark"] = null;
     let globalSearchKeyword: string;
 
     if (queryLandmarkName && queryLandmarkLat !== undefined && queryLandmarkLng !== undefined) {
       resolvedLandmark = {
         id: `query-${queryLandmarkName}-${queryLandmarkLat}-${queryLandmarkLng}`,
         name: queryLandmarkName,
-        address: '',
+        address: "",
         latitude: queryLandmarkLat,
         longitude: queryLandmarkLng,
-        secondaryText: '',
+        secondaryText: "",
       };
       globalSearchKeyword = querySearchLabel ?? queryLandmarkName;
-    } else if (searchMode === 'nearby') {
-      globalSearchKeyword = querySearchLabel ?? '我的当前位置';
+    } else if (searchMode === "nearby") {
+      globalSearchKeyword = querySearchLabel ?? "我的当前位置";
     } else {
-      globalSearchKeyword = querySearchLabel ?? '';
+      globalSearchKeyword = querySearchLabel ?? "";
     }
 
     return {
@@ -252,7 +251,7 @@ export function useMapSearchQuerySync(options: {
 
   const syncQueryFromForm = async (
     state: QuerySyncFormState,
-    mode: 'push' | 'replace' = 'replace',
+    mode: "push" | "replace" = "replace",
     options2: { skipRouteReplay?: boolean } = {}
   ): Promise<boolean> => {
     const nextQuery = buildQueryFromForm(state);

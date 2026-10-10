@@ -22,8 +22,15 @@
     </div>
 
     <div v-else class="coupon-list">
-      <div v-for="coupon in coupons" :key="coupon.id" class="coupon-card"
-        :class="{ 'coupon-used': activeStatus === 'USED', 'coupon-expired': activeStatus === 'EXPIRED' }">
+      <div
+        v-for="coupon in coupons"
+        :key="coupon.id"
+        class="coupon-card"
+        :class="{
+          'coupon-used': activeStatus === 'USED',
+          'coupon-expired': activeStatus === 'EXPIRED',
+        }"
+      >
         <div class="coupon-main">
           <div class="coupon-value">
             <template v-if="coupon.couponType === 'PERCENTAGE'">
@@ -37,20 +44,26 @@
           </div>
           <div class="coupon-info">
             <div class="coupon-name">{{ coupon.name }}</div>
-            <div class="coupon-threshold" v-if="coupon.thresholdAmount && Number(coupon.thresholdAmount) > 0">
+            <div
+              class="coupon-threshold"
+              v-if="coupon.thresholdAmount && Number(coupon.thresholdAmount) > 0"
+            >
               满 {{ coupon.thresholdAmount }} 元可用
             </div>
             <div class="coupon-threshold" v-else>无门槛</div>
             <div class="coupon-scope" v-if="coupon.scopeType">
               {{ formatScopeType(coupon.scopeType) }}
             </div>
-            <div class="coupon-expire">
-              有效期至：{{ formatDate(coupon.expireAt) }}
-            </div>
+            <div class="coupon-expire">有效期至：{{ formatDate(coupon.expireAt) }}</div>
           </div>
         </div>
         <div class="coupon-status">
-          <el-tag v-if="activeStatus === 'AVAILABLE' || isAvailable(coupon)" type="success" size="small">可用</el-tag>
+          <el-tag
+            v-if="activeStatus === 'AVAILABLE' || isAvailable(coupon)"
+            type="success"
+            size="small"
+            >可用</el-tag
+          >
           <el-tag v-else-if="activeStatus === 'USED'" type="info" size="small">已使用</el-tag>
           <el-tag v-else type="danger" size="small">已过期</el-tag>
         </div>
@@ -60,86 +73,86 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { getMyCoupons } from '@/api/coupon'
-import dayjs from 'dayjs'
+import { ref, computed, onMounted } from "vue";
+import { getMyCoupons } from "@/api/coupon";
+import dayjs from "dayjs";
 
 interface CouponItem {
-  id: number
-  name: string
-  couponType: string
-  faceValue: number
-  discountRate: number
-  thresholdAmount: number
-  maxDiscount: number
-  expireAt: string
-  scopeType: string
-  subsidyBearer: string
+  id: number;
+  name: string;
+  couponType: string;
+  faceValue: number;
+  discountRate: number;
+  thresholdAmount: number;
+  maxDiscount: number;
+  expireAt: string;
+  scopeType: string;
+  subsidyBearer: string;
 }
 
-const loading = ref(false)
-const coupons = ref<CouponItem[]>([])
-const activeStatus = ref<'ALL' | 'AVAILABLE' | 'USED' | 'EXPIRED'>('ALL')
+const loading = ref(false);
+const coupons = ref<CouponItem[]>([]);
+const activeStatus = ref<"ALL" | "AVAILABLE" | "USED" | "EXPIRED">("ALL");
 
 const emptyText = computed(() => {
   const map: Record<string, string> = {
-    ALL: '您还没有优惠券',
-    AVAILABLE: '暂无可用优惠券',
-    USED: '暂无已使用优惠券',
-    EXPIRED: '暂无已过期优惠券'
-  }
-  return map[activeStatus.value] || '暂无优惠券'
-})
+    ALL: "您还没有优惠券",
+    AVAILABLE: "暂无可用优惠券",
+    USED: "暂无已使用优惠券",
+    EXPIRED: "暂无已过期优惠券",
+  };
+  return map[activeStatus.value] || "暂无优惠券";
+});
 
 const fetchCoupons = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const response = await getMyCoupons(activeStatus.value)
+    const response = await getMyCoupons(activeStatus.value);
     if (Array.isArray(response.data)) {
-      coupons.value = response.data
+      coupons.value = response.data;
     } else {
-      coupons.value = []
+      coupons.value = [];
     }
   } catch (error) {
-    console.error('获取优惠券失败:', error)
-    coupons.value = []
+    console.error("获取优惠券失败:", error);
+    coupons.value = [];
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleStatusChange = () => {
-  fetchCoupons()
-}
+  fetchCoupons();
+};
 
 const formatDate = (date: string) => {
-  if (!date) return '-'
-  return dayjs(date).format('YYYY-MM-DD HH:mm')
-}
+  if (!date) return "-";
+  return dayjs(date).format("YYYY-MM-DD HH:mm");
+};
 
 const formatDiscountRate = (rate: number) => {
-  if (!rate) return '-'
+  if (!rate) return "-";
   // 0.85 -> 8.5
-  return (Number(rate) * 10).toFixed(1)
-}
+  return (Number(rate) * 10).toFixed(1);
+};
 
 const formatScopeType = (scope: string) => {
   const map: Record<string, string> = {
-    ALL: '全平台通用',
-    SPECIFIC_HOMESTAY: '指定房源',
-    SPECIFIC_HOST: '指定房东',
-    CATEGORY: '指定分类'
-  }
-  return map[scope] || scope
-}
+    ALL: "全平台通用",
+    SPECIFIC_HOMESTAY: "指定房源",
+    SPECIFIC_HOST: "指定房东",
+    CATEGORY: "指定分类",
+  };
+  return map[scope] || scope;
+};
 
 const isAvailable = (coupon: CouponItem) => {
-  return dayjs(coupon.expireAt).isAfter(dayjs())
-}
+  return dayjs(coupon.expireAt).isAfter(dayjs());
+};
 
 onMounted(() => {
-  fetchCoupons()
-})
+  fetchCoupons();
+});
 </script>
 
 <style scoped>

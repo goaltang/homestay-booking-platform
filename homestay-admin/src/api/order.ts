@@ -1,9 +1,6 @@
 import request from "@/utils/request";
 import type { OrderSearchParams } from "@/types";
-import {
-  adaptPageParams,
-  adaptOrderStatus,
-} from "@/utils/adapter";
+import { adaptPageParams, adaptOrderStatus } from "@/utils/adapter";
 
 // --- 定义更具体的类型 ---
 // 管理员订单搜索参数类型 (匹配 AdminOrderController)
@@ -63,7 +60,9 @@ interface PageResponse<T> {
 export function getAdminOrders(params: AdminOrderSearchParams) {
   // 参数处理: 移除空值或 undefined 值，后端 @RequestParam(required = false) 会处理
   const filteredParams = Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== null && value !== undefined && value !== "")
+    Object.entries(params).filter(
+      ([, value]) => value !== null && value !== undefined && value !== ""
+    )
   );
 
   return request<PageResponse<AdminOrderListItem>>({
@@ -242,14 +241,14 @@ export function batchExportOrders(ids: number[]) {
 
 // 异常订单统计数据类型
 export interface ExceptionOrderStats {
-  pendingTimeout: number;    // 待处理超时（PENDING超过24小时）
-  paymentFailed: number;     // 支付失败
-  refundFailed: number;     // 退款失败
-  notCheckedIn: number;     // 已支付但未入住
-  refundPending: number;    // 退款处理中
-  disputePending: number;   // 争议待处理
-  pendingConfirm: number;   // 待确认
-  total: number;            // 异常订单总数
+  pendingTimeout: number; // 待处理超时（PENDING超过24小时）
+  paymentFailed: number; // 支付失败
+  refundFailed: number; // 退款失败
+  notCheckedIn: number; // 已支付但未入住
+  refundPending: number; // 退款处理中
+  disputePending: number; // 争议待处理
+  pendingConfirm: number; // 待确认
+  total: number; // 异常订单总数
 }
 
 // 获取异常订单统计

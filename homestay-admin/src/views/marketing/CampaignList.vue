@@ -11,7 +11,12 @@
       <!-- 搜索筛选 -->
       <el-form :model="searchForm" inline class="search-form">
         <el-form-item label="名称">
-          <el-input v-model="searchForm.name" placeholder="活动名称" clearable @keyup.enter="fetchData" />
+          <el-input
+            v-model="searchForm.name"
+            placeholder="活动名称"
+            clearable
+            @keyup.enter="fetchData"
+          />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="全部" clearable>
@@ -64,7 +69,11 @@
         <el-table-column label="预算使用" width="150">
           <template #default="{ row }">
             <div v-if="row.budgetTotal">
-              <el-progress :percentage="calculateBudgetPercent(row)" :status="getBudgetStatus(row)" :stroke-width="6" />
+              <el-progress
+                :percentage="calculateBudgetPercent(row)"
+                :status="getBudgetStatus(row)"
+                :stroke-width="6"
+              />
               <span class="budget-text">{{ row.budgetUsed || 0 }} / {{ row.budgetTotal }}</span>
             </div>
             <span v-else class="budget-text">无限制</span>
@@ -72,7 +81,7 @@
         </el-table-column>
         <el-table-column label="创建人" width="120">
           <template #default="{ row }">
-            {{ row.hostId ? '房东#' + row.hostId : row.createdBy || '平台' }}
+            {{ row.hostId ? "房东#" + row.hostId : row.createdBy || "平台" }}
           </template>
         </el-table-column>
         <el-table-column prop="startAt" label="开始时间" width="160">
@@ -82,10 +91,28 @@
         </el-table-column>
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status === 'DRAFT'" type="primary" size="small" @click="handlePublish(row.id)">发布</el-button>
-            <el-button v-if="row.status === 'ACTIVE'" type="warning" size="small" @click="handlePause(row.id)">暂停</el-button>
+            <el-button
+              v-if="row.status === 'DRAFT'"
+              type="primary"
+              size="small"
+              @click="handlePublish(row.id)"
+              >发布</el-button
+            >
+            <el-button
+              v-if="row.status === 'ACTIVE'"
+              type="warning"
+              size="small"
+              @click="handlePause(row.id)"
+              >暂停</el-button
+            >
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button v-if="row.status === 'DRAFT'" type="danger" size="small" @click="handleDelete(row.id)">删除</el-button>
+            <el-button
+              v-if="row.status === 'DRAFT'"
+              type="danger"
+              size="small"
+              @click="handleDelete(row.id)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -101,7 +128,12 @@
     </el-card>
 
     <!-- 创建/编辑活动对话框 -->
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑活动' : '创建活动'" width="750px" :close-on-click-modal="false">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="isEdit ? '编辑活动' : '创建活动'"
+      width="750px"
+      :close-on-click-modal="false"
+    >
       <el-form :model="form" label-width="110px">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -136,17 +168,37 @@
           </el-col>
         </el-row>
         <el-form-item label="时间范围">
-          <el-date-picker v-model="dateRange" type="datetimerange" range-separator="至" start-placeholder="开始时间" end-placeholder="结束时间" style="width: 100%" />
+          <el-date-picker
+            v-model="dateRange"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            style="width: 100%"
+          />
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="预算上限">
-              <el-input-number v-model="form.budgetTotal" :min="0" :precision="2" placeholder="0表示无限制" style="width: 100%" />
+              <el-input-number
+                v-model="form.budgetTotal"
+                :min="0"
+                :precision="2"
+                placeholder="0表示无限制"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="预警阈值">
-              <el-input-number v-model="form.budgetAlertThreshold" :min="0" :max="1" :precision="2" :step="0.05" style="width: 100%" />
+              <el-input-number
+                v-model="form.budgetAlertThreshold"
+                :min="0"
+                :max="1"
+                :precision="2"
+                :step="0.05"
+                style="width: 100%"
+              />
               <span class="form-tip">如 0.8 表示预算使用达80%时预警</span>
             </el-form-item>
           </el-col>
@@ -161,7 +213,14 @@
         <div v-for="(rule, index) in form.rules" :key="index" class="rule-card">
           <div class="rule-header">
             <span>规则 {{ index + 1 }}</span>
-            <el-button type="danger" size="small" text @click="removeRule(index)" v-if="form.rules.length > 1">删除</el-button>
+            <el-button
+              type="danger"
+              size="small"
+              text
+              @click="removeRule(index)"
+              v-if="form.rules.length > 1"
+              >删除</el-button
+            >
           </div>
           <el-row :gutter="16">
             <el-col :span="12">
@@ -193,14 +252,37 @@
               <div class="tier-list">
                 <div v-for="(tier, tIndex) in rule.tierConfig" :key="tIndex" class="tier-row">
                   <span class="tier-label">满</span>
-                  <el-input-number v-model="tier.threshold" :min="0" :precision="2" :controls="false" style="width: 90px" />
+                  <el-input-number
+                    v-model="tier.threshold"
+                    :min="0"
+                    :precision="2"
+                    :controls="false"
+                    style="width: 90px"
+                  />
                   <span class="tier-label">减</span>
-                  <el-input-number v-model="tier.discount" :min="0" :precision="2" :controls="false" style="width: 90px" />
-                  <el-button type="danger" size="small" text @click="rule.tierConfig.splice(tIndex, 1)" v-if="rule.tierConfig.length > 1">
+                  <el-input-number
+                    v-model="tier.discount"
+                    :min="0"
+                    :precision="2"
+                    :controls="false"
+                    style="width: 90px"
+                  />
+                  <el-button
+                    type="danger"
+                    size="small"
+                    text
+                    @click="rule.tierConfig.splice(tIndex, 1)"
+                    v-if="rule.tierConfig.length > 1"
+                  >
                     <el-icon><Delete /></el-icon>
                   </el-button>
                 </div>
-                <el-button type="primary" size="small" text @click="rule.tierConfig.push({ threshold: 0, discount: 0 })">
+                <el-button
+                  type="primary"
+                  size="small"
+                  text
+                  @click="rule.tierConfig.push({ threshold: 0, discount: 0 })"
+                >
                   <el-icon><Plus /></el-icon> 添加档位
                 </el-button>
               </div>
@@ -210,36 +292,92 @@
 
           <el-row :gutter="16">
             <el-col :span="8">
-              <el-form-item label="优惠金额" label-width="80px" v-if="rule.ruleType === 'AMOUNT_OFF' || rule.ruleType === 'PER_NIGHT_OFF'">
-                <el-input-number v-model="rule.discountAmount" :min="0" :precision="2" style="width: 100%" />
+              <el-form-item
+                label="优惠金额"
+                label-width="80px"
+                v-if="rule.ruleType === 'AMOUNT_OFF' || rule.ruleType === 'PER_NIGHT_OFF'"
+              >
+                <el-input-number
+                  v-model="rule.discountAmount"
+                  :min="0"
+                  :precision="2"
+                  style="width: 100%"
+                />
               </el-form-item>
-              <el-form-item label="折扣率" label-width="80px" v-if="rule.ruleType === 'PERCENT_OFF'">
-                <el-input-number v-model="rule.discountRate" :min="0.01" :max="0.99" :precision="2" :step="0.05" style="width: 100%" />
+              <el-form-item
+                label="折扣率"
+                label-width="80px"
+                v-if="rule.ruleType === 'PERCENT_OFF'"
+              >
+                <el-input-number
+                  v-model="rule.discountRate"
+                  :min="0.01"
+                  :max="0.99"
+                  :precision="2"
+                  :step="0.05"
+                  style="width: 100%"
+                />
               </el-form-item>
-              <el-form-item label="优惠金额" label-width="80px" v-if="rule.ruleType === 'FULL_REDUCTION' && !hasValidTier(rule)">
-                <el-input-number v-model="rule.discountAmount" :min="0" :precision="2" style="width: 100%" placeholder="单档满减金额" />
+              <el-form-item
+                label="优惠金额"
+                label-width="80px"
+                v-if="rule.ruleType === 'FULL_REDUCTION' && !hasValidTier(rule)"
+              >
+                <el-input-number
+                  v-model="rule.discountAmount"
+                  :min="0"
+                  :precision="2"
+                  style="width: 100%"
+                  placeholder="单档满减金额"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="门槛金额" label-width="80px" v-if="rule.ruleType !== 'FULL_REDUCTION' || !hasValidTier(rule)">
-                <el-input-number v-model="rule.thresholdAmount" :min="0" :precision="2" style="width: 100%" placeholder="可选" />
+              <el-form-item
+                label="门槛金额"
+                label-width="80px"
+                v-if="rule.ruleType !== 'FULL_REDUCTION' || !hasValidTier(rule)"
+              >
+                <el-input-number
+                  v-model="rule.thresholdAmount"
+                  :min="0"
+                  :precision="2"
+                  style="width: 100%"
+                  placeholder="可选"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="8">
               <el-form-item label="最大优惠" label-width="80px">
-                <el-input-number v-model="rule.maxDiscount" :min="0" :precision="2" style="width: 100%" placeholder="可选" />
+                <el-input-number
+                  v-model="rule.maxDiscount"
+                  :min="0"
+                  :precision="2"
+                  style="width: 100%"
+                  placeholder="可选"
+                />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="16">
             <el-col :span="8">
               <el-form-item label="最少入住" label-width="80px">
-                <el-input-number v-model="rule.minNights" :min="1" style="width: 100%" placeholder="可选" />
+                <el-input-number
+                  v-model="rule.minNights"
+                  :min="1"
+                  style="width: 100%"
+                  placeholder="可选"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="8">
               <el-form-item label="最多入住" label-width="80px">
-                <el-input-number v-model="rule.maxNights" :min="1" style="width: 100%" placeholder="可选" />
+                <el-input-number
+                  v-model="rule.maxNights"
+                  :min="1"
+                  style="width: 100%"
+                  placeholder="可选"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="8">
@@ -249,7 +387,10 @@
             </el-col>
           </el-row>
           <el-form-item label="范围值" label-width="80px" v-if="rule.scopeType !== 'ALL'">
-            <el-input v-model="rule.scopeValueInput" :placeholder="getScopePlaceholder(rule.scopeType)" />
+            <el-input
+              v-model="rule.scopeValueInput"
+              :placeholder="getScopePlaceholder(rule.scopeType)"
+            />
             <span class="form-tip">{{ getScopeTip(rule.scopeType) }}</span>
           </el-form-item>
         </div>
@@ -268,13 +409,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { Plus, Delete } from '@element-plus/icons-vue';
+import { ref, reactive, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { Plus, Delete } from "@element-plus/icons-vue";
 import {
-  getCampaigns, createCampaign, updateCampaign,
-  publishCampaign, pauseCampaign, deleteCampaign
-} from '@/api/marketing';
+  getCampaigns,
+  createCampaign,
+  updateCampaign,
+  publishCampaign,
+  pauseCampaign,
+  deleteCampaign,
+} from "@/api/marketing";
 
 // 阶梯配置项
 interface TierItem {
@@ -316,10 +461,10 @@ const size = ref(20);
 const total = ref(0);
 
 const searchForm = reactive({
-  name: '',
-  status: '',
-  campaignType: '',
-  subsidyBearer: '',
+  name: "",
+  status: "",
+  campaignType: "",
+  subsidyBearer: "",
 });
 
 const dialogVisible = ref(false);
@@ -329,25 +474,25 @@ const dateRange = ref<[Date, Date] | null>(null);
 
 function createEmptyRule(): RuleForm {
   return {
-    ruleType: 'PERCENT_OFF',
+    ruleType: "PERCENT_OFF",
     discountAmount: null,
     discountRate: 0.9,
     thresholdAmount: null,
     maxDiscount: null,
     minNights: null,
     maxNights: null,
-    scopeType: 'ALL',
-    scopeValueInput: '',
+    scopeType: "ALL",
+    scopeValueInput: "",
     firstOrderOnly: false,
     tierConfig: [{ threshold: 0, discount: 0 }],
   };
 }
 
 const form = reactive<CampaignForm>({
-  name: '',
-  campaignType: 'FULL_REDUCTION',
+  name: "",
+  campaignType: "FULL_REDUCTION",
   budgetTotal: null,
-  subsidyBearer: 'PLATFORM',
+  subsidyBearer: "PLATFORM",
   priority: 0,
   stackable: false,
   budgetAlertThreshold: null,
@@ -366,57 +511,60 @@ function removeRule(index: number) {
 
 function getScopePlaceholder(scopeType: string) {
   const map: Record<string, string> = {
-    CITY: '城市编码，如 440100',
-    HOMESTAY: '房源ID，多个用逗号分隔，如 1,2,3',
-    HOST: '房东ID，如 10',
-    GROUP: '分组ID，如 5',
-    TYPE: '房源类型，如 entire,private',
+    CITY: "城市编码，如 440100",
+    HOMESTAY: "房源ID，多个用逗号分隔，如 1,2,3",
+    HOST: "房东ID，如 10",
+    GROUP: "分组ID，如 5",
+    TYPE: "房源类型，如 entire,private",
   };
-  return map[scopeType] || '';
+  return map[scopeType] || "";
 }
 
 function getScopeTip(scopeType: string) {
   const map: Record<string, string> = {
-    CITY: '输入城市编码',
-    HOMESTAY: '输入房源ID（逗号分隔）',
-    HOST: '输入房东用户ID',
-    GROUP: '输入房源分组ID',
-    TYPE: '输入房源类型标识',
+    CITY: "输入城市编码",
+    HOMESTAY: "输入房源ID（逗号分隔）",
+    HOST: "输入房东用户ID",
+    GROUP: "输入房源分组ID",
+    TYPE: "输入房源类型标识",
   };
-  return map[scopeType] || '';
+  return map[scopeType] || "";
 }
 
 function buildScopeValueJson(scopeType: string, input: string): string {
-  if (scopeType === 'ALL' || !input.trim()) {
+  if (scopeType === "ALL" || !input.trim()) {
     return '["*"]';
   }
-  const values = input.split(',').map(s => s.trim()).filter(Boolean);
+  const values = input
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   // CITY/TYPE 使用字符串数组，其他使用数字数组
-  if (scopeType === 'CITY' || scopeType === 'TYPE') {
+  if (scopeType === "CITY" || scopeType === "TYPE") {
     return JSON.stringify(values);
   }
-  const nums = values.map(Number).filter(n => !isNaN(n));
+  const nums = values.map(Number).filter((n) => !isNaN(n));
   return JSON.stringify(nums);
 }
 
 function parseScopeValueInput(scopeType: string, scopeValueJson: string): string {
-  if (!scopeValueJson || scopeType === 'ALL') return '';
+  if (!scopeValueJson || scopeType === "ALL") return "";
   try {
     const arr = JSON.parse(scopeValueJson);
     if (Array.isArray(arr)) {
-      return arr.join(', ');
+      return arr.join(", ");
     }
   } catch (e) {
     // ignore
   }
-  return '';
+  return "";
 }
 
 const resetSearch = () => {
-  searchForm.name = '';
-  searchForm.status = '';
-  searchForm.campaignType = '';
-  searchForm.subsidyBearer = '';
+  searchForm.name = "";
+  searchForm.status = "";
+  searchForm.campaignType = "";
+  searchForm.subsidyBearer = "";
   fetchData();
 };
 
@@ -434,7 +582,7 @@ const fetchData = async () => {
     campaignList.value = data.content || data || [];
     total.value = data.totalElements || data.length || 0;
   } catch (e) {
-    ElMessage.error('获取活动列表失败');
+    ElMessage.error("获取活动列表失败");
   } finally {
     loading.value = false;
   }
@@ -443,10 +591,10 @@ const fetchData = async () => {
 const handleCreate = () => {
   isEdit.value = false;
   editId.value = null;
-  form.name = '';
-  form.campaignType = 'FULL_REDUCTION';
+  form.name = "";
+  form.campaignType = "FULL_REDUCTION";
   form.budgetTotal = null;
-  form.subsidyBearer = 'PLATFORM';
+  form.subsidyBearer = "PLATFORM";
   form.priority = 0;
   form.stackable = false;
   form.budgetAlertThreshold = null;
@@ -461,7 +609,7 @@ const handleEdit = (row: any) => {
   form.name = row.name;
   form.campaignType = row.campaignType;
   form.budgetTotal = row.budgetTotal || null;
-  form.subsidyBearer = row.subsidyBearer || 'PLATFORM';
+  form.subsidyBearer = row.subsidyBearer || "PLATFORM";
   form.priority = row.priority || 0;
   form.stackable = row.stackable || false;
   form.budgetAlertThreshold = row.budgetAlertThreshold || null;
@@ -484,15 +632,15 @@ const handleEdit = (row: any) => {
         }
       }
       return {
-        ruleType: r.ruleType || 'PERCENT_OFF',
+        ruleType: r.ruleType || "PERCENT_OFF",
         discountAmount: r.discountAmount || null,
         discountRate: r.discountRate || null,
         thresholdAmount: r.thresholdAmount || null,
         maxDiscount: r.maxDiscount || null,
         minNights: r.minNights || null,
         maxNights: r.maxNights || null,
-        scopeType: r.scopeType || 'ALL',
-        scopeValueInput: parseScopeValueInput(r.scopeType || 'ALL', r.scopeValueJson || ''),
+        scopeType: r.scopeType || "ALL",
+        scopeValueInput: parseScopeValueInput(r.scopeType || "ALL", r.scopeValueJson || ""),
         firstOrderOnly: r.firstOrderOnly || false,
         tierConfig,
       };
@@ -512,20 +660,20 @@ const handleEdit = (row: any) => {
 const submitForm = async () => {
   try {
     if (!form.name.trim()) {
-      ElMessage.warning('请输入活动名称');
+      ElMessage.warning("请输入活动名称");
       return;
     }
     if (!dateRange.value || dateRange.value.length !== 2) {
-      ElMessage.warning('请选择时间范围');
+      ElMessage.warning("请选择时间范围");
       return;
     }
 
     // 构建规则数据（去除临时字段 scopeValueInput，序列化 tierConfig）
-    const rules = form.rules.map(r => {
+    const rules = form.rules.map((r) => {
       const rule: any = {
         ruleType: r.ruleType,
         discountAmount: r.discountAmount,
-        discountRate: r.ruleType === 'PERCENT_OFF' ? r.discountRate : null,
+        discountRate: r.ruleType === "PERCENT_OFF" ? r.discountRate : null,
         maxDiscount: r.maxDiscount,
         thresholdAmount: r.thresholdAmount,
         minNights: r.minNights,
@@ -535,8 +683,8 @@ const submitForm = async () => {
         firstOrderOnly: r.firstOrderOnly,
       };
       // 阶梯满减：如果有有效阶梯配置，序列化为 JSON
-      if (r.ruleType === 'FULL_REDUCTION' && r.tierConfig && r.tierConfig.length > 0) {
-        const validTiers = r.tierConfig.filter(t => t.threshold > 0 && t.discount > 0);
+      if (r.ruleType === "FULL_REDUCTION" && r.tierConfig && r.tierConfig.length > 0) {
+        const validTiers = r.tierConfig.filter((t) => t.threshold > 0 && t.discount > 0);
         if (validTiers.length > 0) {
           rule.tierConfigJson = JSON.stringify(validTiers);
         }
@@ -554,49 +702,49 @@ const submitForm = async () => {
       budgetTotal: form.budgetTotal,
       subsidyBearer: form.subsidyBearer,
       budgetAlertThreshold: form.budgetAlertThreshold,
-      status: isEdit.value ? undefined : 'DRAFT',
+      status: isEdit.value ? undefined : "DRAFT",
       rules,
     };
 
     if (isEdit.value && editId.value) {
       await updateCampaign(editId.value, payload);
-      ElMessage.success('更新成功');
+      ElMessage.success("更新成功");
     } else {
       await createCampaign(payload);
-      ElMessage.success('创建成功');
+      ElMessage.success("创建成功");
     }
     dialogVisible.value = false;
     fetchData();
   } catch (e: any) {
-    ElMessage.error(e.response?.data?.error || (isEdit.value ? '更新失败' : '创建失败'));
+    ElMessage.error(e.response?.data?.error || (isEdit.value ? "更新失败" : "创建失败"));
   }
 };
 
 const handlePublish = async (id: number) => {
   try {
     await publishCampaign(id);
-    ElMessage.success('发布成功');
+    ElMessage.success("发布成功");
     fetchData();
   } catch (e) {
-    ElMessage.error('发布失败');
+    ElMessage.error("发布失败");
   }
 };
 
 const handlePause = async (id: number) => {
   try {
     await pauseCampaign(id);
-    ElMessage.success('暂停成功');
+    ElMessage.success("暂停成功");
     fetchData();
   } catch (e) {
-    ElMessage.error('暂停失败');
+    ElMessage.error("暂停失败");
   }
 };
 
 const handleDelete = async (id: number) => {
   try {
-    await ElMessageBox.confirm('确定要删除该活动吗？', '提示', { type: 'warning' });
+    await ElMessageBox.confirm("确定要删除该活动吗？", "提示", { type: "warning" });
     await deleteCampaign(id);
-    ElMessage.success('删除成功');
+    ElMessage.success("删除成功");
     fetchData();
   } catch (e) {
     // 取消
@@ -605,48 +753,48 @@ const handleDelete = async (id: number) => {
 
 const formatType = (type: string) => {
   const map: Record<string, string> = {
-    FLASH_SALE: '限时折扣',
-    FULL_REDUCTION: '满减',
-    HOMESTAY_DISCOUNT: '房源折扣',
+    FLASH_SALE: "限时折扣",
+    FULL_REDUCTION: "满减",
+    HOMESTAY_DISCOUNT: "房源折扣",
   };
   return map[type] || type;
 };
 
 const formatBearer = (bearer: string) => {
   const map: Record<string, string> = {
-    PLATFORM: '平台',
-    HOST: '房东',
-    MIXED: '混合',
+    PLATFORM: "平台",
+    HOST: "房东",
+    MIXED: "混合",
   };
   return map[bearer] || bearer;
 };
 
 const hasValidTier = (rule: RuleForm): boolean => {
-  return rule.tierConfig.some(t => t.threshold > 0 && t.discount > 0);
+  return rule.tierConfig.some((t) => t.threshold > 0 && t.discount > 0);
 };
 
 const formatStatus = (status: string) => {
   const map: Record<string, string> = {
-    ACTIVE: '进行中',
-    PAUSED: '已暂停',
-    DRAFT: '草稿',
-    ENDED: '已结束',
+    ACTIVE: "进行中",
+    PAUSED: "已暂停",
+    DRAFT: "草稿",
+    ENDED: "已结束",
   };
   return map[status] || status;
 };
 
 const formatStatusType = (status: string) => {
   const map: Record<string, any> = {
-    ACTIVE: 'success',
-    PAUSED: 'warning',
-    DRAFT: 'info',
-    ENDED: 'danger',
+    ACTIVE: "success",
+    PAUSED: "warning",
+    DRAFT: "info",
+    ENDED: "danger",
   };
-  return map[status] || 'info';
+  return map[status] || "info";
 };
 
 const formatDate = (date: string) => {
-  if (!date) return '-';
+  if (!date) return "-";
   return new Date(date).toLocaleString();
 };
 
@@ -657,11 +805,11 @@ const calculateBudgetPercent = (row: any) => {
 };
 
 const getBudgetStatus = (row: any) => {
-  if (!row.budgetTotal) return '';
+  if (!row.budgetTotal) return "";
   const percent = ((row.budgetUsed || 0) / row.budgetTotal) * 100;
-  if (percent >= 100) return 'exception';
-  if (row.budgetAlertTriggered) return 'warning';
-  return '';
+  if (percent >= 100) return "exception";
+  if (row.budgetAlertTriggered) return "warning";
+  return "";
 };
 
 onMounted(fetchData);

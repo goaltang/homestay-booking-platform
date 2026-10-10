@@ -71,9 +71,7 @@ const warn = (...args: unknown[]) => {
 export const useUserStore = defineStore("user", () => {
   // token 迁移后，JWT 存 httpOnly cookie + 内存（供 WebSocket），不落 localStorage
   const token = ref<string | null>(null);
-  const userInfo = ref<UserInfo | null>(
-    JSON.parse(localStorage.getItem(USER_KEY) || "null")
-  );
+  const userInfo = ref<UserInfo | null>(JSON.parse(localStorage.getItem(USER_KEY) || "null"));
 
   // 登录态以 userInfo 为准（token 在 httpOnly cookie，JS 不可读）
   const isAuthenticated = computed(() => !!userInfo.value);
@@ -83,8 +81,8 @@ export const useUserStore = defineStore("user", () => {
   const user = computed(() => userInfo.value);
   /** @deprecated 请直接使用 normalizedRole */
   const userRole = computed(() => normalizedRole.value);
-  const isAdmin = computed(() =>
-    normalizedRole.value === "ROLE_ADMIN" || normalizedRole.value === "ADMIN"
+  const isAdmin = computed(
+    () => normalizedRole.value === "ROLE_ADMIN" || normalizedRole.value === "ADMIN"
   );
   const isLandlord = computed(() => {
     if (!normalizedRole.value) return false;
@@ -159,8 +157,7 @@ export const useUserStore = defineStore("user", () => {
           idCard: userObj?.idCard || response.data.idCard || "",
           role: role || "ROLE_USER", // 确保始终有角色
           avatar: normalizeAvatarUrl(userObj?.avatar || response.data.avatar),
-          verificationStatus:
-            userObj?.verificationStatus || response.data.verificationStatus || "",
+          verificationStatus: userObj?.verificationStatus || response.data.verificationStatus || "",
         };
 
         log("准备保存的用户数据:", userData);
@@ -215,9 +212,7 @@ export const useUserStore = defineStore("user", () => {
     }
   };
 
-  const register = async (
-    registerData: Omit<RegisterRequest, "confirmPassword">
-  ) => {
+  const register = async (registerData: Omit<RegisterRequest, "confirmPassword">) => {
     try {
       // 确保角色信息是大写且格式正确
       if (registerData.role && !registerData.role.startsWith("ROLE_")) {
@@ -360,7 +355,7 @@ export const useUserStore = defineStore("user", () => {
     } catch (error) {
       const apiError = error as ApiRequestError;
       throw new Error(
-        (typeof apiError.response?.data === "object" && apiError.response.data?.message)
+        typeof apiError.response?.data === "object" && apiError.response.data?.message
           ? apiError.response.data.message
           : "更新个人信息失败"
       );
@@ -466,10 +461,7 @@ export const useUserStore = defineStore("user", () => {
       try {
         log("尝试备用API获取用户信息");
         const backupResponse = await api.get("/api/auth/current");
-        if (
-          backupResponse.data &&
-          (backupResponse.data.username || backupResponse.data.id)
-        ) {
+        if (backupResponse.data && (backupResponse.data.username || backupResponse.data.id)) {
           const userData = {
             id: backupResponse.data.id || 0,
             username: backupResponse.data.username || "",

@@ -37,7 +37,9 @@ export const useNotificationStore = defineStore("notification", () => {
   const upsertRealtimeNotification = (notification: NotificationDto) => {
     const normalizedNotification = normalizeNotification(notification);
 
-    const listIndex = notifications.value.findIndex((item) => item.id === normalizedNotification.id);
+    const listIndex = notifications.value.findIndex(
+      (item) => item.id === normalizedNotification.id
+    );
     const isNew = listIndex === -1;
 
     if (isNew) {
@@ -60,14 +62,17 @@ export const useNotificationStore = defineStore("notification", () => {
     }
 
     if (pagination.value) {
-      const pageIndex = pagination.value.content.findIndex((item) => item.id === normalizedNotification.id);
+      const pageIndex = pagination.value.content.findIndex(
+        (item) => item.id === normalizedNotification.id
+      );
 
       if (pageIndex === -1) {
         const newTotalElements = pagination.value.totalElements + 1;
         const newTotalPages = Math.ceil(newTotalElements / pagination.value.size);
-        const nextContent = pagination.value.number === 0
-          ? [normalizedNotification, ...pagination.value.content].slice(0, pagination.value.size)
-          : pagination.value.content;
+        const nextContent =
+          pagination.value.number === 0
+            ? [normalizedNotification, ...pagination.value.content].slice(0, pagination.value.size)
+            : pagination.value.content;
 
         pagination.value = {
           ...pagination.value,
@@ -100,9 +105,7 @@ export const useNotificationStore = defineStore("notification", () => {
   const fetchUnreadCount = async () => {
     // 不需要设置 loading，这个请求通常比较快，在后台静默执行
     try {
-      const response = await api.get<UnreadCountResponse>(
-        "/api/notifications/unread-count"
-      );
+      const response = await api.get<UnreadCountResponse>("/api/notifications/unread-count");
       setUnreadCount(response.data.unreadCount || 0);
       console.log("获取到未读通知数量:", unreadCount.value);
       return unreadCount.value;
@@ -183,9 +186,7 @@ export const useNotificationStore = defineStore("notification", () => {
       let wasUnread = false;
 
       // 更新前端状态
-      const notification = notifications.value.find(
-        (n) => n.id === notificationId
-      );
+      const notification = notifications.value.find((n) => n.id === notificationId);
       if (notification && !notification.read) {
         notification.read = true;
         notification.readAt = updatedNotification.readAt || new Date().toISOString();
@@ -193,9 +194,7 @@ export const useNotificationStore = defineStore("notification", () => {
       }
       // 如果是在通知中心操作，同步更新分页对象中的数据
       if (pagination.value) {
-        const notificationInPage = pagination.value.content.find(
-          (n) => n.id === notificationId
-        );
+        const notificationInPage = pagination.value.content.find((n) => n.id === notificationId);
         if (notificationInPage && !notificationInPage.read) {
           notificationInPage.read = true;
           notificationInPage.readAt = updatedNotification.readAt || new Date().toISOString();
@@ -205,9 +204,7 @@ export const useNotificationStore = defineStore("notification", () => {
 
       if (wasUnread) {
         setUnreadCount(unreadCount.value - 1);
-        console.log(
-          `前端状态更新: 通知 ${notificationId} 标记已读，未读数: ${unreadCount.value}`
-        );
+        console.log(`前端状态更新: 通知 ${notificationId} 标记已读，未读数: ${unreadCount.value}`);
       }
 
       return updatedNotification;
@@ -223,9 +220,7 @@ export const useNotificationStore = defineStore("notification", () => {
    */
   const markAllAsRead = async () => {
     try {
-      const response = await api.post<{ markedCount: number }>(
-        "/api/notifications/read-all"
-      );
+      const response = await api.post<{ markedCount: number }>("/api/notifications/read-all");
       const markedCount = response.data.markedCount || 0;
       console.log(`API 响应: ${markedCount} 条通知已标记为已读`);
 

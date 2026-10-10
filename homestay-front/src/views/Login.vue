@@ -66,36 +66,78 @@
 
           <el-card class="login-card">
             <div class="login-form-wrapper">
-              <el-form ref="loginFormRef" :model="loginForm" :rules="rules" label-position="top"
-                :validate-on-rule-change="false" @submit.prevent="handleLogin">
+              <el-form
+                ref="loginFormRef"
+                :model="loginForm"
+                :rules="rules"
+                label-position="top"
+                :validate-on-rule-change="false"
+                @submit.prevent="handleLogin"
+              >
                 <el-form-item label="用户名" prop="username">
-                  <el-input ref="usernameInputRef" v-model="loginForm.username" placeholder="请输入用户名" prefix-icon="User" name="username"
-                    autocomplete="username" :disabled="loading" @keyup.enter.stop.prevent="handleLogin" @blur="validateField('username')"
-                    clearable />
+                  <el-input
+                    ref="usernameInputRef"
+                    v-model="loginForm.username"
+                    placeholder="请输入用户名"
+                    prefix-icon="User"
+                    name="username"
+                    autocomplete="username"
+                    :disabled="loading"
+                    @keyup.enter.stop.prevent="handleLogin"
+                    @blur="validateField('username')"
+                    clearable
+                  />
                 </el-form-item>
 
                 <el-form-item label="密码" prop="password">
-                  <el-input ref="passwordInputRef" v-model="loginForm.password" type="password" placeholder="请输入密码" prefix-icon="Lock"
-                    name="current-password" autocomplete="current-password" show-password :disabled="loading" @keyup.enter.stop.prevent="handleLogin"
-                    @keydown="handlePasswordKeyState" @keyup="handlePasswordKeyState"
-                    @blur="handlePasswordBlur" clearable />
-                  <p v-if="capsLockOn" class="field-tip field-tip-warning">已开启大写锁定，密码可能输入错误。</p>
+                  <el-input
+                    ref="passwordInputRef"
+                    v-model="loginForm.password"
+                    type="password"
+                    placeholder="请输入密码"
+                    prefix-icon="Lock"
+                    name="current-password"
+                    autocomplete="current-password"
+                    show-password
+                    :disabled="loading"
+                    @keyup.enter.stop.prevent="handleLogin"
+                    @keydown="handlePasswordKeyState"
+                    @keyup="handlePasswordKeyState"
+                    @blur="handlePasswordBlur"
+                    clearable
+                  />
+                  <p v-if="capsLockOn" class="field-tip field-tip-warning">
+                    已开启大写锁定，密码可能输入错误。
+                  </p>
                 </el-form-item>
 
                 <div class="remember-forgot">
                   <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
-                  <el-button type="text" @click.stop.prevent="goToForgotPassword" :disabled="loading">忘记密码？</el-button>
+                  <el-button
+                    type="text"
+                    @click.stop.prevent="goToForgotPassword"
+                    :disabled="loading"
+                    >忘记密码？</el-button
+                  >
                 </div>
 
-                <el-button native-type="submit" type="primary" class="submit-btn" :class="{ 'submit-btn-ready': canSubmit }"
-                  :loading="loading" :disabled="loading">
-                  {{ loading ? '登录中...' : '登录' }}
+                <el-button
+                  native-type="submit"
+                  type="primary"
+                  class="submit-btn"
+                  :class="{ 'submit-btn-ready': canSubmit }"
+                  :loading="loading"
+                  :disabled="loading"
+                >
+                  {{ loading ? "登录中..." : "登录" }}
                 </el-button>
                 <p class="submit-helper">支持回车登录，成功后会回到你刚才访问的页面。</p>
 
                 <div class="admin-entry">
                   <span>平台管理员？</span>
-                  <el-button type="text" @click.stop.prevent="goToAdminLogin" :disabled="loading">前往管理后台</el-button>
+                  <el-button type="text" @click.stop.prevent="goToAdminLogin" :disabled="loading"
+                    >前往管理后台</el-button
+                  >
                 </div>
 
                 <div v-if="showQuickLogin" class="fast-login-section">
@@ -117,7 +159,9 @@
 
                 <div class="register-link">
                   还没有账号？
-                  <el-button type="text" @click.stop.prevent="goToRegister" :disabled="loading">立即注册</el-button>
+                  <el-button type="text" @click.stop.prevent="goToRegister" :disabled="loading"
+                    >立即注册</el-button
+                  >
                 </div>
               </el-form>
             </div>
@@ -141,11 +185,13 @@ type LoginError = {
   message?: string;
   response?: {
     status?: number;
-    data?: {
-      message?: string;
-      error?: string;
-      msg?: string;
-    } | string;
+    data?:
+      | {
+          message?: string;
+          error?: string;
+          msg?: string;
+        }
+      | string;
   };
 };
 
@@ -168,11 +214,13 @@ const quickLoginAccounts = [
 const loginForm = reactive({
   username: "",
   password: "",
-  remember: false
+  remember: false,
 });
 
 const normalizedUsername = computed(() => loginForm.username.trim());
-const showQuickLogin = computed(() => import.meta.env.DEV || import.meta.env.VITE_SHOW_TEST_ACCOUNTS === "true");
+const showQuickLogin = computed(
+  () => import.meta.env.DEV || import.meta.env.VITE_SHOW_TEST_ACCOUNTS === "true"
+);
 
 const getAdminLoginUrl = () => {
   const configuredBaseUrl = import.meta.env.VITE_ADMIN_BASE_URL?.trim();
@@ -236,7 +284,8 @@ const extractLoginErrorMessage = (error: LoginError) => {
   if (error.response?.status === 401) return "用户名或密码错误，请重新输入";
   if (error.response?.status === 404) return "用户不存在，请检查用户名或先注册账号";
   if (error.response?.status === 429) return "登录尝试过于频繁，请稍后再试";
-  if (error.response?.status && error.response.status >= 500) return "服务器暂时无法连接，请稍后重试";
+  if (error.response?.status && error.response.status >= 500)
+    return "服务器暂时无法连接，请稍后重试";
   if (error.message?.includes("Network Error")) return "网络连接失败，请检查网络设置";
   if (error.message) return error.message;
 
@@ -248,7 +297,11 @@ const rules = {
   username: [
     { required: true, message: "请输入用户名", trigger: "blur" },
     { min: 3, max: 20, message: "用户名长度应在 3-20 个字符之间", trigger: "blur" },
-    { pattern: USERNAME_PATTERN, message: "用户名只能包含字母、数字、下划线和中文", trigger: "blur" }
+    {
+      pattern: USERNAME_PATTERN,
+      message: "用户名只能包含字母、数字、下划线和中文",
+      trigger: "blur",
+    },
   ],
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
@@ -258,11 +311,13 @@ const rules = {
 
 // 计算表单是否有效
 const canSubmit = computed(() => {
-  return normalizedUsername.value.length >= 3 &&
+  return (
+    normalizedUsername.value.length >= 3 &&
     loginForm.password.length >= 6 &&
     normalizedUsername.value.length <= 20 &&
     loginForm.password.length <= 20 &&
-    USERNAME_PATTERN.test(normalizedUsername.value);
+    USERNAME_PATTERN.test(normalizedUsername.value)
+  );
 });
 
 // 单个字段验证
@@ -328,24 +383,21 @@ const handleLogin = async (event?: Event) => {
         }
 
         ElMessage.success({
-          message: `欢迎回来，${userStore.userInfo?.realName || userStore.userInfo?.username || '用户'}！`,
-          duration: 2000
+          message: `欢迎回来，${userStore.userInfo?.realName || userStore.userInfo?.username || "用户"}！`,
+          duration: 2000,
         });
 
         persistRememberedUsername();
 
         // 导航逻辑
         await handleLoginSuccess();
-
       } catch (fetchError: any) {
         console.error("获取用户信息失败:", fetchError);
         userStore.logout();
       }
-
     } else {
       ElMessage.error("登录失败，请检查用户名和密码");
     }
-
   } catch (error: unknown) {
     console.error("登录过程中出错:", error);
 
@@ -378,13 +430,13 @@ const handleLoginSuccess = async () => {
   await nextTick(); // 确保 DOM 更新完成
 
   // 从最新的 userInfo 中获取角色，确保使用 fetchUserInfo 后的最新数据
-  const role = userStore.userInfo?.role?.toUpperCase() || '';
+  const role = userStore.userInfo?.role?.toUpperCase() || "";
 
   console.log("导航决策:", {
     role: userStore.userInfo?.role,
     normalizedRole: role,
     isAdmin: userStore.isAdmin,
-    isLandlord: userStore.isLandlord
+    isLandlord: userStore.isLandlord,
   });
 
   // 管理员 → 管理后台
@@ -395,12 +447,12 @@ const handleLoginSuccess = async () => {
 
   // 房东 → 房东管理页
   if (userStore.isLandlord) {
-    await router.push(getSafeRedirectPath('/host'));
+    await router.push(getSafeRedirectPath("/host"));
     return;
   }
 
   // 普通用户 → 检查 redirect 参数，否则去首页
-  await router.push(getSafeRedirectPath('/'));
+  await router.push(getSafeRedirectPath("/"));
 };
 
 // 跳转到注册页
@@ -421,7 +473,7 @@ const goToAdminLogin = () => {
 };
 
 // 一键快速登录
-const fastLogin = async (username: string, password: string = '111111') => {
+const fastLogin = async (username: string, password: string = "111111") => {
   if (loading.value || !showQuickLogin.value) return;
   loginForm.username = username;
   loginForm.password = password;
@@ -439,7 +491,7 @@ onMounted(async () => {
   }
 
   // 恢复记住的用户名
-  const rememberedUsername = localStorage.getItem('rememberedUsername');
+  const rememberedUsername = localStorage.getItem("rememberedUsername");
   if (rememberedUsername) {
     loginForm.username = rememberedUsername;
     loginForm.remember = true;
@@ -682,7 +734,12 @@ onMounted(async () => {
   overflow: hidden;
   background:
     radial-gradient(circle at 78% 22%, rgba(255, 239, 189, 0.95) 0 8%, transparent 9%),
-    linear-gradient(160deg, rgba(36, 66, 57, 0.96) 0 35%, rgba(121, 168, 144, 0.94) 35% 62%, rgba(240, 189, 127, 0.9) 62% 100%);
+    linear-gradient(
+      160deg,
+      rgba(36, 66, 57, 0.96) 0 35%,
+      rgba(121, 168, 144, 0.94) 35% 62%,
+      rgba(240, 189, 127, 0.9) 62% 100%
+    );
 }
 
 .route-dot,
@@ -856,7 +913,10 @@ onMounted(async () => {
   border-radius: 16px;
   background-color: rgba(255, 252, 246, 0.86);
   box-shadow: inset 0 0 0 1px var(--login-line);
-  transition: box-shadow 180ms ease, transform 180ms ease, background-color 180ms ease;
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background-color 180ms ease;
 }
 
 :deep(.el-input__wrapper:hover) {
@@ -866,7 +926,9 @@ onMounted(async () => {
 
 :deep(.el-input__wrapper.is-focus) {
   background-color: #fffdf8;
-  box-shadow: inset 0 0 0 2px rgba(197, 111, 68, 0.55), 0 10px 24px rgba(197, 111, 68, 0.12);
+  box-shadow:
+    inset 0 0 0 2px rgba(197, 111, 68, 0.55),
+    0 10px 24px rgba(197, 111, 68, 0.12);
   transform: translateY(-1px);
 }
 
@@ -910,7 +972,10 @@ onMounted(async () => {
   font-weight: 800;
   background: linear-gradient(135deg, #c56f44 0%, #315b4c 100%);
   box-shadow: 0 14px 30px rgba(49, 91, 76, 0.24);
-  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
 }
 
 .submit-btn:not(.is-disabled):hover {
@@ -984,7 +1049,8 @@ onMounted(async () => {
 }
 
 @keyframes floatSlow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
 

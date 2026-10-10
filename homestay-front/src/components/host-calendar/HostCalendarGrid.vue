@@ -21,7 +21,7 @@ const emit = defineEmits<{
   "day-click": [payload: { date: string; entries: HostCalendarDay[] }];
   "range-select": [payload: { startDate: string; endDate: string; entries: HostCalendarDay[] }];
   "order-click": [orderId: number];
-  "escape": [];
+  escape: [];
 }>();
 
 const focusedDate = shallowRef<string | null>(null);
@@ -107,7 +107,12 @@ function handleGridKeydown(e: KeyboardEvent) {
   }
 
   if (!focusedDate.value) {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+    if (
+      e.key === "ArrowDown" ||
+      e.key === "ArrowUp" ||
+      e.key === "ArrowLeft" ||
+      e.key === "ArrowRight"
+    ) {
       e.preventDefault();
       focusedDate.value = inMonthCells.value[0]?.date ?? null;
     }
@@ -219,11 +224,7 @@ const daysByDate = computed(() => {
 });
 
 const cells = computed<CalendarCell[]>(() => {
-  const monthStart = new Date(
-    props.currentMonth.getFullYear(),
-    props.currentMonth.getMonth(),
-    1
-  );
+  const monthStart = new Date(props.currentMonth.getFullYear(), props.currentMonth.getMonth(), 1);
   const leadingDays = (monthStart.getDay() + 6) % 7;
   const gridStart = new Date(monthStart);
   gridStart.setDate(monthStart.getDate() - leadingDays);
@@ -247,8 +248,7 @@ function getDominantStatus(entries: HostCalendarDay[]): HostCalendarStatus {
     return "AVAILABLE";
   }
   return (
-    statusPriority.find((status) => entries.some((entry) => entry.status === status)) ??
-    "AVAILABLE"
+    statusPriority.find((status) => entries.some((entry) => entry.status === status)) ?? "AVAILABLE"
   );
 }
 
@@ -278,7 +278,6 @@ function getCellSummary(entries: HostCalendarDay[]) {
 
   return `${available}可订 / ${booked}已订 / ${pending}待确认 / ${unavailable}不可订`;
 }
-
 </script>
 
 <template>
@@ -294,7 +293,12 @@ function getCellSummary(entries: HostCalendarDay[]) {
       :data-date="cell.date"
       class="calendar-cell"
       :class="[
-        { muted: !cell.inMonth, today: cell.isToday, 'in-range': isInRange(cell.date), focused: focusedDate === cell.date },
+        {
+          muted: !cell.inMonth,
+          today: cell.isToday,
+          'in-range': isInRange(cell.date),
+          focused: focusedDate === cell.date,
+        },
         getStatusClass(getDominantStatus(cell.entries)),
       ]"
       :disabled="!cell.inMonth"
@@ -322,21 +326,23 @@ function getCellSummary(entries: HostCalendarDay[]) {
             @mousedown.stop
             @click.prevent="emit('order-click', cell.entries[0].orderId)"
           >
-            {{ cell.entries[0].guestName || cell.entries[0].orderNumber || `订单#${cell.entries[0].orderId}` }}
+            {{
+              cell.entries[0].guestName ||
+              cell.entries[0].orderNumber ||
+              `订单#${cell.entries[0].orderId}`
+            }}
           </a>
         </template>
         <template v-else>
           <span v-if="cell.entries[0].reason" class="reason-tag">{{ cell.entries[0].reason }}</span>
           <span v-else-if="cell.entries[0].guestName">{{ cell.entries[0].guestName }}</span>
         </template>
-        <span v-if="cell.entries[0].finalPrice" class="price-tag">¥{{ cell.entries[0].finalPrice }}</span>
+        <span v-if="cell.entries[0].finalPrice" class="price-tag"
+          >¥{{ cell.entries[0].finalPrice }}</span
+        >
       </span>
 
-      <el-tooltip
-        v-else-if="cell.entries.length > 1"
-        placement="top"
-        :show-after="300"
-      >
+      <el-tooltip v-else-if="cell.entries.length > 1" placement="top" :show-after="300">
         <template #content>
           <div class="tooltip-homestay-list">
             <div v-for="e in cell.entries" :key="e.homestayId" class="tooltip-row">
@@ -347,9 +353,7 @@ function getCellSummary(entries: HostCalendarDay[]) {
             </div>
           </div>
         </template>
-        <span class="cell-detail">
-          {{ cell.entries.length }} 套房源
-        </span>
+        <span class="cell-detail"> {{ cell.entries.length }} 套房源 </span>
       </el-tooltip>
     </button>
   </div>
@@ -387,7 +391,9 @@ function getCellSummary(entries: HostCalendarDay[]) {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: background 0.16s ease, box-shadow 0.16s ease;
+  transition:
+    background 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .calendar-cell:hover:not(:disabled) {
@@ -519,7 +525,10 @@ function getCellSummary(entries: HostCalendarDay[]) {
 }
 
 .focused {
-  box-shadow: inset 0 0 0 2px #2563eb, 0 0 0 2px #fff, 0 0 0 4px #2563eb !important;
+  box-shadow:
+    inset 0 0 0 2px #2563eb,
+    0 0 0 2px #fff,
+    0 0 0 4px #2563eb !important;
   z-index: 1;
   position: relative;
 }
@@ -593,11 +602,21 @@ function getCellSummary(entries: HostCalendarDay[]) {
   white-space: nowrap;
 }
 
-.tooltip-status.text-status-available { color: #4ade80; }
-.tooltip-status.text-status-pending-confirm { color: #fbbf24; }
+.tooltip-status.text-status-available {
+  color: #4ade80;
+}
+.tooltip-status.text-status-pending-confirm {
+  color: #fbbf24;
+}
 .tooltip-status.text-status-booked,
 .tooltip-status.text-status-checked-in,
-.tooltip-status.text-status-checked-out { color: #60a5fa; }
-.tooltip-status.text-status-unavailable { color: #f87171; }
-.tooltip-status.text-status-locked { color: #94a3b8; }
+.tooltip-status.text-status-checked-out {
+  color: #60a5fa;
+}
+.tooltip-status.text-status-unavailable {
+  color: #f87171;
+}
+.tooltip-status.text-status-locked {
+  color: #94a3b8;
+}
 </style>

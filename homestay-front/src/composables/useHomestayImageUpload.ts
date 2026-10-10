@@ -11,10 +11,7 @@ interface EditableForm {
   images?: string[];
 }
 
-export function useHomestayImageUpload(
-  form: EditableForm,
-  homestayId: ComputedRef<number>
-) {
+export function useHomestayImageUpload(form: EditableForm, homestayId: ComputedRef<number>) {
   const uploadingCover = ref(false);
   const uploadingGallery = ref(false);
 

@@ -9,16 +9,33 @@
         <p class="login-subtitle">请输入您的管理员账号和密码</p>
 
         <el-card class="login-card">
-          <el-form ref="loginFormRef" :model="loginForm" :rules="rules" label-position="top"
-            @submit.prevent="handleLogin">
+          <el-form
+            ref="loginFormRef"
+            :model="loginForm"
+            :rules="rules"
+            label-position="top"
+            @submit.prevent="handleLogin"
+          >
             <el-form-item label="用户名" prop="username">
-              <el-input v-model="loginForm.username" placeholder="请输入用户名" prefix-icon="User" :disabled="loading"
-                @keyup.enter="handleLogin" />
+              <el-input
+                v-model="loginForm.username"
+                placeholder="请输入用户名"
+                prefix-icon="User"
+                :disabled="loading"
+                @keyup.enter="handleLogin"
+              />
             </el-form-item>
 
             <el-form-item label="密码" prop="password">
-              <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" prefix-icon="Lock"
-                show-password :disabled="loading" @keyup.enter="handleLogin" />
+              <el-input
+                v-model="loginForm.password"
+                type="password"
+                placeholder="请输入密码"
+                prefix-icon="Lock"
+                show-password
+                :disabled="loading"
+                @keyup.enter="handleLogin"
+              />
             </el-form-item>
 
             <div class="remember-forgot">
@@ -27,7 +44,7 @@
             </div>
 
             <el-button type="primary" class="submit-btn" :loading="loading" @click="handleLogin">
-              {{ loading ? '登录中...' : '登录' }}
+              {{ loading ? "登录中..." : "登录" }}
             </el-button>
           </el-form>
         </el-card>
@@ -42,7 +59,7 @@ import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
-import { login } from '@/api/auth';
+import { login } from "@/api/auth";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -52,7 +69,7 @@ const loading = ref(false);
 const loginForm = reactive({
   username: "",
   password: "",
-  remember: false
+  remember: false,
 });
 
 const rules = {
@@ -76,21 +93,21 @@ const handleLogin = async () => {
     // 调用登录API
     const result = await login({
       username: loginForm.username,
-      password: loginForm.password
+      password: loginForm.password,
     });
 
     // 使用 Pinia store 保存用户信息和 token
     userStore.setToken(result.token);
     userStore.setUserInfo({
       username: result.admin.username,
-      role: result.admin.role
+      role: result.admin.role,
     });
 
     // 如果选择了记住我，可以在本地存储中保存用户名
     if (loginForm.remember) {
-      localStorage.setItem('rememberedUsername', loginForm.username);
+      localStorage.setItem("rememberedUsername", loginForm.username);
     } else {
-      localStorage.removeItem('rememberedUsername');
+      localStorage.removeItem("rememberedUsername");
     }
 
     ElMessage.success("登录成功");
@@ -103,10 +120,11 @@ const handleLogin = async () => {
 
     if (error.response) {
       // 如果有响应对象，尝试从不同位置获取错误信息
-      errorMessage = error.response.data?.error ||
+      errorMessage =
+        error.response.data?.error ||
         error.response.data?.message ||
         error.response.data?.msg ||
-        (typeof error.response.data === 'string' ? error.response.data : errorMessage);
+        (typeof error.response.data === "string" ? error.response.data : errorMessage);
     } else if (error.message) {
       // 如果有错误信息，直接使用
       errorMessage = error.message;
@@ -120,7 +138,7 @@ const handleLogin = async () => {
 
 // 页面加载时，如果之前记住了用户名，就自动填充
 const initRememberedUsername = () => {
-  const rememberedUsername = localStorage.getItem('rememberedUsername');
+  const rememberedUsername = localStorage.getItem("rememberedUsername");
   if (rememberedUsername) {
     loginForm.username = rememberedUsername;
     loginForm.remember = true;
@@ -144,13 +162,17 @@ initRememberedUsername();
 }
 
 .login-container::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 200%;
   height: 200%;
   top: -50%;
   left: -50%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 60%);
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0) 60%
+  );
   animation: rotate 30s linear infinite;
 }
 

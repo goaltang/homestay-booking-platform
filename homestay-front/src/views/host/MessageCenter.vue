@@ -24,7 +24,9 @@
           >
             <div class="conv-avatar">
               <img :src="getAvatar(conv)" class="avatar" />
-              <span v-if="conv.unreadCount > 0" class="unread-badge">{{ conv.unreadCount > 99 ? '99+' : conv.unreadCount }}</span>
+              <span v-if="conv.unreadCount > 0" class="unread-badge">{{
+                conv.unreadCount > 99 ? "99+" : conv.unreadCount
+              }}</span>
             </div>
             <div class="conv-content">
               <div class="conv-header">
@@ -34,7 +36,7 @@
               <div class="homestay-title" v-if="conv.homestayTitle">
                 房源: {{ conv.homestayTitle }}
               </div>
-              <div class="last-message">{{ conv.lastMessageContent || '暂无消息' }}</div>
+              <div class="last-message">{{ conv.lastMessageContent || "暂无消息" }}</div>
             </div>
           </div>
         </div>
@@ -81,7 +83,11 @@ const formatTime = (dateString: string | null) => {
   if (diff < oneDay) {
     return date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
   } else if (diff < 7 * oneDay) {
-    return date.toLocaleDateString("zh-CN", { weekday: "short", hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleDateString("zh-CN", {
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } else {
     return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
   }

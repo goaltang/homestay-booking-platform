@@ -4,11 +4,7 @@ import type {
   HomestaySearchParams,
   PageResult, // 导入 PageResult 以获得更强的类型检查
 } from "@/types";
-import {
-  adaptPageParams,
-  adaptPageResponse,
-  adaptHomestayItem,
-} from "@/utils/adapter";
+import { adaptPageParams, adaptPageResponse, adaptHomestayItem } from "@/utils/adapter";
 
 // Temporary type definition if not available in @/types
 interface HomestayTypeDTO {
@@ -61,9 +57,7 @@ interface AuditStatistics {
 }
 
 // 获取房源列表
-export function getHomestayList(
-  params: HomestaySearchParams
-): Promise<PageResult<Homestay>> {
+export function getHomestayList(params: HomestaySearchParams): Promise<PageResult<Homestay>> {
   const adaptedParams = adaptPageParams(params);
 
   // 使用 title 字段进行搜索 (如果存在)
@@ -152,10 +146,7 @@ export function createHomestay(data: Omit<Homestay, "id">): Promise<Homestay> {
 }
 
 // 更新房源
-export function updateHomestay(
-  id: number,
-  data: Partial<Homestay>
-): Promise<Homestay> {
+export function updateHomestay(id: number, data: Partial<Homestay>): Promise<Homestay> {
   // 直接使用传入的 data (假设已包含 title 和新的地址字段)
   const adaptedData: Partial<Homestay> = { ...data };
 
@@ -200,12 +191,12 @@ export function updateHomestayStatus(id: number, status: string) {
 
 // 更新首页精选状态
 export function updateHomestayFeatured(id: number, featured: boolean): Promise<any> {
-  console.log('API调用: PUT /api/admin/homestays/' + id + '/featured', { featured })
+  console.log("API调用: PUT /api/admin/homestays/" + id + "/featured", { featured });
   return request({
     url: `/api/admin/homestays/${id}/featured`,
-    method: 'put',
+    method: "put",
     data: { featured },
-  })
+  });
 }
 
 // 新增: 批量删除房源
@@ -256,10 +247,7 @@ export function getActiveHomestayTypes(): Promise<HomestayTypeDTO[]> {
 /**
  * 执行房源审核操作
  */
-export function reviewHomestay(
-  id: number,
-  reviewData: ReviewRequest
-): Promise<AuditLog> {
+export function reviewHomestay(id: number, reviewData: ReviewRequest): Promise<AuditLog> {
   return request<AuditLog>({
     url: `/api/homestays/${id}/review`,
     method: "post",
@@ -309,10 +297,7 @@ export function submitHomestayForReview(id: number): Promise<AuditLog> {
 /**
  * 获取审核统计数据
  */
-export function getAuditStatistics(
-  startDate?: string,
-  endDate?: string
-): Promise<AuditStatistics> {
+export function getAuditStatistics(startDate?: string, endDate?: string): Promise<AuditStatistics> {
   return request<AuditStatistics>({
     url: "/api/admin/statistics/audit",
     method: "get",
@@ -433,11 +418,14 @@ export function getDetailedAuditStatistics(
 /**
  * 强制下架房源（因违规）
  */
-export function forceDelistHomestay(id: number, data: {
-  reason: string;
-  notes?: string;
-  violationType?: string;
-}) {
+export function forceDelistHomestay(
+  id: number,
+  data: {
+    reason: string;
+    notes?: string;
+    violationType?: string;
+  }
+) {
   return request({
     url: `/api/admin/homestays/${id}/force-delist`,
     method: "post",

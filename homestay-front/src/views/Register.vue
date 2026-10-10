@@ -70,11 +70,26 @@
 
           <el-card class="register-card">
             <div class="register-form-wrapper">
-              <el-form ref="registerFormRef" :model="form" :rules="rules" label-position="top"
-                :validate-on-rule-change="false" @submit.prevent="handleRegister">
+              <el-form
+                ref="registerFormRef"
+                :model="form"
+                :rules="rules"
+                label-position="top"
+                :validate-on-rule-change="false"
+                @submit.prevent="handleRegister"
+              >
                 <el-form-item label="用户名" prop="username">
-                  <el-input v-model="form.username" placeholder="请输入用户名（3-20个字符）" prefix-icon="User" name="username" autocomplete="username"
-                    :disabled="loading" :suffix-icon="usernameValidating ? 'Loading' : ''" clearable @blur="validateField('username')" />
+                  <el-input
+                    v-model="form.username"
+                    placeholder="请输入用户名（3-20个字符）"
+                    prefix-icon="User"
+                    name="username"
+                    autocomplete="username"
+                    :disabled="loading"
+                    :suffix-icon="usernameValidating ? 'Loading' : ''"
+                    clearable
+                    @blur="validateField('username')"
+                  />
                   <div class="form-item-tip" v-if="usernameValidating">
                     <span class="checking-text">正在检查用户名是否可用...</span>
                   </div>
@@ -84,9 +99,20 @@
                 </el-form-item>
 
                 <el-form-item label="邮箱" prop="email">
-                  <el-autocomplete v-model="form.email" placeholder="请输入邮箱地址" :fetch-suggestions="queryEmailSearch"
-                    :trigger-on-focus="false" clearable style="width: 100%;" prefix-icon="Message" name="email" autocomplete="email" :disabled="loading"
-                    :suffix-icon="emailValidating ? 'Loading' : ''" @blur="validateField('email')" />
+                  <el-autocomplete
+                    v-model="form.email"
+                    placeholder="请输入邮箱地址"
+                    :fetch-suggestions="queryEmailSearch"
+                    :trigger-on-focus="false"
+                    clearable
+                    style="width: 100%"
+                    prefix-icon="Message"
+                    name="email"
+                    autocomplete="email"
+                    :disabled="loading"
+                    :suffix-icon="emailValidating ? 'Loading' : ''"
+                    @blur="validateField('email')"
+                  />
                   <div class="form-item-tip" v-if="emailValidating">
                     <span class="checking-text">正在检查邮箱是否可用...</span>
                   </div>
@@ -96,22 +122,44 @@
                 </el-form-item>
 
                 <el-form-item label="手机号" prop="phone">
-                  <el-input v-model="form.phone" placeholder="请输入手机号（可选）" prefix-icon="Phone" name="tel" autocomplete="tel" :disabled="loading"
-                    clearable @blur="validateField('phone')" />
+                  <el-input
+                    v-model="form.phone"
+                    placeholder="请输入手机号（可选）"
+                    prefix-icon="Phone"
+                    name="tel"
+                    autocomplete="tel"
+                    :disabled="loading"
+                    clearable
+                    @blur="validateField('phone')"
+                  />
                   <div class="form-item-tip" v-if="form.phone && isValidPhone(form.phone)">
                     <span class="success-text">✓ 手机号格式正确</span>
                   </div>
                 </el-form-item>
 
                 <el-form-item label="密码" prop="password">
-                  <el-input v-model="form.password" type="password" placeholder="请输入密码（6-20个字符）" prefix-icon="Lock"
-                    name="new-password" autocomplete="new-password" show-password :disabled="loading" clearable @input="onPasswordInput"
-                    @blur="validateField('password')" />
+                  <el-input
+                    v-model="form.password"
+                    type="password"
+                    placeholder="请输入密码（6-20个字符）"
+                    prefix-icon="Lock"
+                    name="new-password"
+                    autocomplete="new-password"
+                    show-password
+                    :disabled="loading"
+                    clearable
+                    @input="onPasswordInput"
+                    @blur="validateField('password')"
+                  />
                   <!-- 密码强度指示器 -->
                   <div class="password-strength" v-if="form.password">
                     <div class="strength-bars">
-                      <div class="strength-bar" :class="getPasswordStrengthClass(index)" v-for="index in 4"
-                        :key="index"></div>
+                      <div
+                        class="strength-bar"
+                        :class="getPasswordStrengthClass(index)"
+                        v-for="index in 4"
+                        :key="index"
+                      ></div>
                     </div>
                     <span class="strength-text" :class="passwordStrength.class">
                       {{ passwordStrength.text }}
@@ -121,26 +169,35 @@
                   <div class="password-tips" v-if="showPasswordTips">
                     <p class="tip-title">密码要求：</p>
                     <ul class="tip-list">
-                      <li :class="{ 'tip-success': form.password.length >= 6 }">
-                        ✓ 至少6个字符
-                      </li>
+                      <li :class="{ 'tip-success': form.password.length >= 6 }">✓ 至少6个字符</li>
                       <li :class="{ 'tip-success': /[A-Z]/.test(form.password) }">
                         ✓ 包含大写字母（推荐）
                       </li>
                       <li :class="{ 'tip-success': /[0-9]/.test(form.password) }">
                         ✓ 包含数字（推荐）
                       </li>
-                      <li :class="{ 'tip-success': hasSpecialChar }">
-                        ✓ 包含特殊字符（推荐）
-                      </li>
+                      <li :class="{ 'tip-success': hasSpecialChar }">✓ 包含特殊字符（推荐）</li>
                     </ul>
                   </div>
                 </el-form-item>
 
                 <el-form-item label="确认密码" prop="confirmPassword">
-                  <el-input v-model="form.confirmPassword" type="password" placeholder="请再次输入密码" prefix-icon="Lock"
-                    name="confirm-password" autocomplete="new-password" show-password :disabled="loading" clearable @blur="validateField('confirmPassword')" />
-                  <div class="form-item-tip" v-if="form.confirmPassword && form.password === form.confirmPassword">
+                  <el-input
+                    v-model="form.confirmPassword"
+                    type="password"
+                    placeholder="请再次输入密码"
+                    prefix-icon="Lock"
+                    name="confirm-password"
+                    autocomplete="new-password"
+                    show-password
+                    :disabled="loading"
+                    clearable
+                    @blur="validateField('confirmPassword')"
+                  />
+                  <div
+                    class="form-item-tip"
+                    v-if="form.confirmPassword && form.password === form.confirmPassword"
+                  >
                     <span class="success-text">✓ 密码匹配</span>
                   </div>
                 </el-form-item>
@@ -161,12 +218,25 @@
                     </el-radio>
                   </el-radio-group>
                   <div class="role-tip" v-if="form.role === 'ROLE_HOST'">
-                    <el-alert title="房东特权：发布房源、管理订单、获得收益、专属客服支持" type="info" :closable="false" show-icon />
+                    <el-alert
+                      title="房东特权：发布房源、管理订单、获得收益、专属客服支持"
+                      type="info"
+                      :closable="false"
+                      show-icon
+                    />
                   </div>
                 </el-form-item>
 
                 <el-form-item label="邀请码（可选）">
-                  <el-input v-model="form.referralCode" placeholder="如有邀请码，请输入" prefix-icon="Ticket" name="referralCode" autocomplete="off" :disabled="loading" clearable />
+                  <el-input
+                    v-model="form.referralCode"
+                    placeholder="如有邀请码，请输入"
+                    prefix-icon="Ticket"
+                    name="referralCode"
+                    autocomplete="off"
+                    :disabled="loading"
+                    clearable
+                  />
                   <div class="form-item-tip" v-if="form.referralCode">
                     <span class="checking-text">注册成功后将自动领取邀请奖励</span>
                   </div>
@@ -174,18 +244,31 @@
 
                 <!-- 用户协议和隐私政策 -->
                 <el-form-item prop="agreement">
-                  <el-checkbox v-model="form.agreement" :disabled="loading" class="agreement-checkbox">
+                  <el-checkbox
+                    v-model="form.agreement"
+                    :disabled="loading"
+                    class="agreement-checkbox"
+                  >
                     我已阅读并同意
-                    <el-button type="text" class="agreement-link" @click="showUserAgreement">《用户服务协议》</el-button>
+                    <el-button type="text" class="agreement-link" @click="showUserAgreement"
+                      >《用户服务协议》</el-button
+                    >
                     和
-                    <el-button type="text" class="agreement-link" @click="showPrivacyPolicy">《隐私政策》</el-button>
+                    <el-button type="text" class="agreement-link" @click="showPrivacyPolicy"
+                      >《隐私政策》</el-button
+                    >
                   </el-checkbox>
                 </el-form-item>
 
-                <el-button native-type="submit" type="primary" class="submit-btn" :class="{ 'submit-btn-ready': isFormValid }"
-                  :loading="loading" :disabled="loading || usernameValidating || emailValidating"
+                <el-button
+                  native-type="submit"
+                  type="primary"
+                  class="submit-btn"
+                  :class="{ 'submit-btn-ready': isFormValid }"
+                  :loading="loading"
+                  :disabled="loading || usernameValidating || emailValidating"
                 >
-                  {{ loading ? '注册中...' : '立即注册' }}
+                  {{ loading ? "注册中..." : "立即注册" }}
                 </el-button>
                 <p class="submit-helper">提交时会逐项校验信息，未完成的内容会直接显示在表单中。</p>
 
@@ -203,14 +286,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, shallowRef } from 'vue';
-import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
-import type { FormInstance } from 'element-plus';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import Logo from '@/components/common/Logo.vue';
-import api from '@/api';
-import { debounce } from 'lodash-es';
+import { ref, reactive, computed, shallowRef } from "vue";
+import { useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
+import type { FormInstance } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
+import Logo from "@/components/common/Logo.vue";
+import api from "@/api";
+import { debounce } from "lodash-es";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -219,13 +302,13 @@ const loading = shallowRef(false);
 const showPasswordTips = shallowRef(false);
 
 const form = reactive({
-  username: '',
-  email: '',
-  phone: '',
-  password: '',
-  confirmPassword: '',
-  role: 'ROLE_USER',
-  referralCode: '',
+  username: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+  role: "ROLE_USER",
+  referralCode: "",
   agreement: false,
 });
 
@@ -238,7 +321,8 @@ const usernamePattern = /^[a-zA-Z0-9_\u4e00-\u9fa5]+$/;
 
 // 计算表单是否有效
 const isFormValid = computed(() => {
-  return form.username.length >= 3 &&
+  return (
+    form.username.length >= 3 &&
     form.username.length <= 20 &&
     usernamePattern.test(form.username) &&
     isValidEmail(form.email) &&
@@ -247,13 +331,14 @@ const isFormValid = computed(() => {
     form.confirmPassword === form.password &&
     form.agreement &&
     !usernameValidating.value &&
-    !emailValidating.value;
+    !emailValidating.value
+  );
 });
 
 // 密码强度计算
 const passwordStrength = computed(() => {
   const password = form.password;
-  if (!password) return { score: 0, text: '', class: '' };
+  if (!password) return { score: 0, text: "", class: "" };
 
   let score = 0;
 
@@ -268,19 +353,19 @@ const passwordStrength = computed(() => {
   if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
 
   // 根据分数确定强度
-  if (score <= 2) return { score, text: '弱', class: 'weak' };
-  if (score <= 4) return { score, text: '中等', class: 'medium' };
-  return { score, text: '强', class: 'strong' };
+  if (score <= 2) return { score, text: "弱", class: "weak" };
+  if (score <= 4) return { score, text: "中等", class: "medium" };
+  return { score, text: "强", class: "strong" };
 });
 
 const getPasswordStrengthClass = (index: number) => {
   const score = passwordStrength.value.score;
   if (index <= score) {
-    if (score <= 2) return 'weak';
-    if (score <= 4) return 'medium';
-    return 'strong';
+    if (score <= 2) return "weak";
+    if (score <= 4) return "medium";
+    return "strong";
   }
-  return '';
+  return "";
 };
 
 // 邮箱验证
@@ -308,25 +393,43 @@ const validateField = async (prop: string) => {
   }
 };
 
-const emailSuffixes = ['@qq.com', '@gmail.com', '@163.com', '@126.com', '@sina.com', '@hotmail.com', '@outlook.com', '@live.com', '@icloud.com'];
+const emailSuffixes = [
+  "@qq.com",
+  "@gmail.com",
+  "@163.com",
+  "@126.com",
+  "@sina.com",
+  "@hotmail.com",
+  "@outlook.com",
+  "@live.com",
+  "@icloud.com",
+];
 
-interface EmailSuggestion { value: string; }
+interface EmailSuggestion {
+  value: string;
+}
 
 const queryEmailSearch = (queryString: string, cb: (suggestions: EmailSuggestion[]) => void) => {
   let results: EmailSuggestion[] = [];
   if (queryString) {
-    const atIndex = queryString.indexOf('@');
-    if (atIndex === -1) { // 用户尚未输入 @
-      results = emailSuffixes.map(suffix => ({ value: queryString + suffix }));
-    } else { // 用户已输入 @
+    const atIndex = queryString.indexOf("@");
+    if (atIndex === -1) {
+      // 用户尚未输入 @
+      results = emailSuffixes.map((suffix) => ({ value: queryString + suffix }));
+    } else {
+      // 用户已输入 @
       const prefix = queryString.substring(0, atIndex);
       const domainInput = queryString.substring(atIndex);
       results = emailSuffixes
-        .filter(suffix => suffix.startsWith(domainInput))
-        .map(suffix => ({ value: prefix + suffix }));
+        .filter((suffix) => suffix.startsWith(domainInput))
+        .map((suffix) => ({ value: prefix + suffix }));
 
       // 如果用户输入的@xxx.com 不在预设后缀中，也允许其作为选项，但优先显示匹配的预设后缀
-      if (!emailSuffixes.some(s => s === domainInput) && domainInput.length > 1 && domainInput.includes('.')) {
+      if (
+        !emailSuffixes.some((s) => s === domainInput) &&
+        domainInput.length > 1 &&
+        domainInput.includes(".")
+      ) {
         results.unshift({ value: queryString });
       }
     }
@@ -335,30 +438,35 @@ const queryEmailSearch = (queryString: string, cb: (suggestions: EmailSuggestion
 };
 
 // 检查用户名是否存在的函数
-const checkUsernameExists = debounce(async (username: string, callback: (error?: Error) => void) => {
-  if (!username || username.length < 3) {
-    callback();
-    return;
-  }
-
-  try {
-    usernameValidating.value = true;
-    const response = await api.get(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
-    const exists = response.data?.exists;
-
-    if (exists) {
-      callback(new Error('该用户名已被使用'));
-    } else {
+const checkUsernameExists = debounce(
+  async (username: string, callback: (error?: Error) => void) => {
+    if (!username || username.length < 3) {
       callback();
+      return;
     }
-  } catch (error) {
-    console.error('检查用户名失败:', error);
-    // 如果API请求失败，我们不阻止表单提交
-    callback();
-  } finally {
-    usernameValidating.value = false;
-  }
-}, 500);
+
+    try {
+      usernameValidating.value = true;
+      const response = await api.get(
+        `/api/auth/check-username?username=${encodeURIComponent(username)}`
+      );
+      const exists = response.data?.exists;
+
+      if (exists) {
+        callback(new Error("该用户名已被使用"));
+      } else {
+        callback();
+      }
+    } catch (error) {
+      console.error("检查用户名失败:", error);
+      // 如果API请求失败，我们不阻止表单提交
+      callback();
+    } finally {
+      usernameValidating.value = false;
+    }
+  },
+  500
+);
 
 // 检查邮箱是否存在的函数
 const checkEmailExists = debounce(async (email: string, callback: (error?: Error) => void) => {
@@ -373,12 +481,12 @@ const checkEmailExists = debounce(async (email: string, callback: (error?: Error
     const exists = response.data?.exists;
 
     if (exists) {
-      callback(new Error('该邮箱已被注册'));
+      callback(new Error("该邮箱已被注册"));
     } else {
       callback();
     }
   } catch (error) {
-    console.error('检查邮箱失败:', error);
+    console.error("检查邮箱失败:", error);
     // 如果API请求失败，我们不阻止表单提交
     callback();
   } finally {
@@ -388,18 +496,18 @@ const checkEmailExists = debounce(async (email: string, callback: (error?: Error
 
 // 自定义用户名验证
 const validateUsername = (_rule: any, value: string, callback: any) => {
-  if (value === '') {
-    callback(new Error('请输入用户名'));
+  if (value === "") {
+    callback(new Error("请输入用户名"));
     return;
   }
 
   if (value.length < 3 || value.length > 20) {
-    callback(new Error('用户名长度应在 3-20 个字符之间'));
+    callback(new Error("用户名长度应在 3-20 个字符之间"));
     return;
   }
 
   if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(value)) {
-    callback(new Error('用户名只能包含字母、数字、下划线和中文'));
+    callback(new Error("用户名只能包含字母、数字、下划线和中文"));
     return;
   }
 
@@ -414,12 +522,12 @@ const validateUsername = (_rule: any, value: string, callback: any) => {
 // 自定义邮箱验证
 const validateEmail = (_rule: any, value: string, callback: any) => {
   if (!value) {
-    callback(new Error('请输入邮箱'));
+    callback(new Error("请输入邮箱"));
     return;
   }
 
   if (!isValidEmail(value)) {
-    callback(new Error('请输入正确的邮箱地址'));
+    callback(new Error("请输入正确的邮箱地址"));
     return;
   }
 
@@ -432,10 +540,10 @@ const validateEmail = (_rule: any, value: string, callback: any) => {
 };
 
 const validatePass2 = (_rule: any, value: string, callback: any) => {
-  if (value === '') {
-    callback(new Error('请再次输入密码'));
+  if (value === "") {
+    callback(new Error("请再次输入密码"));
   } else if (value !== form.password) {
-    callback(new Error('两次输入密码不一致'));
+    callback(new Error("两次输入密码不一致"));
   } else {
     callback();
   }
@@ -447,7 +555,7 @@ const validatePhone = (_rule: any, value: string, callback: any) => {
     return;
   }
   if (!isValidPhone(value)) {
-    callback(new Error('请输入正确的手机号'));
+    callback(new Error("请输入正确的手机号"));
   } else {
     callback();
   }
@@ -455,7 +563,7 @@ const validatePhone = (_rule: any, value: string, callback: any) => {
 
 const validateAgreement = (_rule: any, value: boolean, callback: any) => {
   if (!value) {
-    callback(new Error('请阅读并同意用户协议和隐私政策'));
+    callback(new Error("请阅读并同意用户协议和隐私政策"));
   } else {
     callback();
   }
@@ -463,28 +571,16 @@ const validateAgreement = (_rule: any, value: boolean, callback: any) => {
 
 // 更新验证规则
 const rules = {
-  username: [
-    { validator: validateUsername, trigger: 'blur' }
-  ],
-  email: [
-    { validator: validateEmail, trigger: 'blur' }
-  ],
-  phone: [
-    { validator: validatePhone, trigger: 'blur' },
-  ],
+  username: [{ validator: validateUsername, trigger: "blur" }],
+  email: [{ validator: validateEmail, trigger: "blur" }],
+  phone: [{ validator: validatePhone, trigger: "blur" }],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度应在 6-20 个字符之间', trigger: 'blur' },
+    { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 6, max: 20, message: "密码长度应在 6-20 个字符之间", trigger: "blur" },
   ],
-  confirmPassword: [
-    { required: true, validator: validatePass2, trigger: 'blur' },
-  ],
-  role: [
-    { required: true, message: '请选择注册身份', trigger: 'change' },
-  ],
-  agreement: [
-    { validator: validateAgreement, trigger: 'change' },
-  ],
+  confirmPassword: [{ required: true, validator: validatePass2, trigger: "blur" }],
+  role: [{ required: true, message: "请选择注册身份", trigger: "change" }],
+  agreement: [{ validator: validateAgreement, trigger: "change" }],
 };
 
 const handleRegister = async () => {
@@ -495,7 +591,7 @@ const handleRegister = async () => {
     loading.value = true;
 
     const { confirmPassword, agreement, ...registerData } = form;
-    console.log('提交注册信息:', registerData);
+    console.log("提交注册信息:", registerData);
 
     try {
       // 注册
@@ -503,62 +599,62 @@ const handleRegister = async () => {
 
       if (registerSuccess) {
         // 注册成功，根据角色提供不同的成功提示
-        if (form.role === 'ROLE_HOST') {
+        if (form.role === "ROLE_HOST") {
           ElMessage.success({
-            message: '恭喜您！已成功注册为房东。',
-            duration: 3000
+            message: "恭喜您！已成功注册为房东。",
+            duration: 3000,
           });
 
           // 延迟跳转提示
           setTimeout(() => {
             ElMessage.info({
-              message: '即将跳转到房东信息完善页面...',
-              duration: 2000
+              message: "即将跳转到房东信息完善页面...",
+              duration: 2000,
             });
           }, 1000);
 
           // 跳转到房东信息完善引导页面
           setTimeout(() => {
-            router.push('/host/onboarding');
+            router.push("/host/onboarding");
           }, 3000);
         } else {
           ElMessage.success({
-            message: '注册成功！欢迎加入我们的平台！',
-            duration: 3000
+            message: "注册成功！欢迎加入我们的平台！",
+            duration: 3000,
           });
 
           // 普通用户跳转到首页
           setTimeout(() => {
-            router.push('/');
+            router.push("/");
           }, 2000);
         }
       } else {
-        ElMessage.error('注册处理失败，请稍后重试');
+        ElMessage.error("注册处理失败，请稍后重试");
       }
     } catch (error: any) {
       // 注册失败：拦截器已统一弹出后端返回的具体错误信息（如"邮箱已存在"/"用户名已存在"）
-      console.error('注册失败详情:', error);
+      console.error("注册失败详情:", error);
     }
   } catch (formError: any) {
-    console.error('表单验证失败:', formError);
-    ElMessage.error('请正确填写所有必填信息');
+    console.error("表单验证失败:", formError);
+    ElMessage.error("请正确填写所有必填信息");
   } finally {
     loading.value = false;
   }
 };
 
 const goToLogin = () => {
-  router.push('/login');
+  router.push("/login");
 };
 
 // 显示用户协议
 const showUserAgreement = () => {
   ElMessageBox.alert(
-    '这里是用户服务协议的内容...\n\n1. 用户权利和义务\n2. 平台服务内容\n3. 隐私保护\n4. 免责声明\n\n详细内容请访问我们的官方网站。',
-    '用户服务协议',
+    "这里是用户服务协议的内容...\n\n1. 用户权利和义务\n2. 平台服务内容\n3. 隐私保护\n4. 免责声明\n\n详细内容请访问我们的官方网站。",
+    "用户服务协议",
     {
-      confirmButtonText: '我知道了',
-      type: 'info'
+      confirmButtonText: "我知道了",
+      type: "info",
     }
   );
 };
@@ -566,11 +662,11 @@ const showUserAgreement = () => {
 // 显示隐私政策
 const showPrivacyPolicy = () => {
   ElMessageBox.alert(
-    '这里是隐私政策的内容...\n\n1. 信息收集\n2. 信息使用\n3. 信息保护\n4. 第三方服务\n\n我们承诺保护您的隐私安全。',
-    '隐私政策',
+    "这里是隐私政策的内容...\n\n1. 信息收集\n2. 信息使用\n3. 信息保护\n4. 第三方服务\n\n我们承诺保护您的隐私安全。",
+    "隐私政策",
     {
-      confirmButtonText: '我知道了',
-      type: 'info'
+      confirmButtonText: "我知道了",
+      type: "info",
     }
   );
 };
@@ -936,7 +1032,10 @@ const showPrivacyPolicy = () => {
   border-radius: 16px;
   background-color: rgba(255, 252, 246, 0.86);
   box-shadow: inset 0 0 0 1px var(--register-line);
-  transition: box-shadow 180ms ease, transform 180ms ease, background-color 180ms ease;
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background-color 180ms ease;
 }
 
 :deep(.el-input__wrapper:hover) {
@@ -946,7 +1045,9 @@ const showPrivacyPolicy = () => {
 
 :deep(.el-input__wrapper.is-focus) {
   background-color: #fffdf8;
-  box-shadow: inset 0 0 0 2px rgba(197, 111, 68, 0.55), 0 10px 24px rgba(197, 111, 68, 0.12);
+  box-shadow:
+    inset 0 0 0 2px rgba(197, 111, 68, 0.55),
+    0 10px 24px rgba(197, 111, 68, 0.12);
   transform: translateY(-1px);
 }
 
@@ -966,7 +1067,10 @@ const showPrivacyPolicy = () => {
   font-weight: 800;
   background: linear-gradient(135deg, #c56f44 0%, #315b4c 100%);
   box-shadow: 0 14px 30px rgba(49, 91, 76, 0.24);
-  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
 }
 
 .submit-btn:not(.is-disabled):hover {
@@ -1058,15 +1162,15 @@ const showPrivacyPolicy = () => {
 }
 
 .strength-bar.weak {
-  background-color: #F56C6C;
+  background-color: #f56c6c;
 }
 
 .strength-bar.medium {
-  background-color: #E6A23C;
+  background-color: #e6a23c;
 }
 
 .strength-bar.strong {
-  background-color: #67C23A;
+  background-color: #67c23a;
 }
 
 .strength-text {
@@ -1076,15 +1180,15 @@ const showPrivacyPolicy = () => {
 }
 
 .strength-text.weak {
-  color: #F56C6C;
+  color: #f56c6c;
 }
 
 .strength-text.medium {
-  color: #E6A23C;
+  color: #e6a23c;
 }
 
 .strength-text.strong {
-  color: #67C23A;
+  color: #67c23a;
 }
 
 .password-tips {
@@ -1132,7 +1236,10 @@ const showPrivacyPolicy = () => {
   border: 1px solid var(--register-line);
   border-radius: 18px;
   background: rgba(255, 252, 246, 0.7);
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
 .role-radio:hover {
@@ -1177,7 +1284,8 @@ const showPrivacyPolicy = () => {
 }
 
 @keyframes floatSlow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
 

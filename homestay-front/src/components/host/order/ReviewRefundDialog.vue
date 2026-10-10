@@ -9,12 +9,16 @@
     <div v-if="order" class="refund-dialog-content">
       <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 20px">
         <template #title>
-          <span>请审核对订单 <strong>#{{ order.id }}</strong> 发起的退款申请。</span>
+          <span
+            >请审核对订单 <strong>#{{ order.id }}</strong> 发起的退款申请。</span
+          >
         </template>
       </el-alert>
 
       <el-descriptions :column="1" border size="small" class="refund-order-info">
-        <el-descriptions-item label="退款原因">{{ order.refundReason || "无" }}</el-descriptions-item>
+        <el-descriptions-item label="退款原因">{{
+          order.refundReason || "无"
+        }}</el-descriptions-item>
         <el-descriptions-item label="退款金额">
           <span class="refund-amount-highlight">
             ¥{{ formatAmount(order.refundAmount || order.totalAmount) }}
@@ -32,13 +36,17 @@
         <el-form-item
           :label="form.action === 'approve' ? '同意备注' : '拒绝原因'"
           prop="reason"
-          :rules="[{ required: form.action === 'reject', message: '请输入拒绝原因', trigger: 'blur' }]"
+          :rules="[
+            { required: form.action === 'reject', message: '请输入拒绝原因', trigger: 'blur' },
+          ]"
         >
           <el-input
             v-model="form.reason"
             type="textarea"
             :rows="3"
-            :placeholder="form.action === 'approve' ? '选填：同意退款备注' : '必填：请输入拒绝退款的原因'"
+            :placeholder="
+              form.action === 'approve' ? '选填：同意退款备注' : '必填：请输入拒绝退款的原因'
+            "
             maxlength="200"
             show-word-limit
           />

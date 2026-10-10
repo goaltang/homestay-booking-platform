@@ -39,11 +39,7 @@ export function createOrder(data: {
  * 获取用户的订单列表
  * @param params 查询参数
  */
-export function getUserOrders(params?: {
-  page?: number;
-  size?: number;
-  status?: string;
-}) {
+export function getUserOrders(params?: { page?: number; size?: number; status?: string }) {
   console.log("获取用户订单列表，参数:", params);
   return request({
     url: "/api/orders",
@@ -69,12 +65,8 @@ export function getUserOrders(params?: {
             homestayTitle: "湖景度假房",
             imageUrl: "https://picsum.photos/400/300?random=1",
             guestCount: 2,
-            checkInDate: new Date(Date.now() + 86400000 * 7)
-              .toISOString()
-              .split("T")[0],
-            checkOutDate: new Date(Date.now() + 86400000 * 10)
-              .toISOString()
-              .split("T")[0],
+            checkInDate: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0],
+            checkOutDate: new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0],
             nights: 3,
             totalAmount: 1200,
             status: OrderStatus.PENDING,
@@ -87,12 +79,8 @@ export function getUserOrders(params?: {
             homestayTitle: "山景小木屋",
             imageUrl: "https://picsum.photos/400/300?random=2",
             guestCount: 4,
-            checkInDate: new Date(Date.now() + 86400000 * 14)
-              .toISOString()
-              .split("T")[0],
-            checkOutDate: new Date(Date.now() + 86400000 * 17)
-              .toISOString()
-              .split("T")[0],
+            checkInDate: new Date(Date.now() + 86400000 * 14).toISOString().split("T")[0],
+            checkOutDate: new Date(Date.now() + 86400000 * 17).toISOString().split("T")[0],
             nights: 3,
             totalAmount: 1800,
             status: OrderStatus.CONFIRMED,
@@ -103,9 +91,7 @@ export function getUserOrders(params?: {
         // 根据传入的状态参数过滤订单
         let filteredOrders = mockOrders;
         if (params && params.status && params.status !== "all") {
-          filteredOrders = mockOrders.filter(
-            (order) => order.status === params.status
-          );
+          filteredOrders = mockOrders.filter((order) => order.status === params.status);
         }
 
         return {
@@ -401,10 +387,7 @@ export function getOrderDetail(id: number) {
 }
 
 // 生成支付二维码
-export function generatePaymentQRCode(data: {
-  orderId: number;
-  method: string;
-}) {
+export function generatePaymentQRCode(data: { orderId: number; method: string }) {
   return request({
     url: `/api/payment/${data.orderId}/create?method=${data.method}`,
     method: "post",
@@ -427,11 +410,7 @@ export function checkPayment(orderId: number) {
 }
 
 // 获取订单列表
-export function getOrderList(params?: {
-  status?: string;
-  page?: number;
-  size?: number;
-}) {
+export function getOrderList(params?: { status?: string; page?: number; size?: number }) {
   return request({
     url: "/api/orders",
     method: "get",
@@ -505,12 +484,8 @@ export function getMyOrders(params?: {
             imageUrl: "https://picsum.photos/400/300?random=1",
             location: "杭州西湖区",
             guestCount: 2,
-            checkInDate: new Date(Date.now() + 86400000 * 7)
-              .toISOString()
-              .split("T")[0],
-            checkOutDate: new Date(Date.now() + 86400000 * 10)
-              .toISOString()
-              .split("T")[0],
+            checkInDate: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0],
+            checkOutDate: new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0],
             nights: 3,
             totalAmount: 1200,
             price: 350,
@@ -527,12 +502,8 @@ export function getMyOrders(params?: {
             imageUrl: "https://picsum.photos/400/300?random=2",
             location: "莫干山度假区",
             guestCount: 4,
-            checkInDate: new Date(Date.now() + 86400000 * 14)
-              .toISOString()
-              .split("T")[0],
-            checkOutDate: new Date(Date.now() + 86400000 * 17)
-              .toISOString()
-              .split("T")[0],
+            checkInDate: new Date(Date.now() + 86400000 * 14).toISOString().split("T")[0],
+            checkOutDate: new Date(Date.now() + 86400000 * 17).toISOString().split("T")[0],
             nights: 3,
             totalAmount: 1800,
             price: 500,
@@ -549,12 +520,8 @@ export function getMyOrders(params?: {
             imageUrl: "https://picsum.photos/400/300?random=3",
             location: "三亚亚龙湾",
             guestCount: 6,
-            checkInDate: new Date(Date.now() - 86400000 * 10)
-              .toISOString()
-              .split("T")[0],
-            checkOutDate: new Date(Date.now() - 86400000 * 5)
-              .toISOString()
-              .split("T")[0],
+            checkInDate: new Date(Date.now() - 86400000 * 10).toISOString().split("T")[0],
+            checkOutDate: new Date(Date.now() - 86400000 * 5).toISOString().split("T")[0],
             nights: 5,
             totalAmount: 3500,
             price: 600,
@@ -568,9 +535,7 @@ export function getMyOrders(params?: {
         // 根据传入的状态参数过滤订单
         let filteredOrders = mockOrders;
         if (params && params.status && params.status !== "all") {
-          filteredOrders = mockOrders.filter(
-            (order) => order.status === params.status
-          );
+          filteredOrders = mockOrders.filter((order) => order.status === params.status);
         }
 
         return {

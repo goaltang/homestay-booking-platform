@@ -35,18 +35,14 @@ export function uploadSingleFile(file: File, type: string = "common") {
     },
   }).then((response) => {
     // Adapt to the actual backend response structure
-    const isSuccess =
-      response && (response.success || response.status === "success");
+    const isSuccess = response && (response.success || response.status === "success");
     const fileUrl = response?.data?.url || response?.downloadUrl; // Check both possible locations
 
     if (isSuccess && fileUrl) {
       console.log("File uploaded successfully:", fileUrl);
       return fileUrl; // Return the URL
     } else {
-      console.error(
-        "File upload failed or URL not found in response:",
-        response
-      );
+      console.error("File upload failed or URL not found in response:", response);
       const errorMsg = response?.message || "文件上传失败";
       // Attempt to extract more specific error from nested data if available
       // const nestedMessage = (response?.data as any)?.message;

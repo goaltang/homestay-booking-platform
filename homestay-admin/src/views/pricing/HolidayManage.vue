@@ -4,7 +4,9 @@
     <el-row :gutter="16" class="stat-row">
       <el-col :xs="12" :sm="6">
         <div class="stat-card stat-primary">
-          <div class="stat-icon"><el-icon><Calendar /></el-icon></div>
+          <div class="stat-icon">
+            <el-icon><Calendar /></el-icon>
+          </div>
           <div class="stat-body">
             <div class="stat-value">{{ statTotal }}</div>
             <div class="stat-label">节假日总数</div>
@@ -13,7 +15,9 @@
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card stat-danger">
-          <div class="stat-icon"><el-icon><Clock /></el-icon></div>
+          <div class="stat-icon">
+            <el-icon><Clock /></el-icon>
+          </div>
           <div class="stat-body">
             <div class="stat-value">{{ statHolidays }}</div>
             <div class="stat-label">法定假日</div>
@@ -22,7 +26,9 @@
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card stat-warning">
-          <div class="stat-icon"><el-icon><WarnTriangleFilled /></el-icon></div>
+          <div class="stat-icon">
+            <el-icon><WarnTriangleFilled /></el-icon>
+          </div>
           <div class="stat-body">
             <div class="stat-value">{{ statMakeup }}</div>
             <div class="stat-label">调休补班</div>
@@ -31,7 +37,9 @@
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card stat-success">
-          <div class="stat-icon"><el-icon><Sunny /></el-icon></div>
+          <div class="stat-icon">
+            <el-icon><Sunny /></el-icon>
+          </div>
           <div class="stat-body">
             <div class="stat-value">{{ statUpcoming }}</div>
             <div class="stat-label">即将到来</div>
@@ -44,9 +52,7 @@
     <el-card shadow="never" class="toolbar-card">
       <div class="toolbar">
         <div class="toolbar-left">
-          <el-button type="primary" :icon="Plus" @click="handleAdd">
-            新增节假日
-          </el-button>
+          <el-button type="primary" :icon="Plus" @click="handleAdd"> 新增节假日 </el-button>
           <el-button type="success" plain :icon="MagicStick" @click="showGenerateDialog">
             一键生成
           </el-button>
@@ -110,7 +116,9 @@
         <el-table-column label="类型" width="120" align="center">
           <template #default="scope">
             <div class="type-badge" :class="getTypeClass(scope.row)">
-              <el-icon v-if="scope.row.isMakeupWorkday" class="type-icon"><OfficeBuilding /></el-icon>
+              <el-icon v-if="scope.row.isMakeupWorkday" class="type-icon"
+                ><OfficeBuilding
+              /></el-icon>
               <el-icon v-else-if="scope.row.isHoliday" class="type-icon"><StarFilled /></el-icon>
               <el-icon v-else class="type-icon"><Document /></el-icon>
               <span>{{ getTypeText(scope.row) }}</span>
@@ -220,16 +228,10 @@
       <div class="generate-body">
         <el-icon class="generate-icon" :size="48" color="#67c23a"><Calendar /></el-icon>
         <h3 class="generate-title">中国法定节假日模板</h3>
-        <p class="generate-desc">
-          内置 2024-2027 年法定假日数据（含调休补班），一键导入当前年份。
-        </p>
+        <p class="generate-desc">内置 2024-2027 年法定假日数据（含调休补班），一键导入当前年份。</p>
         <el-form label-width="80px">
           <el-form-item label="选择年份">
-            <el-select
-              v-model="generateYear"
-              placeholder="选择年份"
-              style="width: 200px"
-            >
+            <el-select v-model="generateYear" placeholder="选择年份" style="width: 200px">
               <el-option
                 v-for="opt in yearOptions"
                 :key="opt.value"
@@ -239,12 +241,7 @@
             </el-select>
           </el-form-item>
         </el-form>
-        <el-alert
-          type="info"
-          :closable="false"
-          show-icon
-          style="margin-top: 16px"
-        >
+        <el-alert type="info" :closable="false" show-icon style="margin-top: 16px">
           已存在的日期会自动跳过，不会重复添加
         </el-alert>
       </div>
@@ -277,7 +274,8 @@
           />
           <div class="batch-example">
             <el-divider>示例数据</el-divider>
-            <pre>2025-01-01,元旦,PUBLIC_HOLIDAY,true,false
+            <pre>
+2025-01-01,元旦,PUBLIC_HOLIDAY,true,false
 2025-01-26,春节调休补班,MAKEUP_WORKDAY,false,true
 2025-05-01,劳动节,PUBLIC_HOLIDAY,true,false</pre>
           </div>
@@ -294,264 +292,288 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, onMounted, computed } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
-  Plus, Edit, Delete, Calendar, Upload, MagicStick,
-  Clock, WarnTriangleFilled, Sunny, StarFilled,
-  OfficeBuilding, Document, Flag, Location,
-} from '@element-plus/icons-vue'
+  Plus,
+  Edit,
+  Delete,
+  Calendar,
+  Upload,
+  MagicStick,
+  Clock,
+  WarnTriangleFilled,
+  Sunny,
+  StarFilled,
+  OfficeBuilding,
+  Document,
+  Flag,
+  Location,
+} from "@element-plus/icons-vue";
 import {
-  getHolidays, createHoliday, updateHoliday, deleteHoliday,
-  generateHolidays, batchCreateHolidays,
-} from '@/api/pricing'
+  getHolidays,
+  createHoliday,
+  updateHoliday,
+  deleteHoliday,
+  generateHolidays,
+  batchCreateHolidays,
+} from "@/api/pricing";
 
 interface HolidayItem {
-  id?: number
-  date: string
-  name: string
-  type: string
-  regionCode: string
-  isHoliday: boolean
-  isMakeupWorkday: boolean
+  id?: number;
+  date: string;
+  name: string;
+  type: string;
+  regionCode: string;
+  isHoliday: boolean;
+  isMakeupWorkday: boolean;
 }
 
 interface HolidayImportResult {
-  year?: number
-  total?: number
-  imported?: number
-  skipped?: number
-  message?: string
+  year?: number;
+  total?: number;
+  imported?: number;
+  skipped?: number;
+  message?: string;
 }
 
-const loading = ref(false)
-const tableData = ref<HolidayItem[]>([])
-const query = reactive({ year: new Date().getFullYear() })
-const filterType = ref('ALL')
+const loading = ref(false);
+const tableData = ref<HolidayItem[]>([]);
+const query = reactive({ year: new Date().getFullYear() });
+const filterType = ref("ALL");
 
 // 筛选后的数据
 const filteredData = computed(() => {
-  if (filterType.value === 'ALL') return tableData.value
-  if (filterType.value === 'HOLIDAY') return tableData.value.filter(r => r.isHoliday && !r.isMakeupWorkday)
-  if (filterType.value === 'MAKEUP') return tableData.value.filter(r => r.isMakeupWorkday)
-  return tableData.value
-})
+  if (filterType.value === "ALL") return tableData.value;
+  if (filterType.value === "HOLIDAY")
+    return tableData.value.filter((r) => r.isHoliday && !r.isMakeupWorkday);
+  if (filterType.value === "MAKEUP") return tableData.value.filter((r) => r.isMakeupWorkday);
+  return tableData.value;
+});
 
 // 统计
-const statTotal = computed(() => tableData.value.length)
-const statHolidays = computed(() => tableData.value.filter(r => r.isHoliday && !r.isMakeupWorkday).length)
-const statMakeup = computed(() => tableData.value.filter(r => r.isMakeupWorkday).length)
+const statTotal = computed(() => tableData.value.length);
+const statHolidays = computed(
+  () => tableData.value.filter((r) => r.isHoliday && !r.isMakeupWorkday).length
+);
+const statMakeup = computed(() => tableData.value.filter((r) => r.isMakeupWorkday).length);
 const statUpcoming = computed(() => {
-  const today = new Date().toISOString().slice(0, 10)
-  return tableData.value.filter(r => r.date >= today).length
-})
+  const today = new Date().toISOString().slice(0, 10);
+  return tableData.value.filter((r) => r.date >= today).length;
+});
 
 // 新增/编辑
-const dialogVisible = ref(false)
-const editMode = ref(false)
-const formRef = ref()
+const dialogVisible = ref(false);
+const editMode = ref(false);
+const formRef = ref();
 const form = reactive<any>({
-  date: '',
-  name: '',
-  type: 'PUBLIC_HOLIDAY',
-  regionCode: 'CN',
+  date: "",
+  name: "",
+  type: "PUBLIC_HOLIDAY",
+  regionCode: "CN",
   isHoliday: true,
   isMakeupWorkday: false,
-})
-const currentId = ref<number | null>(null)
+});
+const currentId = ref<number | null>(null);
 
 // 一键生成
-const generateDialogVisible = ref(false)
-const generateYear = ref(new Date().getFullYear())
-const generating = ref(false)
-const yearOptions = [2024, 2025, 2026, 2027].map(y => ({ value: y, label: `${y} 年` }))
+const generateDialogVisible = ref(false);
+const generateYear = ref(new Date().getFullYear());
+const generating = ref(false);
+const yearOptions = [2024, 2025, 2026, 2027].map((y) => ({ value: y, label: `${y} 年` }));
 
 // 批量导入
-const batchDialogVisible = ref(false)
-const batchActiveTab = ref('paste')
-const batchText = ref('')
-const batchLoading = ref(false)
+const batchDialogVisible = ref(false);
+const batchActiveTab = ref("paste");
+const batchText = ref("");
+const batchLoading = ref(false);
 const batchCount = computed(() => {
-  if (!batchText.value.trim()) return 0
-  return batchText.value.trim().split('\n').filter(l => l.trim() && !l.trim().startsWith('#')).length
-})
+  if (!batchText.value.trim()) return 0;
+  return batchText.value
+    .trim()
+    .split("\n")
+    .filter((l) => l.trim() && !l.trim().startsWith("#")).length;
+});
 
 const rules = {
-  date: [{ required: true, message: '请选择日期', trigger: 'change' }],
-  name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
-}
+  date: [{ required: true, message: "请选择日期", trigger: "change" }],
+  name: [{ required: true, message: "请输入名称", trigger: "blur" }],
+};
 
 const getList = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const holidays = await getHolidays({ year: Number(query.year) || undefined })
-    tableData.value = Array.isArray(holidays) ? holidays : []
+    const holidays = await getHolidays({ year: Number(query.year) || undefined });
+    tableData.value = Array.isArray(holidays) ? holidays : [];
   } catch (e) {
-    console.error(e)
+    console.error(e);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const applyFilter = () => {
   // 筛选仅在前端执行，无需重新请求
-}
+};
 
 const formatDay = (dateStr: string) => {
-  const d = new Date(dateStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
-}
+  const d = new Date(dateStr);
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+};
 
 const formatWeekday = (dateStr: string) => {
-  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  const d = new Date(dateStr)
-  return weekdays[d.getDay()]
-}
+  const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+  const d = new Date(dateStr);
+  return weekdays[d.getDay()];
+};
 
 const isUpcoming = (dateStr: string) => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const target = new Date(dateStr)
-  const diff = (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  return diff >= 0 && diff <= 30
-}
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  const diff = (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+  return diff >= 0 && diff <= 30;
+};
 
 const getTypeClass = (row: HolidayItem) => {
-  if (row.isMakeupWorkday) return 'type-makeup'
-  if (row.isHoliday) return 'type-holiday'
-  return 'type-normal'
-}
+  if (row.isMakeupWorkday) return "type-makeup";
+  if (row.isHoliday) return "type-holiday";
+  return "type-normal";
+};
 
 const getTypeText = (row: HolidayItem) => {
-  if (row.isMakeupWorkday) return '调休补班'
-  if (row.isHoliday) return '法定节假日'
-  return '普通'
-}
+  if (row.isMakeupWorkday) return "调休补班";
+  if (row.isHoliday) return "法定节假日";
+  return "普通";
+};
 
 const rowClassName = ({ row }: { row: HolidayItem }) => {
-  if (row.isMakeupWorkday) return 'row-makeup'
-  if (row.isHoliday) return 'row-holiday'
-  return ''
-}
+  if (row.isMakeupWorkday) return "row-makeup";
+  if (row.isHoliday) return "row-holiday";
+  return "";
+};
 
 const handleAdd = () => {
-  editMode.value = false
-  currentId.value = null
+  editMode.value = false;
+  currentId.value = null;
   Object.assign(form, {
-    date: '',
-    name: '',
-    type: 'PUBLIC_HOLIDAY',
-    regionCode: 'CN',
+    date: "",
+    name: "",
+    type: "PUBLIC_HOLIDAY",
+    regionCode: "CN",
     isHoliday: true,
     isMakeupWorkday: false,
-  })
-  dialogVisible.value = true
-}
+  });
+  dialogVisible.value = true;
+};
 
 const handleEdit = (row: any) => {
-  editMode.value = true
-  currentId.value = row.id
-  Object.assign(form, row)
-  dialogVisible.value = true
-}
+  editMode.value = true;
+  currentId.value = row.id;
+  Object.assign(form, row);
+  dialogVisible.value = true;
+};
 
 const handleSubmit = async () => {
-  await formRef.value.validate()
+  await formRef.value.validate();
   try {
     if (editMode.value && currentId.value) {
-      await updateHoliday(currentId.value, form)
-      ElMessage.success('更新成功')
+      await updateHoliday(currentId.value, form);
+      ElMessage.success("更新成功");
     } else {
-      await createHoliday(form)
-      ElMessage.success('创建成功')
+      await createHoliday(form);
+      ElMessage.success("创建成功");
     }
-    dialogVisible.value = false
-    getList()
+    dialogVisible.value = false;
+    getList();
   } catch (e: any) {
-    ElMessage.error(e.response?.data || '操作失败')
+    ElMessage.error(e.response?.data || "操作失败");
   }
-}
+};
 
 const handleDelete = (row: any) => {
-  ElMessageBox.confirm(`确定删除 ${row.date}「${row.name}」吗？`, '提示', { type: 'warning' })
+  ElMessageBox.confirm(`确定删除 ${row.date}「${row.name}」吗？`, "提示", { type: "warning" })
     .then(async () => {
-      await deleteHoliday(row.id)
-      ElMessage.success('删除成功')
-      getList()
+      await deleteHoliday(row.id);
+      ElMessage.success("删除成功");
+      getList();
     })
-    .catch(() => {})
-}
+    .catch(() => {});
+};
 
 // 一键生成
 const showGenerateDialog = () => {
-  generateYear.value = Number(query.year) || new Date().getFullYear()
-  generateDialogVisible.value = true
-}
+  generateYear.value = Number(query.year) || new Date().getFullYear();
+  generateDialogVisible.value = true;
+};
 
 const handleGenerate = async () => {
-  generating.value = true
+  generating.value = true;
   try {
-    const result = await generateHolidays(generateYear.value) as HolidayImportResult
-    ElMessage.success(result.message || `成功导入 ${result.imported || 0} 条`)
-    generateDialogVisible.value = false
-    query.year = generateYear.value
-    getList()
+    const result = (await generateHolidays(generateYear.value)) as HolidayImportResult;
+    ElMessage.success(result.message || `成功导入 ${result.imported || 0} 条`);
+    generateDialogVisible.value = false;
+    query.year = generateYear.value;
+    getList();
   } catch (e: any) {
-    ElMessage.error(e.response?.data || '生成失败')
+    ElMessage.error(e.response?.data || "生成失败");
   } finally {
-    generating.value = false
+    generating.value = false;
   }
-}
+};
 
 // 批量导入
 const showBatchDialog = () => {
-  batchText.value = ''
-  batchDialogVisible.value = true
-}
+  batchText.value = "";
+  batchDialogVisible.value = true;
+};
 
 const handleBatchImport = async () => {
   if (!batchText.value.trim()) {
-    ElMessage.warning('请输入数据')
-    return
+    ElMessage.warning("请输入数据");
+    return;
   }
 
-  const lines = batchText.value.trim().split('\n').filter(l => l.trim() && !l.trim().startsWith('#'))
-  const holidays: any[] = []
+  const lines = batchText.value
+    .trim()
+    .split("\n")
+    .filter((l) => l.trim() && !l.trim().startsWith("#"));
+  const holidays: any[] = [];
 
   for (const line of lines) {
-    const parts = line.split(',').map(s => s.trim())
-    if (parts.length < 2) continue
+    const parts = line.split(",").map((s) => s.trim());
+    if (parts.length < 2) continue;
 
-    const [date, name, type = 'PUBLIC_HOLIDAY', isHoliday = 'true', isMakeup = 'false'] = parts
+    const [date, name, type = "PUBLIC_HOLIDAY", isHoliday = "true", isMakeup = "false"] = parts;
     holidays.push({
       date,
       name,
       type,
-      regionCode: 'CN',
-      isHoliday: isHoliday.toLowerCase() === 'true',
-      isMakeupWorkday: isMakeup.toLowerCase() === 'true',
-    })
+      regionCode: "CN",
+      isHoliday: isHoliday.toLowerCase() === "true",
+      isMakeupWorkday: isMakeup.toLowerCase() === "true",
+    });
   }
 
   if (holidays.length === 0) {
-    ElMessage.warning('未解析到有效数据')
-    return
+    ElMessage.warning("未解析到有效数据");
+    return;
   }
 
-  batchLoading.value = true
+  batchLoading.value = true;
   try {
-    const result = await batchCreateHolidays(holidays) as HolidayImportResult
-    ElMessage.success(result.message || `成功导入 ${result.imported || 0} 条`)
-    batchDialogVisible.value = false
-    getList()
+    const result = (await batchCreateHolidays(holidays)) as HolidayImportResult;
+    ElMessage.success(result.message || `成功导入 ${result.imported || 0} 条`);
+    batchDialogVisible.value = false;
+    getList();
   } catch (e: any) {
-    ElMessage.error(e.response?.data || '导入失败')
+    ElMessage.error(e.response?.data || "导入失败");
   } finally {
-    batchLoading.value = false
+    batchLoading.value = false;
   }
-}
+};
 
-onMounted(getList)
+onMounted(getList);
 </script>
 
 <style scoped>
@@ -572,22 +594,32 @@ onMounted(getList)
   padding: 16px 20px;
   border-radius: 12px;
   color: #fff;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
-.stat-primary { background: linear-gradient(135deg, var(--el-color-primary), #66b1ff); }
-.stat-danger  { background: linear-gradient(135deg, #f56c6c, #f89898); }
-.stat-warning { background: linear-gradient(135deg, #e6a23c, #eebe77); }
-.stat-success { background: linear-gradient(135deg, #67c23a, #95d475); }
+.stat-primary {
+  background: linear-gradient(135deg, var(--el-color-primary), #66b1ff);
+}
+.stat-danger {
+  background: linear-gradient(135deg, #f56c6c, #f89898);
+}
+.stat-warning {
+  background: linear-gradient(135deg, #e6a23c, #eebe77);
+}
+.stat-success {
+  background: linear-gradient(135deg, #67c23a, #95d475);
+}
 
 .stat-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -735,7 +767,7 @@ onMounted(getList)
 }
 
 .batch-textarea :deep(.el-textarea__inner) {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 13px;
 }
 .batch-example pre {

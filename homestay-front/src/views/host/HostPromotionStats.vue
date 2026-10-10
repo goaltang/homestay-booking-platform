@@ -17,7 +17,9 @@
       </el-col>
       <el-col :span="6">
         <el-card>
-          <div class="stat-value" style="color: #f56c6c">¥{{ formatAmount(stats.totalDiscount) }}</div>
+          <div class="stat-value" style="color: #f56c6c">
+            ¥{{ formatAmount(stats.totalDiscount) }}
+          </div>
           <div class="stat-label">累计优惠金额</div>
         </el-card>
       </el-col>
@@ -39,7 +41,9 @@
       </el-col>
       <el-col :span="6">
         <el-card>
-          <div class="stat-value" style="color: #f56c6c">¥{{ formatAmount(roi.totalDiscountCost) }}</div>
+          <div class="stat-value" style="color: #f56c6c">
+            ¥{{ formatAmount(roi.totalDiscountCost) }}
+          </div>
           <div class="stat-label">优惠成本</div>
         </el-card>
       </el-col>
@@ -71,14 +75,10 @@
           </template>
         </el-table-column>
         <el-table-column label="GMV" width="120">
-          <template #default="{ row }">
-            ¥{{ formatAmount(row.gmv) }}
-          </template>
+          <template #default="{ row }"> ¥{{ formatAmount(row.gmv) }} </template>
         </el-table-column>
         <el-table-column label="优惠成本" width="120">
-          <template #default="{ row }">
-            ¥{{ formatAmount(row.discountCost) }}
-          </template>
+          <template #default="{ row }"> ¥{{ formatAmount(row.discountCost) }} </template>
         </el-table-column>
         <el-table-column label="订单数" width="90">
           <template #default="{ row }">
@@ -93,13 +93,14 @@
           </template>
         </el-table-column>
         <el-table-column label="核销率" width="90">
-          <template #default="{ row }">
-            {{ row.usageRate }}%
-          </template>
+          <template #default="{ row }"> {{ row.usageRate }}% </template>
         </el-table-column>
         <el-table-column label="预算使用" width="120">
           <template #default="{ row }">
-            <el-progress :percentage="Math.min(row.budgetUsageRate || 0, 100)" :status="row.budgetUsageRate >= 80 ? 'exception' : ''" />
+            <el-progress
+              :percentage="Math.min(row.budgetUsageRate || 0, 100)"
+              :status="row.budgetUsageRate >= 80 ? 'exception' : ''"
+            />
           </template>
         </el-table-column>
       </el-table>
@@ -109,8 +110,18 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
-import { getHostCampaigns, getHostPromotionStats, getHostRoiOverview, getHostRoiCampaigns } from "@/api/hostPromotion";
-import type { HostCampaign, HostPromotionStats, HostRoiOverview, HostRoiCampaign } from "@/api/hostPromotion";
+import {
+  getHostCampaigns,
+  getHostPromotionStats,
+  getHostRoiOverview,
+  getHostRoiCampaigns,
+} from "@/api/hostPromotion";
+import type {
+  HostCampaign,
+  HostPromotionStats,
+  HostRoiOverview,
+  HostRoiCampaign,
+} from "@/api/hostPromotion";
 
 const loading = ref(false);
 const campaignList = ref<HostCampaign[]>([]);

@@ -67,11 +67,11 @@
 </template>
 
 <script setup lang="ts">
-import { UserFilled, Lock, ChatDotRound, RefreshLeft } from '@element-plus/icons-vue'
-import type { HomeStats } from '@/api/home'
+import { UserFilled, Lock, ChatDotRound, RefreshLeft } from "@element-plus/icons-vue";
+import type { HomeStats } from "@/api/home";
 
 interface Props {
-  stats?: HomeStats
+  stats?: HomeStats;
 }
 
 withDefaults(defineProps<Props>(), {
@@ -80,15 +80,15 @@ withDefaults(defineProps<Props>(), {
     cityCount: 50,
     positiveRate: 98,
     recentOrders: 0,
-    availableToday: 0
-  })
-})
+    availableToday: 0,
+  }),
+});
 
 const formatCount = (num: number) => {
-  if (!num && num !== 0) return '0'
-  if (num >= 10000) return (num / 10000).toFixed(1) + '万+'
-  return num.toLocaleString()
-}
+  if (!num && num !== 0) return "0";
+  if (num >= 10000) return (num / 10000).toFixed(1) + "万+";
+  return num.toLocaleString();
+};
 </script>
 
 <style scoped>

@@ -21,13 +21,7 @@
             <div class="hero-content">
               <h1 class="hero-title">{{ banner.title }}</h1>
               <p v-if="banner.subtitle" class="hero-desc">{{ banner.subtitle }}</p>
-              <el-button
-                v-if="banner.linkUrl"
-                type="primary"
-                class="hero-btn"
-                round
-                size="large"
-              >
+              <el-button v-if="banner.linkUrl" type="primary" class="hero-btn" round size="large">
                 立即探索
                 <el-icon class="btn-icon"><ArrowRight /></el-icon>
               </el-button>
@@ -66,12 +60,12 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight } from '@element-plus/icons-vue'
-import type { Banner, HomeStats } from '@/api/home'
+import { ArrowRight } from "@element-plus/icons-vue";
+import type { Banner, HomeStats } from "@/api/home";
 
 interface Props {
-  banners?: Banner[]
-  stats?: HomeStats
+  banners?: Banner[];
+  stats?: HomeStats;
 }
 
 withDefaults(defineProps<Props>(), {
@@ -81,36 +75,36 @@ withDefaults(defineProps<Props>(), {
     cityCount: 50,
     positiveRate: 98,
     recentOrders: 0,
-    availableToday: 0
-  })
-})
+    availableToday: 0,
+  }),
+});
 
 const emit = defineEmits<{
-  bannerClick: [banner: Banner]
-  explore: []
-}>()
+  bannerClick: [banner: Banner];
+  explore: [];
+}>();
 
 const getBannerStyle = (banner: Banner) => {
-  const style: Record<string, string> = {}
+  const style: Record<string, string> = {};
   if (banner.imageUrl) {
-    style.backgroundImage = `url(${banner.imageUrl})`
-    style.backgroundSize = 'cover'
-    style.backgroundPosition = 'center'
+    style.backgroundImage = `url(${banner.imageUrl})`;
+    style.backgroundSize = "cover";
+    style.backgroundPosition = "center";
   } else if (banner.bgGradient) {
-    style.background = banner.bgGradient
+    style.background = banner.bgGradient;
   } else {
-    style.background = 'linear-gradient(135deg, #6a2d1e 0%, #a33d22 48%, #d45f2e 100%)'
+    style.background = "linear-gradient(135deg, #6a2d1e 0%, #a33d22 48%, #d45f2e 100%)";
   }
-  return style
-}
+  return style;
+};
 
 const handleBannerClick = (banner: Banner) => {
-  emit('bannerClick', banner)
-}
+  emit("bannerClick", banner);
+};
 
 const handleBannerChange = (_index: number) => {
   // 可扩展：埋点统计 Banner 曝光
-}
+};
 </script>
 
 <style scoped>
@@ -143,7 +137,12 @@ const handleBannerChange = (_index: number) => {
 .default-slide {
   background:
     radial-gradient(circle at 18% 20%, rgba(249, 224, 210, 0.22), transparent 28%),
-    linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-primary-700) 48%, var(--color-primary-500) 100%);
+    linear-gradient(
+      135deg,
+      var(--color-primary-900) 0%,
+      var(--color-primary-700) 48%,
+      var(--color-primary-500) 100%
+    );
 }
 
 .hero-overlay {

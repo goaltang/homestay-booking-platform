@@ -68,6 +68,9 @@ jobs:
       - name: Full lint
         run: npm run lint:check
 
+      - name: Full format check
+        run: npm run format:check
+
       - name: Check changed-file quality
         env:
           PR_BASE: ${{ github.event.pull_request.base.sha }}

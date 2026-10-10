@@ -3,7 +3,13 @@
     <div class="handle-box">
       <el-row :gutter="20">
         <el-col :span="24">
-          <el-select v-model="query.status" placeholder="公告状态" clearable class="handle-select mr10" @change="handleSearch">
+          <el-select
+            v-model="query.status"
+            placeholder="公告状态"
+            clearable
+            class="handle-select mr10"
+            @change="handleSearch"
+          >
             <el-option label="全部状态" value=""></el-option>
             <el-option label="草稿" value="DRAFT"></el-option>
             <el-option label="已发布" value="PUBLISHED"></el-option>
@@ -20,17 +26,34 @@
       <template #header>
         <div class="card-header">
           <span>公告管理</span>
-          <span class="log-count" v-if="pagination.total > 0">共 {{ pagination.total }} 条记录</span>
+          <span class="log-count" v-if="pagination.total > 0"
+            >共 {{ pagination.total }} 条记录</span
+          >
         </div>
       </template>
 
-      <el-table v-loading="loading" :data="tableData" border stripe highlight-current-row class="table">
+      <el-table
+        v-loading="loading"
+        :data="tableData"
+        border
+        stripe
+        highlight-current-row
+        class="table"
+      >
         <el-table-column prop="id" label="ID" width="80"></el-table-column>
-        <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip></el-table-column>
+        <el-table-column
+          prop="title"
+          label="标题"
+          min-width="200"
+          show-overflow-tooltip
+        ></el-table-column>
         <el-table-column prop="category" label="分类" width="150">
           <template #default="scope">
-            <el-tag size="small" :type="scope.row.category === 'SYSTEM_NOTIFICATION' ? 'primary' : 'success'">
-              {{ scope.row.category === 'SYSTEM_NOTIFICATION' ? '系统通知' : '活动公告' }}
+            <el-tag
+              size="small"
+              :type="scope.row.category === 'SYSTEM_NOTIFICATION' ? 'primary' : 'success'"
+            >
+              {{ scope.row.category === "SYSTEM_NOTIFICATION" ? "系统通知" : "活动公告" }}
             </el-tag>
           </template>
         </el-table-column>
@@ -49,7 +72,7 @@
         <el-table-column prop="publisherName" label="发布人" width="120"></el-table-column>
         <el-table-column prop="publishedAt" label="发布时间" width="180">
           <template #default="scope">
-            {{ scope.row.publishedAt ? formatDate(scope.row.publishedAt) : '-' }}
+            {{ scope.row.publishedAt ? formatDate(scope.row.publishedAt) : "-" }}
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180">
@@ -59,22 +82,28 @@
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right" align="center">
           <template #default="scope">
-            <el-button type="primary" link size="small" @click="handleEditWithDetail(scope.row)">编辑</el-button>
+            <el-button type="primary" link size="small" @click="handleEditWithDetail(scope.row)"
+              >编辑</el-button
+            >
             <el-button
               v-if="scope.row.status === 'DRAFT'"
               type="success"
               link
               size="small"
               @click="handlePublish(scope.row)"
-            >发布</el-button>
+              >发布</el-button
+            >
             <el-button
               v-if="scope.row.status === 'PUBLISHED'"
               type="warning"
               link
               size="small"
               @click="handleOffline(scope.row)"
-            >下线</el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(scope.row)">删除</el-button>
+              >下线</el-button
+            >
+            <el-button type="danger" link size="small" @click="handleDelete(scope.row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
 
@@ -106,7 +135,12 @@
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="公告标题" prop="title">
-          <el-input v-model="form.title" placeholder="请输入公告标题" maxlength="200" show-word-limit></el-input>
+          <el-input
+            v-model="form.title"
+            placeholder="请输入公告标题"
+            maxlength="200"
+            show-word-limit
+          ></el-input>
         </el-form-item>
         <el-form-item label="公告分类" prop="category">
           <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
@@ -115,7 +149,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="优先级" prop="priority">
-          <el-input-number v-model="form.priority" :min="0" :max="999" placeholder="数值越大越靠前"></el-input-number>
+          <el-input-number
+            v-model="form.priority"
+            :min="0"
+            :max="999"
+            placeholder="数值越大越靠前"
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="展示时间">
           <el-date-picker
@@ -148,10 +187,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus } from '@element-plus/icons-vue'
-import { useCrud } from '@/composables/useCrud'
+import { ref } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { Search, Refresh, Plus } from "@element-plus/icons-vue";
+import { useCrud } from "@/composables/useCrud";
 import {
   getAdminAnnouncementsApi,
   getAdminAnnouncementByIdApi,
@@ -161,14 +200,18 @@ import {
   publishAnnouncementApi,
   offlineAnnouncementApi,
   type Announcement,
-} from '@/api/announcement'
+} from "@/api/announcement";
 
-const currentUsername = ref(localStorage.getItem('homestay_admin_username') || localStorage.getItem('username') || 'admin')
-const currentUserId = ref(Number(localStorage.getItem('homestay_admin_userId') || localStorage.getItem('userId')) || 1)
+const currentUsername = ref(
+  localStorage.getItem("homestay_admin_username") || localStorage.getItem("username") || "admin"
+);
+const currentUserId = ref(
+  Number(localStorage.getItem("homestay_admin_userId") || localStorage.getItem("userId")) || 1
+);
 
 // 日期范围辅助字段
-const dateRange = ref<string[]>([])
-const submitLoading = ref(false)
+const dateRange = ref<string[]>([]);
+const submitLoading = ref(false);
 
 // 包装 API 适配 useCrud（后端 page 从 0 开始，前端从 1 开始）
 const wrappedListApi = async (params: any) => {
@@ -176,29 +219,29 @@ const wrappedListApi = async (params: any) => {
     page: params.page,
     size: params.size,
     status: params.status || undefined,
-  })
-  if (!res.success) throw new Error(res.message || '获取公告失败')
+  });
+  if (!res.success) throw new Error(res.message || "获取公告失败");
   // 返回标准分页格式，让 useCrud 统一处理
   return {
     content: res.data || [],
     totalElements: res.total || 0,
-  }
-}
+  };
+};
 
 const wrappedCreateApi = async (data: any) => {
   const payload: Announcement = {
     title: data.title,
     content: data.content,
     category: data.category,
-    status: 'DRAFT',
+    status: "DRAFT",
     priority: data.priority,
     startTime: dateRange.value?.[0],
     endTime: dateRange.value?.[1],
-  }
-  const res = await createAnnouncementApi(payload, currentUserId.value, currentUsername.value)
-  if (!res.success) throw new Error(res.message || '创建失败')
-  return res
-}
+  };
+  const res = await createAnnouncementApi(payload, currentUserId.value, currentUsername.value);
+  if (!res.success) throw new Error(res.message || "创建失败");
+  return res;
+};
 
 const wrappedUpdateApi = async (id: number | string, data: any) => {
   const payload: Announcement = {
@@ -209,78 +252,90 @@ const wrappedUpdateApi = async (id: number | string, data: any) => {
     priority: data.priority,
     startTime: dateRange.value?.[0],
     endTime: dateRange.value?.[1],
-  }
-  const res = await updateAnnouncementApi(Number(id), payload, currentUsername.value)
-  if (!res.success) throw new Error(res.message || '更新失败')
-  return res
-}
+  };
+  const res = await updateAnnouncementApi(Number(id), payload, currentUsername.value);
+  if (!res.success) throw new Error(res.message || "更新失败");
+  return res;
+};
 
 const wrappedDeleteApi = async (id: number | string) => {
-  const res = await deleteAnnouncementApi(Number(id), currentUsername.value)
-  if (!res.success) throw new Error(res.message || '删除失败')
-  return res
-}
+  const res = await deleteAnnouncementApi(Number(id), currentUsername.value);
+  if (!res.success) throw new Error(res.message || "删除失败");
+  return res;
+};
 
 // 使用 useCrud
 const {
-  loading, tableData, query, pagination,
-  dialogVisible, editMode, formRef, form, rules,
-  getList, handleAdd, handleDelete, handlePageChange, handleSizeChange, resetForm,
+  loading,
+  tableData,
+  query,
+  pagination,
+  dialogVisible,
+  editMode,
+  formRef,
+  form,
+  rules,
+  getList,
+  handleAdd,
+  handleDelete,
+  handlePageChange,
+  handleSizeChange,
+  resetForm,
 } = useCrud<Announcement>({
   listApi: wrappedListApi,
   createApi: wrappedCreateApi,
   updateApi: wrappedUpdateApi,
   deleteApi: wrappedDeleteApi,
-  defaultQuery: { status: '', page: 0, size: 20 } as any,
+  defaultQuery: { status: "", page: 0, size: 20 } as any,
   defaultForm: {
-    title: '',
-    content: '',
-    category: 'SYSTEM_NOTIFICATION',
-    status: 'DRAFT',
+    title: "",
+    content: "",
+    category: "SYSTEM_NOTIFICATION",
+    status: "DRAFT",
     priority: 0,
   } as any,
   rules: {
-    title: [{ required: true, message: '请输入公告标题', trigger: 'blur' }],
-    category: [{ required: true, message: '请选择分类', trigger: 'change' }],
-    content: [{ required: true, message: '请输入公告内容', trigger: 'blur' }],
+    title: [{ required: true, message: "请输入公告标题", trigger: "blur" }],
+    category: [{ required: true, message: "请选择分类", trigger: "change" }],
+    content: [{ required: true, message: "请输入公告内容", trigger: "blur" }],
   },
-})
+});
 
 // 覆盖 handleSubmit，增加 submitLoading 和日期范围处理
 const handleSubmit = async () => {
-  if (!formRef.value) return
+  if (!formRef.value) return;
   await formRef.value.validate(async (valid: boolean) => {
-    if (!valid) return
-    submitLoading.value = true
+    if (!valid) return;
+    submitLoading.value = true;
     try {
       if (editMode.value && form.id) {
-        await wrappedUpdateApi(form.id, form)
-        ElMessage.success('更新成功')
+        await wrappedUpdateApi(form.id, form);
+        ElMessage.success("更新成功");
       } else {
-        await wrappedCreateApi(form)
-        ElMessage.success('创建成功')
+        await wrappedCreateApi(form);
+        ElMessage.success("创建成功");
       }
-      dialogVisible.value = false
-      dateRange.value = []
-      await getList()
+      dialogVisible.value = false;
+      dateRange.value = [];
+      await getList();
     } catch (e: any) {
-      ElMessage.error(e.message || '操作失败')
+      ElMessage.error(e.message || "操作失败");
     } finally {
-      submitLoading.value = false
+      submitLoading.value = false;
     }
-  })
-}
+  });
+};
 
 // 覆盖 handleEdit，先获取详情再打开对话框
 const handleEditWithDetail = async (row: Announcement) => {
-  const res = await getAdminAnnouncementByIdApi(row.id!)
+  const res = await getAdminAnnouncementByIdApi(row.id!);
   if (!res.success || !res.data) {
-    ElMessage.error(res.message || '获取公告详情失败')
-    return
+    ElMessage.error(res.message || "获取公告详情失败");
+    return;
   }
-  const data = res.data
-  editMode.value = true
-  resetForm()
+  const data = res.data;
+  editMode.value = true;
+  resetForm();
   Object.assign(form, {
     id: data.id,
     title: data.title,
@@ -288,90 +343,119 @@ const handleEditWithDetail = async (row: Announcement) => {
     category: data.category,
     status: data.status,
     priority: data.priority || 0,
-  })
-  dateRange.value = []
-  if (data.startTime) dateRange.value[0] = data.startTime
-  if (data.endTime) dateRange.value[1] = data.endTime
-  dialogVisible.value = true
-}
+  });
+  dateRange.value = [];
+  if (data.startTime) dateRange.value[0] = data.startTime;
+  if (data.endTime) dateRange.value[1] = data.endTime;
+  dialogVisible.value = true;
+};
 
 // 覆盖 handleAdd，清空日期范围
-const _rawAdd = handleAdd
+const _rawAdd = handleAdd;
 const handleAddClean = () => {
-  _rawAdd()
-  dateRange.value = []
-}
+  _rawAdd();
+  dateRange.value = [];
+};
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 0
-  getList()
-}
+  pagination.page = 0;
+  getList();
+};
 
 const clearSearch = () => {
-  query.status = ''
-  pagination.page = 0
-  getList()
-}
+  query.status = "";
+  pagination.page = 0;
+  getList();
+};
 
 // 特殊操作：发布/下线
 const handlePublish = (row: Announcement) => {
-  ElMessageBox.confirm('确定要发布此公告吗？', '发布确认', { type: 'warning' })
+  ElMessageBox.confirm("确定要发布此公告吗？", "发布确认", { type: "warning" })
     .then(async () => {
-      const res = await publishAnnouncementApi(row.id!, currentUserId.value, currentUsername.value)
+      const res = await publishAnnouncementApi(row.id!, currentUserId.value, currentUsername.value);
       if (res.success) {
-        ElMessage.success('发布成功')
-        getList()
+        ElMessage.success("发布成功");
+        getList();
       } else {
-        ElMessage.error(res.message || '发布失败')
+        ElMessage.error(res.message || "发布失败");
       }
     })
-    .catch(() => {})
-}
+    .catch(() => {});
+};
 
 const handleOffline = (row: Announcement) => {
-  ElMessageBox.confirm('确定要下线此公告吗？', '下线确认', { type: 'warning' })
+  ElMessageBox.confirm("确定要下线此公告吗？", "下线确认", { type: "warning" })
     .then(async () => {
-      const res = await offlineAnnouncementApi(row.id!, currentUsername.value)
+      const res = await offlineAnnouncementApi(row.id!, currentUsername.value);
       if (res.success) {
-        ElMessage.success('下线成功')
-        getList()
+        ElMessage.success("下线成功");
+        getList();
       } else {
-        ElMessage.error(res.message || '下线失败')
+        ElMessage.error(res.message || "下线失败");
       }
     })
-    .catch(() => {})
-}
+    .catch(() => {});
+};
 
 // 状态映射
 const getStatusTag = (status?: string) => {
-  const map: Record<string, string> = { DRAFT: 'info', PUBLISHED: 'success', OFFLINE: 'warning' }
-  return map[status || ''] || 'info'
-}
+  const map: Record<string, string> = { DRAFT: "info", PUBLISHED: "success", OFFLINE: "warning" };
+  return map[status || ""] || "info";
+};
 
 const getStatusText = (status?: string) => {
-  const map: Record<string, string> = { DRAFT: '草稿', PUBLISHED: '已发布', OFFLINE: '已下线' }
-  return map[status || ''] || status
-}
+  const map: Record<string, string> = { DRAFT: "草稿", PUBLISHED: "已发布", OFFLINE: "已下线" };
+  return map[status || ""] || status;
+};
 
 const formatDate = (dateStr?: string) => {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  })
-}
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  return date.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+};
 </script>
 
 <style scoped>
-.container { padding: 20px; }
-.handle-box { margin-bottom: 20px; }
-.handle-input { width: 150px; display: inline-block; }
-.handle-select { width: 130px; display: inline-block; }
-.mr10 { margin-right: 10px; }
-.table { width: 100%; font-size: 14px; }
-.pagination { margin: 20px 0; text-align: right; }
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.log-count { font-size: 12px; color: #909399; }
+.container {
+  padding: 20px;
+}
+.handle-box {
+  margin-bottom: 20px;
+}
+.handle-input {
+  width: 150px;
+  display: inline-block;
+}
+.handle-select {
+  width: 130px;
+  display: inline-block;
+}
+.mr10 {
+  margin-right: 10px;
+}
+.table {
+  width: 100%;
+  font-size: 14px;
+}
+.pagination {
+  margin: 20px 0;
+  text-align: right;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.log-count {
+  font-size: 12px;
+  color: #909399;
+}
 </style>

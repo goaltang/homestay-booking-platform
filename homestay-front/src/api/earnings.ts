@@ -65,9 +65,7 @@ export interface Withdrawal {
 }
 
 // 获取收益汇总数据
-export const getEarningsSummary = (
-  params: EarningsQueryParams
-): Promise<EarningsSummary> => {
+export const getEarningsSummary = (params: EarningsQueryParams): Promise<EarningsSummary> => {
   console.log("请求收益汇总数据，参数:", params);
   return request
     .get("/api/host/earnings/summary", { params })
@@ -99,9 +97,7 @@ export const getEarningsDetail = (
 };
 
 // 获取收益趋势数据
-export const getEarningsTrend = (
-  params: EarningsQueryParams
-): Promise<TrendData> => {
+export const getEarningsTrend = (params: EarningsQueryParams): Promise<TrendData> => {
   console.log("请求收益趋势数据，参数:", params);
   return request
     .get("/api/host/earnings/trend", { params })
@@ -163,10 +159,7 @@ export const addBankAccount = (
 };
 
 // 更新银行账户
-export const updateBankAccount = (
-  id: number,
-  data: Partial<BankAccount>
-): Promise<BankAccount> => {
+export const updateBankAccount = (id: number, data: Partial<BankAccount>): Promise<BankAccount> => {
   return request.put(`/api/host/earnings/accounts/${id}`, data);
 };
 
@@ -203,9 +196,7 @@ export const cancelWithdrawal = (id: number): Promise<void> => {
 };
 
 // 导出收益数据
-export const exportEarningsData = (
-  params: EarningsQueryParams
-): Promise<Blob> => {
+export const exportEarningsData = (params: EarningsQueryParams): Promise<Blob> => {
   return request
     .get("/api/host/earnings/export", {
       params,

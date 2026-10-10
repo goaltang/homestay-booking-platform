@@ -4,10 +4,10 @@
    在 main.ts 中 import './styles/design-system.css'
    ============================================ */
 
-@import './tokens/colors.css';
-@import './tokens/typography.css';
-@import './tokens/spacing.css';
-@import './tokens/motion.css';
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/motion.css";
 
 /* ============================================
    Element Plus Theme Mapping

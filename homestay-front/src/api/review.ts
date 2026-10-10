@@ -45,10 +45,7 @@ export function deleteReview(id: number) {
  * @param homestayId 房源ID
  * @param params 分页参数
  */
-export function getHomestayReviews(
-  homestayId: number,
-  params?: { page?: number; size?: number }
-) {
+export function getHomestayReviews(homestayId: number, params?: { page?: number; size?: number }) {
   console.log(`获取房源评价，ID: ${homestayId}，参数:`, params);
   return request({
     url: `/api/reviews/homestay/${homestayId}`,

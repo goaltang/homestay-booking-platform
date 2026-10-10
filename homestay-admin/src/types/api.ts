@@ -53,7 +53,6 @@ export interface UserBatchResetPasswordResponse {
   [id: string]: string;
 }
 
-
 // 房源相关API
 // 后端房源对象
 export interface HomestayDTO {
@@ -88,7 +87,6 @@ export interface HomestayBatchRequest {
 export interface HomestayBatchStatusRequest extends HomestayBatchRequest {
   status: "ACTIVE" | "INACTIVE";
 }
-
 
 // 订单相关API
 // 后端订单对象

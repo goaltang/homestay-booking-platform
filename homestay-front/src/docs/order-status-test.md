@@ -46,15 +46,10 @@ const getFilteredOrders = () => {
       case "PENDING":
         return status === "PENDING";
       case "NEED_PAYMENT":
-        return (
-          status === "CONFIRMED" &&
-          (paymentStatus === "UNPAID" || !paymentStatus)
-        );
+        return status === "CONFIRMED" && (paymentStatus === "UNPAID" || !paymentStatus);
       case "IN_PROGRESS":
         return (
-          paymentStatus === "PAID" ||
-          status === "CHECKED_IN" ||
-          status === "READY_FOR_CHECKIN"
+          paymentStatus === "PAID" || status === "CHECKED_IN" || status === "READY_FOR_CHECKIN"
         );
       case "COMPLETED":
         return status === "COMPLETED";

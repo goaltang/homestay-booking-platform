@@ -32,12 +32,7 @@ export class HostUtils {
   static getDisplayName(host: HostDTO | null): string {
     if (!host) return "房东";
 
-    return (
-      host.realName?.trim() ||
-      host.nickname?.trim() ||
-      host.username?.trim() ||
-      "房东"
-    );
+    return host.realName?.trim() || host.nickname?.trim() || host.username?.trim() || "房东";
   }
 
   /**
@@ -76,11 +71,7 @@ export class HostUtils {
   static isVerified(host: HostDTO | null): boolean {
     if (!host) return false;
 
-    return !!(
-      host.realName?.trim() ||
-      host.phone?.trim() ||
-      host.email?.trim()
-    );
+    return !!(host.realName?.trim() || host.phone?.trim() || host.email?.trim());
   }
 
   /**
@@ -129,11 +120,7 @@ export class HostUtils {
     }
 
     // 好评房东（评分>=4.0且评价数>=3）
-    if (
-      this.getDisplayRating(host) >= 4.0 &&
-      host.reviewCount &&
-      host.reviewCount >= 3
-    ) {
+    if (this.getDisplayRating(host) >= 4.0 && host.reviewCount && host.reviewCount >= 3) {
       badges.push("好评房东");
     }
 

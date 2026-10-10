@@ -9,7 +9,9 @@
     <div v-if="order" class="refund-dialog-content">
       <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 20px">
         <template #title>
-          <span>确认对订单 <strong>#{{ order.id }}</strong> 发起退款？退款将原路退回给客户。</span>
+          <span
+            >确认对订单 <strong>#{{ order.id }}</strong> 发起退款？退款将原路退回给客户。</span
+          >
         </template>
       </el-alert>
 
@@ -61,7 +63,9 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="emit('update:modelValue', false)">取消</el-button>
-        <el-button type="danger" :loading="submitting" @click="handleSubmit">确认发起退款</el-button>
+        <el-button type="danger" :loading="submitting" @click="handleSubmit"
+          >确认发起退款</el-button
+        >
       </span>
     </template>
   </el-dialog>

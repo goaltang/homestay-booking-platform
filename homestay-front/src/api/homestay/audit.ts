@@ -69,9 +69,7 @@ export function getHomestayAuditHistory(
   page: number = 0,
   size: number = 10
 ): Promise<{ data: AuditHistoryResponse }> {
-  console.log(
-    `获取房源审核历史，ID: ${homestayId}, 页码: ${page}, 大小: ${size}`
-  );
+  console.log(`获取房源审核历史，ID: ${homestayId}, 页码: ${page}, 大小: ${size}`);
   return request({
     url: `/api/homestays/${homestayId}/audit-logs`,
     method: "get",

@@ -75,8 +75,7 @@ export function getHomestayHostInfo(homestayId: number) {
           data: {
             id: 101,
             name: "张晓明",
-            avatar:
-              "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
+            avatar: "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
             rating: 4.92,
             accommodations: 156,
             years: 5,
@@ -85,13 +84,11 @@ export function getHomestayHostInfo(homestayId: number) {
             companions: [
               {
                 name: "李华",
-                avatar:
-                  "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
+                avatar: "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
               },
               {
                 name: "王芳",
-                avatar:
-                  "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
+                avatar: "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
               },
             ],
           },
@@ -224,9 +221,7 @@ export const uploadHostDocument = async (file: File, type: string) => {
  * 获取房东最近订单
  * @param limit 获取的订单数量，默认为 5
  */
-export function getHostRecentOrders(
-  limit: number = 5
-): Promise<HostOrderData[]> {
+export function getHostRecentOrders(limit: number = 5): Promise<HostOrderData[]> {
   return request({
     url: "/api/host/orders",
     method: "get",
@@ -262,10 +257,7 @@ export function getHostMonthlyEarnings(): Promise<number> {
   })
     .then((response) => {
       // 假设后端直接返回 BigDecimal 或 Number
-      if (
-        response &&
-        (typeof response.data === "number" || !isNaN(parseFloat(response.data)))
-      ) {
+      if (response && (typeof response.data === "number" || !isNaN(parseFloat(response.data)))) {
         return Number(response.data);
       } else {
         // 如果返回的是空或无效数据，则返回 0
@@ -284,9 +276,7 @@ export function getHostMonthlyEarnings(): Promise<number> {
 /**
  * 获取房东的房源选项列表 (用于下拉菜单)
  */
-export function getHostHomestayOptions(): Promise<
-  { id: number; title: string }[]
-> {
+export function getHostHomestayOptions(): Promise<{ id: number; title: string }[]> {
   return request({
     url: "/api/host/homestay-options",
     method: "get",

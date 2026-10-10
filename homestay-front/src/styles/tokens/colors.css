@@ -7,7 +7,7 @@
 
 :root {
   /* Primary — Terracotta */
-  --color-primary-50:  #fdf2ec;
+  --color-primary-50: #fdf2ec;
   --color-primary-100: #f9e0d2;
   --color-primary-200: #f3c1a5;
   --color-primary-300: #ea9a6e;
@@ -19,7 +19,7 @@
   --color-primary-900: #6a2d1e;
 
   /* Secondary — Sage */
-  --color-secondary-50:  #f4f7f4;
+  --color-secondary-50: #f4f7f4;
   --color-secondary-100: #e3ebe3;
   --color-secondary-200: #c7d8c7;
   --color-secondary-300: #9ebf9e;
@@ -31,8 +31,8 @@
   --color-secondary-900: #263826;
 
   /* Neutral — Warm Gray */
-  --color-neutral-0:   #ffffff;
-  --color-neutral-50:  #faf9f7;
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #faf9f7;
   --color-neutral-100: #f2f0ec;
   --color-neutral-200: #e6e2db;
   --color-neutral-300: #d1ccc2;
@@ -46,12 +46,12 @@
   /* Functional */
   --color-success: #2d7a46;
   --color-warning: #c9872c;
-  --color-error:   #b53a2a;
-  --color-info:    #3a6ea5;
+  --color-error: #b53a2a;
+  --color-info: #3a6ea5;
 
   /* Surfaces */
-  --color-surface:         var(--color-neutral-0);
+  --color-surface: var(--color-neutral-0);
   --color-surface-elevated: #ffffff;
-  --color-background:      var(--color-neutral-50);
+  --color-background: var(--color-neutral-50);
   --color-background-warm: #f7f4f0;
 }

@@ -12,8 +12,7 @@ type AnyRecord = Record<string, any>;
 const isRecord = (value: unknown): value is AnyRecord =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
-const hasOwn = (value: AnyRecord, key: string) =>
-  Object.prototype.hasOwnProperty.call(value, key);
+const hasOwn = (value: AnyRecord, key: string) => Object.prototype.hasOwnProperty.call(value, key);
 
 export function unwrapApiData<T>(response: unknown, fallback?: T): T {
   if (isRecord(response) && hasOwn(response, "data") && response.data !== undefined) {
@@ -59,11 +58,7 @@ export function normalizePageResponse<T>(
     list = payloadRecord.list as T[];
   } else if (Array.isArray(payloadRecord.data)) {
     list = payloadRecord.data as T[];
-  } else if (
-    options.singleObjectAsList &&
-    isRecord(payload) &&
-    Object.keys(payload).length > 0
-  ) {
+  } else if (options.singleObjectAsList && isRecord(payload) && Object.keys(payload).length > 0) {
     list = [payload as T];
   }
 
@@ -78,7 +73,8 @@ export function normalizePageResponse<T>(
     list,
     total: Number(total) || 0,
     totalPages: payloadRecord.totalPages ?? source.totalPages,
-    currentPage: payloadRecord.currentPage ?? payloadRecord.page ?? source.currentPage ?? source.page,
+    currentPage:
+      payloadRecord.currentPage ?? payloadRecord.page ?? source.currentPage ?? source.page,
     page: payloadRecord.page ?? source.page,
     size: payloadRecord.size ?? source.size,
   };
