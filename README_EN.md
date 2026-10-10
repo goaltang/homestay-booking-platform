@@ -12,7 +12,7 @@ A homestay booking system for guests, hosts, and administrators, covering listin
 
 This solo full-stack project serves as a learning and interview portfolio, with development starting in February 2025. AI coding tools assist implementation; the author owns architecture, product decisions, code review, critical modules, and quality control.
 
-[Installation guide](docs/INSTALL.md#english-version) · [Architecture gallery](docs/diagrams/README.md) · [Feature documentation](obsidian-vault/02-功能模块/) · [Engineering reports](obsidian-vault/05-工程实践/)
+[Installation guide](docs/INSTALL.md#english-version) · [Architecture gallery](docs/diagrams/README.md) · [Feature documentation](obsidian-vault/02-功能模块/) · [Documentation home](obsidian-vault/00-首页.md)
 
 ## Contents
 
@@ -178,10 +178,11 @@ The following design and engineering documents are in Chinese; the installation 
 |---|---|
 | Installation and configuration | [Installation guide, including agent instructions](docs/INSTALL.md#english-version) |
 | Architecture and workflows | [Full gallery and implementation boundaries](docs/diagrams/README.md) |
+| Documentation routes | [Documentation home](obsidian-vault/00-首页.md) · [Full catalog](<obsidian-vault/00-索引/Homestay 项目索引.md>) |
 | Modules and directories | [Project structure](docs/项目结构总览.md) · [Feature documentation](obsidian-vault/02-功能模块/) |
-| AI support design and validation | [Permission matrix](obsidian-vault/04-架构分析/方案-AI客服Agent-三方权限矩阵.md) · [Test report](obsidian-vault/04-架构分析/AI客服Agent-测试报告.md) |
-| Performance evidence | [Parallel home statistics](obsidian-vault/05-工程实践/性能压测报告-首页统计并行化对比.md) · [Admin build optimization](obsidian-vault/05-工程实践/前端性能优化-管理后台构建体积.md) |
-| CI implementation | [CI engineering report](obsidian-vault/05-工程实践/CI-CD攻坚-从零到全绿.md) |
+| AI support design and validation | [Permission matrix](obsidian-vault/03-技术设计/AI客服/AI客服Agent-权限与工具边界.md) · [Test report](obsidian-vault/04-验证与复盘/AI客服Agent-测试报告.md) |
+| Performance evidence | [Parallel home statistics](obsidian-vault/04-验证与复盘/性能压测报告-首页统计并行化对比.md) · [Admin build optimization](obsidian-vault/04-验证与复盘/前端性能优化-管理后台构建体积.md) |
+| CI implementation | [CI engineering report](obsidian-vault/04-验证与复盘/CI-CD攻坚-从零到全绿.md) |
 | Frontend documentation | [Customer app](homestay-front/README.md) · [Admin app](homestay-admin/README.md) |
 
 ## Security Notes
