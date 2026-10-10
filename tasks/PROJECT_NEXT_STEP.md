@@ -18,7 +18,7 @@
 | 维度 | 状态 | 证据 |
 |---|---|---|
 | 代码规模 | 后端 src 约 7.1 万行 Java（main+test）、用户端 173 文件约 6.2 万行、管理端 77 文件约 2.6 万行 | `find ... wc -l` |
-| 接口规模 | 58 个 Controller、400 个端点（GET 186/POST 130/PUT 43/DELETE 33/PATCH 8） | `obsidian-vault/03-后端/后端-Controller 接口清单.md` + controller 目录 |
+| 接口规模 | 58 个 Controller、400 个端点（GET 186/POST 130/PUT 43/DELETE 33/PATCH 8） | `obsidian-vault/03-技术设计/后端/后端-Controller 接口清单.md` + controller 目录 |
 | 数据模型 | 51 个 JPA 实体；Flyway V1~V49 共 41 个迁移脚本 | `entity/`、`db/migration/` |
 | 测试 | 62 个测试类、438 处 `@Test`（README 称 429）；9 个 `@SpringBootTest` 全部带 `@ActiveProfiles("test")`（红线守住了） | `src/test/` |
 | 前端测试 | 用户端仅 2 个 vitest spec，管理端 0 | `homestay-front/src/**/*.spec.ts` |

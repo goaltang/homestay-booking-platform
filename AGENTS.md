@@ -27,7 +27,7 @@
 - 端口：8080 常被本机 Dify 占用，后端固定 8081
 ## AI 客服 Agent 模块（三层架构）
 
-> 设计文档：`obsidian-vault/04-架构分析/方案-AI客服Agent-三方权限矩阵.md`（v1.0 含落地记录）；测试报告：`obsidian-vault/04-架构分析/AI客服Agent-测试报告.md`。改动前必读。
+> 设计文档：`obsidian-vault/03-技术设计/AI客服/AI客服Agent-权限与工具边界.md`（当前工具与权限边界）；测试报告：`obsidian-vault/04-验证与复盘/AI客服Agent-测试报告.md`。改动前必读。
 
 - **第一层 FAQ**：`service/agent/tools/` 7 个只读工具 + `AgentToolRegistry`（10 工具白名单硬编码）+ `SupportAgentServiceImpl` 两阶段 JSON 编排 + `LlmClient`（OpenAI 兼容）
 - **第二层 订单服务**：3 个申请型写工具（`request_user_refund`/`cancel_order_with_reason`/`raise_dispute_by_guest`）——**只起草不执行**，返回 `pendingAction`，用户确认后走 `POST /api/support/agent/confirm` 才真正执行；`OrderAccessGuard.requireGuestOrder` 强校验订单客人
@@ -61,8 +61,10 @@
 
 ## 文档规范
 
-vault 的 `功能模块-*.md` 有强制模板，完整规范见 `obsidian-vault/02-功能模块/_文档规范模板.md`。
+vault 的 `功能模块-*.md` 有强制模板，完整规范见 `obsidian-vault/98-文档规范/功能模块文档规范.md`。
 核心四条：只记已实现；按用户视角分类；多用表格；组件结构树形缩进。
+文档首页：`obsidian-vault/00-首页.md`；分类与维护规则：`obsidian-vault/98-文档规范/文档分类与维护规则.md`。
+当前说明、历史报告、待实施方案和求职素材分开维护；整理日期不能代替代码核对日期或测试日期。
 
 ## 工具特有文件
 

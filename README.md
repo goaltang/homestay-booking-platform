@@ -12,7 +12,7 @@
 
 这是一个用于学习与面试展示的单人全栈项目，自 2025 年 2 月开始迭代。开发中使用 AI 编码工具辅助实现，项目作者负责架构设计、需求决策、代码审查、关键模块攻关与质量把控。
 
-[安装教程](docs/INSTALL.md) · [完整架构图集](docs/diagrams/README.md) · [功能模块文档](obsidian-vault/02-功能模块/) · [工程实践记录](obsidian-vault/05-工程实践/)
+[安装教程](docs/INSTALL.md) · [完整架构图集](docs/diagrams/README.md) · [功能模块文档](obsidian-vault/02-功能模块/) · [文档首页](obsidian-vault/00-首页.md)
 
 ## 目录
 
@@ -176,10 +176,11 @@ CI 配置见 [ci.yml](.github/workflows/ci.yml)；测试与性能结果见下方
 |---|---|
 | 安装与配置 | [安装教程（含 AI Agent 指引）](docs/INSTALL.md) |
 | 架构与业务流程 | [完整架构图集及实现限制](docs/diagrams/README.md) |
+| 文档阅读入口 | [文档首页](obsidian-vault/00-首页.md) · [完整目录](<obsidian-vault/00-索引/Homestay 项目索引.md>) |
 | 模块职责与目录 | [项目结构总览](docs/项目结构总览.md) · [功能模块文档](obsidian-vault/02-功能模块/) |
-| AI 客服设计与验证 | [权限矩阵](obsidian-vault/04-架构分析/方案-AI客服Agent-三方权限矩阵.md) · [测试报告](obsidian-vault/04-架构分析/AI客服Agent-测试报告.md) |
-| 性能优化证据 | [首页统计并行化对比](obsidian-vault/05-工程实践/性能压测报告-首页统计并行化对比.md) · [管理后台构建优化](obsidian-vault/05-工程实践/前端性能优化-管理后台构建体积.md) |
-| CI 实践 | [CI 攻坚记录](obsidian-vault/05-工程实践/CI-CD攻坚-从零到全绿.md) |
+| AI 客服设计与验证 | [权限矩阵](obsidian-vault/03-技术设计/AI客服/AI客服Agent-权限与工具边界.md) · [测试报告](obsidian-vault/04-验证与复盘/AI客服Agent-测试报告.md) |
+| 性能优化证据 | [首页统计并行化对比](obsidian-vault/04-验证与复盘/性能压测报告-首页统计并行化对比.md) · [管理后台构建优化](obsidian-vault/04-验证与复盘/前端性能优化-管理后台构建体积.md) |
+| CI 实践 | [CI 攻坚记录](obsidian-vault/04-验证与复盘/CI-CD攻坚-从零到全绿.md) |
 | 前端说明 | [用户端](homestay-front/README.md) · [管理端](homestay-admin/README.md) |
 
 ## 安全说明
