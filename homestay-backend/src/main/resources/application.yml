@@ -1,0 +1,13 @@
+# 共享默认配置；本地 application.properties 可覆盖。
+# 一个开关同时控制搜索/索引服务和 Repository 初始化。
+elasticsearch:
+  enabled: ${ELASTICSEARCH_ENABLED:false}
+management:
+  health:
+    elasticsearch:
+      enabled: ${elasticsearch.enabled}
+spring:
+  data:
+    elasticsearch:
+      repositories:
+        enabled: ${elasticsearch.enabled}

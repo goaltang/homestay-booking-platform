@@ -96,7 +96,7 @@ See the [structure guide](docs/项目结构总览.md) for directory responsibili
 
 For local development, prepare Java 17, Maven, Node.js 20, MySQL 8, Redis, and Elasticsearch with the IK plugin. Start RabbitMQ to demonstrate the three messaging scenarios. See the [installation guide](docs/INSTALL.md#english-version) for infrastructure setup and configuration.
 
-> Elasticsearch must be online at backend startup. `elasticsearch.enabled=false` disables index synchronization and enables search fallback; it does not remove this startup dependency. Docker entry ports are shown in the [deployment diagram](docs/diagrams/deployment-apps.png).
+> Elasticsearch is disabled by default; the backend starts with JPA search. To enable ES, start ES with IK, set `ELASTICSEARCH_ENABLED=true`, and restart the backend, then rebuild the index via the admin-only `POST /api/admin/search/index/rebuild` endpoint. Compose profiles `search` and `monitoring` control optional ES and monitoring services. Docker entry ports are shown in the [deployment diagram](docs/diagrams/deployment-apps.png).
 
 ### 1. Clone and Configure
 

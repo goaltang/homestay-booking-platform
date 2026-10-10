@@ -96,7 +96,7 @@ homestay3/
 
 以下为本地开发方式。先准备 Java 17、Maven、Node.js 20、MySQL 8、Redis，以及安装 IK 插件的 Elasticsearch；演示三个 MQ 场景时同时启动 RabbitMQ。基础设施准备和完整配置见[安装教程](docs/INSTALL.md)。
 
-> 当前后端启动需要 Elasticsearch 在线。`elasticsearch.enabled=false` 只关闭索引同步并使搜索降级，不能跳过 ES 启动。Docker 部署端口另见[应用部署图](docs/diagrams/deployment-apps.png)。
+> ES 默认关闭，后端可直接启动并使用 JPA 搜索。需要 ES 时，先启动带 IK 的 ES，再设置 `ELASTICSEARCH_ENABLED=true` 并重启后端；重新开启后由管理员调用 `POST /api/admin/search/index/rebuild` 重建索引。Compose 的 `search` / `monitoring` profiles 分别控制 ES / 监控按需启动。Docker 部署端口另见[应用部署图](docs/diagrams/deployment-apps.png)。
 
 ### 1. 克隆与配置
 

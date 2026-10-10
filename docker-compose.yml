@@ -1,6 +1,7 @@
 ﻿# ============================================
 # homestay3 全套部署（生产形态）
 # 用法：cp .env.example .env（填真实值）→ docker compose up -d --build
+# 默认不启动 ES/监控；按需启用 search / monitoring profiles（见 docs/INSTALL.md）
 # 端口：后端 8081 ｜ 前端 8088 ｜ 管理端 8089 ｜ ES 9200 ｜ MQ 5672/15672 ｜ 监控 9090/3000
 # 说明：8080 常被本机 Dify 占用，前端/管理端避免使用
 # ============================================
@@ -38,6 +39,7 @@ services:
       - redis-data:/data
 
   elasticsearch:
+    profiles: ["search"]
     image: homestay-es-ik:test   # 带 IK 分词插件（本地构建；生产可替换为自建带 IK 的镜像）
     container_name: homestay-es
     environment:
@@ -70,6 +72,7 @@ services:
     container_name: homestay-backend
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      ELASTICSEARCH_ENABLED: ${ELASTICSEARCH_ENABLED:-false}
     env_file:
       - .env
     ports:
@@ -81,8 +84,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      elasticsearch:
-        condition: service_healthy
       rabbitmq:
         condition: service_started
 
@@ -104,6 +105,7 @@ services:
 
   # ---------- 监控（可选） ----------
   prometheus:
+    profiles: ["monitoring"]
     image: prom/prometheus:v2.45.0
     container_name: homestay-prometheus
     volumes:
@@ -112,6 +114,7 @@ services:
       - "9090:9090"
 
   grafana:
+    profiles: ["monitoring"]
     image: grafana/grafana:10.1.0
     container_name: homestay-grafana
     environment:

@@ -12,7 +12,8 @@
 
 ## 常用命令
 
-- 依赖：`docker-compose up -d`（ES 9200 + RabbitMQ 5672/15672）；MySQL 需本机已有（3306/homestay_db）
+- 本地依赖：MySQL（3306/homestay_db）+ Redis；RabbitMQ 按需 `docker compose up -d rabbitmq`；ES 按需 `docker compose up -d elasticsearch`，后端设 `ELASTICSEARCH_ENABLED=true`
+- 全套容器：`docker compose up -d --build` 默认不启动 ES 与监控；ES 使用 `search` profile 并设置 `ELASTICSEARCH_ENABLED=true`，监控使用 `monitoring` profile
 - 后端：`cd homestay-backend && mvn spring-boot:run`（8081）｜ `mvn test`（H2 内存库，见红线）
 - 前端：`cd homestay-front && npm run dev`（5173）｜ `cd homestay-admin && npm run dev`（5174）｜ `npm run build`（vue-tsc 类型检查 + vite build）
 - 一键：根目录 `npm run dev` / `npm run dev:admin` / `npm run dev:all`
@@ -30,7 +31,7 @@
 - homestay-admin/ — 管理后台（同栈），5174
 - homestay-backend/ — 后端 API（Spring Boot 3.0.2 + Java 17 + JPA + Flyway + Security/JWT + Redis + ES + RabbitMQ），8081
 - obsidian-vault/ — 项目文档（Obsidian 管理，git 同步 md 文档）
-- 依赖：MySQL(3306, Flyway 管表结构) ｜ ES(9200, 需 IK 插件, **后端启动必须在线**) ｜ Redis(缓存) ｜ RabbitMQ(homestay-rabbitmq, homestay/homestay123, 管理台 15672)
+- 依赖：MySQL(3306, Flyway 管表结构) ｜ ES(9200, 需 IK 插件, 默认关闭并走 JPA 搜索；开启时需在线) ｜ Redis(缓存) ｜ RabbitMQ(homestay-rabbitmq, homestay/homestay123, 管理台 15672)
 - 端口：8080 常被本机 Dify 占用，后端固定 8081
 
 ## AI 客服 Agent 模块（三层架构）
