@@ -7,7 +7,7 @@
     @open="code = ''"
   >
     <div class="self-checkin-content">
-      <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px;">
+      <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px">
         请输入房东提供的6位入住码完成入住。
       </el-alert>
       <el-form>

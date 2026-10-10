@@ -8,9 +8,19 @@
       <el-button link type="primary" size="small" @click="handleClear">清空</el-button>
     </div>
     <div class="recent-scroll">
-      <div v-for="item in displayList" :key="item.id" class="recent-card" @click="handleClick(item)">
+      <div
+        v-for="item in displayList"
+        :key="item.id"
+        class="recent-card"
+        @click="handleClick(item)"
+      >
         <div class="recent-image">
-          <img v-if="item.coverImage" :src="getImageUrl(item.coverImage)" :alt="item.title" loading="lazy" />
+          <img
+            v-if="item.coverImage"
+            :src="getImageUrl(item.coverImage)"
+            :alt="item.title"
+            loading="lazy"
+          />
           <div v-else class="image-placeholder">
             <el-icon :size="24"><Picture /></el-icon>
           </div>
@@ -28,29 +38,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Timer, Picture } from '@element-plus/icons-vue'
-import { getRecentViews, clearRecentViews, type RecentViewItem } from '@/utils/recentViews'
-import { getHomestayImageUrl } from '@/utils/image'
+import { computed } from "vue";
+import { Timer, Picture } from "@element-plus/icons-vue";
+import { getRecentViews, clearRecentViews, type RecentViewItem } from "@/utils/recentViews";
+import { getHomestayImageUrl } from "@/utils/image";
 
 const emit = defineEmits<{
-  click: [item: RecentViewItem]
-  clear: []
-}>()
+  click: [item: RecentViewItem];
+  clear: [];
+}>();
 
-const recentList = computed(() => getRecentViews())
-const displayList = computed(() => recentList.value.slice(0, 6))
+const recentList = computed(() => getRecentViews());
+const displayList = computed(() => recentList.value.slice(0, 6));
 
-const getImageUrl = (url: string) => getHomestayImageUrl(url)
+const getImageUrl = (url: string) => getHomestayImageUrl(url);
 
 const handleClick = (item: RecentViewItem) => {
-  emit('click', item)
-}
+  emit("click", item);
+};
 
 const handleClear = () => {
-  clearRecentViews()
-  emit('clear')
-}
+  clearRecentViews();
+  emit("clear");
+};
 </script>
 
 <style scoped>

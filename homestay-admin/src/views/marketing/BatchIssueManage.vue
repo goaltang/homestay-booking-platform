@@ -9,7 +9,11 @@
 
       <el-form :model="taskForm" label-width="120px">
         <el-form-item label="选择模板">
-          <el-select v-model="taskForm.templateId" placeholder="请选择优惠券模板" style="width: 300px">
+          <el-select
+            v-model="taskForm.templateId"
+            placeholder="请选择优惠券模板"
+            style="width: 300px"
+          >
             <el-option
               v-for="t in activeTemplates"
               :key="t.id"
@@ -19,10 +23,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="任务名称">
-          <el-input v-model="taskForm.name" placeholder="如：30天未下单用户召回" style="width: 300px" />
+          <el-input
+            v-model="taskForm.name"
+            placeholder="如：30天未下单用户召回"
+            style="width: 300px"
+          />
         </el-form-item>
         <el-form-item label="筛选条件">
-          <el-select v-model="taskForm.filterType" placeholder="选择用户筛选条件" style="width: 300px">
+          <el-select
+            v-model="taskForm.filterType"
+            placeholder="选择用户筛选条件"
+            style="width: 300px"
+          >
             <el-option label="全部用户" value="ALL" />
             <el-option label="新注册用户（7天内）" value="NEW_USER" />
             <el-option label="流失风险用户（30天未活跃）" value="AT_RISK" />
@@ -62,7 +74,13 @@
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDetail(row)">详情</el-button>
-            <el-button link type="warning" @click="retryTask(row)" :disabled="row.failCount === 0 || row.status !== 'COMPLETED'">重试失败</el-button>
+            <el-button
+              link
+              type="warning"
+              @click="retryTask(row)"
+              :disabled="row.failCount === 0 || row.status !== 'COMPLETED'"
+              >重试失败</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -109,7 +127,9 @@
         <el-table-column prop="userId" label="用户ID" width="100" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'SUCCESS' ? 'success' : 'danger'" size="small">{{ row.status === 'SUCCESS' ? '成功' : '失败' }}</el-tag>
+            <el-tag :type="row.status === 'SUCCESS' ? 'success' : 'danger'" size="small">{{
+              row.status === "SUCCESS" ? "成功" : "失败"
+            }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="errorMsg" label="错误信息" show-overflow-tooltip />
@@ -130,186 +150,203 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import request from '@/utils/request'
+import { ref, reactive, onMounted, computed } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import request from "@/utils/request";
 
-const activeTemplates = ref<any[]>([])
-const taskList = ref<any[]>([])
-const loading = ref(false)
-const creating = ref(false)
-const page = ref(1)
-const pageSize = ref(20)
-const total = ref(0)
+const activeTemplates = ref<any[]>([]);
+const taskList = ref<any[]>([]);
+const loading = ref(false);
+const creating = ref(false);
+const page = ref(1);
+const pageSize = ref(20);
+const total = ref(0);
 
 const taskForm = reactive({
   templateId: null as number | null,
-  name: '',
-  filterType: 'ALL',
-})
+  name: "",
+  filterType: "ALL",
+});
 
 // 详情弹窗
-const detailVisible = ref(false)
-const detailTask = ref<any>(null)
-const detailSuccess = ref(0)
-const detailFail = ref(0)
-const detailItems = ref<any[]>([])
-const detailLoading = ref(false)
-const detailPage = ref(1)
-const detailPageSize = ref(20)
-const detailTotal = ref(0)
-const itemStatus = ref('')
-const currentTaskId = ref<number | null>(null)
+const detailVisible = ref(false);
+const detailTask = ref<any>(null);
+const detailSuccess = ref(0);
+const detailFail = ref(0);
+const detailItems = ref<any[]>([]);
+const detailLoading = ref(false);
+const detailPage = ref(1);
+const detailPageSize = ref(20);
+const detailTotal = ref(0);
+const itemStatus = ref("");
+const currentTaskId = ref<number | null>(null);
 
 const detailRate = computed(() => {
-  const total = (detailSuccess.value + detailFail.value)
-  if (total === 0) return 0
-  return Math.round((detailSuccess.value / total) * 100)
-})
+  const total = detailSuccess.value + detailFail.value;
+  if (total === 0) return 0;
+  return Math.round((detailSuccess.value / total) * 100);
+});
 
 const fetchTemplates = async () => {
   try {
-    const res: any = await request({ url: '/api/admin/promotions/templates', method: 'get', params: { page: 0, size: 100, status: 'ACTIVE' } })
-    const data = res.data || res
-    activeTemplates.value = (data.content || data || []).filter((t: any) => t.status === 'ACTIVE')
+    const res: any = await request({
+      url: "/api/admin/promotions/templates",
+      method: "get",
+      params: { page: 0, size: 100, status: "ACTIVE" },
+    });
+    const data = res.data || res;
+    activeTemplates.value = (data.content || data || []).filter((t: any) => t.status === "ACTIVE");
   } catch (e) {
-    console.error('获取模板失败', e)
+    console.error("获取模板失败", e);
   }
-}
+};
 
 const fetchTasks = async () => {
-  loading.value = true
+  loading.value = true;
   try {
     const res: any = await request({
-      url: '/api/admin/promotions/batch-tasks',
-      method: 'get',
+      url: "/api/admin/promotions/batch-tasks",
+      method: "get",
       params: { page: page.value - 1, size: pageSize.value },
-    })
-    const data = res.data || res
-    taskList.value = data.content || data || []
-    total.value = data.totalElements || data.length || 0
+    });
+    const data = res.data || res;
+    taskList.value = data.content || data || [];
+    total.value = data.totalElements || data.length || 0;
   } catch (e) {
-    ElMessage.error('获取任务列表失败')
+    ElMessage.error("获取任务列表失败");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const createTask = async () => {
   if (!taskForm.templateId) {
-    ElMessage.warning('请选择优惠券模板')
-    return
+    ElMessage.warning("请选择优惠券模板");
+    return;
   }
   if (!taskForm.name.trim()) {
-    ElMessage.warning('请输入任务名称')
-    return
+    ElMessage.warning("请输入任务名称");
+    return;
   }
-  creating.value = true
+  creating.value = true;
   try {
     await request({
-      url: '/api/admin/promotions/batch-tasks',
-      method: 'post',
+      url: "/api/admin/promotions/batch-tasks",
+      method: "post",
       data: {
         templateId: taskForm.templateId,
         name: taskForm.name,
         filterType: taskForm.filterType,
         filterParams: {},
       },
-    })
-    ElMessage.success('批量发券任务已创建并开始执行')
-    taskForm.name = ''
-    taskForm.templateId = null
-    fetchTasks()
+    });
+    ElMessage.success("批量发券任务已创建并开始执行");
+    taskForm.name = "";
+    taskForm.templateId = null;
+    fetchTasks();
   } catch (e: any) {
-    ElMessage.error(e?.response?.data?.error || '创建失败')
+    ElMessage.error(e?.response?.data?.error || "创建失败");
   } finally {
-    creating.value = false
+    creating.value = false;
   }
-}
+};
 
 const openDetail = async (row: any) => {
-  currentTaskId.value = row.id
-  detailTask.value = row
-  detailVisible.value = true
-  detailPage.value = 1
-  itemStatus.value = ''
+  currentTaskId.value = row.id;
+  detailTask.value = row;
+  detailVisible.value = true;
+  detailPage.value = 1;
+  itemStatus.value = "";
   // 加载统计
   try {
-    const res: any = await request({ url: `/api/admin/promotions/batch-tasks/${row.id}`, method: 'get' })
-    const data = res.data || res
-    detailSuccess.value = data.successCount || 0
-    detailFail.value = data.failCount || 0
+    const res: any = await request({
+      url: `/api/admin/promotions/batch-tasks/${row.id}`,
+      method: "get",
+    });
+    const data = res.data || res;
+    detailSuccess.value = data.successCount || 0;
+    detailFail.value = data.failCount || 0;
   } catch (e) {}
-  await fetchDetailItems()
-}
+  await fetchDetailItems();
+};
 
 const fetchDetailItems = async () => {
-  if (!currentTaskId.value) return
-  detailLoading.value = true
+  if (!currentTaskId.value) return;
+  detailLoading.value = true;
   try {
     const res: any = await request({
       url: `/api/admin/promotions/batch-tasks/${currentTaskId.value}/items`,
-      method: 'get',
+      method: "get",
       params: { status: itemStatus.value, page: detailPage.value - 1, size: detailPageSize.value },
-    })
-    const data = res.data || res
-    detailItems.value = data.content || data || []
-    detailTotal.value = data.totalElements || data.length || 0
+    });
+    const data = res.data || res;
+    detailItems.value = data.content || data || [];
+    detailTotal.value = data.totalElements || data.length || 0;
   } catch (e) {
-    ElMessage.error('获取明细失败')
+    ElMessage.error("获取明细失败");
   } finally {
-    detailLoading.value = false
+    detailLoading.value = false;
   }
-}
+};
 
 const retryTask = async (row: any) => {
   try {
-    await ElMessageBox.confirm(`确定对任务「${row.name}」的失败项进行重试吗？`, '重试确认', { type: 'warning' })
-    await request({ url: `/api/admin/promotions/batch-tasks/${row.id}/retry-failed`, method: 'post' })
-    ElMessage.success('重试任务已启动')
-    fetchTasks()
+    await ElMessageBox.confirm(`确定对任务「${row.name}」的失败项进行重试吗？`, "重试确认", {
+      type: "warning",
+    });
+    await request({
+      url: `/api/admin/promotions/batch-tasks/${row.id}/retry-failed`,
+      method: "post",
+    });
+    ElMessage.success("重试任务已启动");
+    fetchTasks();
   } catch (e: any) {
-    if (e !== 'cancel') {
-      ElMessage.error(e?.response?.data?.error || '重试失败')
+    if (e !== "cancel") {
+      ElMessage.error(e?.response?.data?.error || "重试失败");
     }
   }
-}
+};
 
 const formatFilterType = (type: string) => {
   const map: Record<string, string> = {
-    ALL: '全部用户',
-    NEW_USER: '新注册用户',
-    AT_RISK: '流失风险用户',
-    NO_ORDER_30D: '30天未下单',
-    HIGH_VALUE: '高价值用户',
-  }
-  return map[type] || type
-}
+    ALL: "全部用户",
+    NEW_USER: "新注册用户",
+    AT_RISK: "流失风险用户",
+    NO_ORDER_30D: "30天未下单",
+    HIGH_VALUE: "高价值用户",
+  };
+  return map[type] || type;
+};
 
 const formatStatus = (status: string) => {
   const map: Record<string, string> = {
-    PENDING: '待执行',
-    PROCESSING: '执行中',
-    COMPLETED: '已完成',
-    FAILED: '失败',
-  }
-  return map[status] || status
-}
+    PENDING: "待执行",
+    PROCESSING: "执行中",
+    COMPLETED: "已完成",
+    FAILED: "失败",
+  };
+  return map[status] || status;
+};
 
 const formatStatusType = (status: string) => {
-  const map: Record<string, any> = { PENDING: 'info', PROCESSING: 'warning', COMPLETED: 'success', FAILED: 'danger' }
-  return map[status] || 'info'
-}
+  const map: Record<string, any> = {
+    PENDING: "info",
+    PROCESSING: "warning",
+    COMPLETED: "success",
+    FAILED: "danger",
+  };
+  return map[status] || "info";
+};
 
 const formatDate = (date: string) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleString()
-}
+  if (!date) return "-";
+  return new Date(date).toLocaleString();
+};
 
 onMounted(() => {
-  fetchTemplates()
-  fetchTasks()
-})
+  fetchTemplates();
+  fetchTasks();
+});
 </script>
 
 <style scoped>

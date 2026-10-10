@@ -6,7 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "quality:changed": "node ../tools/check-frontend-changes.mjs",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
@@ -28,6 +35,14 @@
     "unplugin-auto-import": "^21.0.0",
     "unplugin-vue-components": "^31.0.0",
     "vite": "^6.2.0",
-    "vue-tsc": "^2.2.4"
+    "vue-tsc": "^2.2.4",
+    "@vue/eslint-config-typescript": "^14.9.0",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.10.0",
+    "prettier": "^3.9.6",
+    "vitest": "4.1.4",
+    "@vue/test-utils": "2.4.6",
+    "jsdom": "29.0.2"
   }
 }

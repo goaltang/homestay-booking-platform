@@ -46,8 +46,20 @@
             <circle :cx="pin.x" :cy="pin.y" r="14" fill="white" opacity="0.9" />
             <circle :cx="pin.x" :cy="pin.y" r="5" :fill="pin.color" />
             <circle :cx="pin.x" :cy="pin.y" r="10" :fill="pin.color" opacity="0.2">
-              <animate attributeName="r" values="10;16;10" dur="2s" :begin="`${i * 0.3}s`" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" :begin="`${i * 0.3}s`" repeatCount="indefinite" />
+              <animate
+                attributeName="r"
+                values="10;16;10"
+                dur="2s"
+                :begin="`${i * 0.3}s`"
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="opacity"
+                values="0.3;0;0.3"
+                dur="2s"
+                :begin="`${i * 0.3}s`"
+                repeatCount="indefinite"
+              />
             </circle>
           </g>
         </svg>
@@ -61,7 +73,9 @@
       <!-- 右侧文案 -->
       <div class="map-content">
         <h3 class="map-title">地图找房</h3>
-        <p class="map-desc">在地图上直观查看房源分布，拖拽地图按视口范围筛选，或使用地标、POI 搜索找到理想住宿。</p>
+        <p class="map-desc">
+          在地图上直观查看房源分布，拖拽地图按视口范围筛选，或使用地标、POI 搜索找到理想住宿。
+        </p>
         <div class="map-features">
           <div class="map-feature">
             <el-icon :size="18" color="var(--color-primary-600)"><Location /></el-icon>
@@ -86,25 +100,25 @@
 </template>
 
 <script setup lang="ts">
-import { MapLocation, ArrowRight, Location, Compass, ZoomIn } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
+import { MapLocation, ArrowRight, Location, Compass, ZoomIn } from "@element-plus/icons-vue";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 
 const pins = [
-  { x: 130, y: 110, color: 'var(--color-primary-500)' },
-  { x: 210, y: 80, color: 'var(--color-secondary-500)' },
-  { x: 180, y: 190, color: 'var(--color-primary-500)' },
-  { x: 270, y: 130, color: 'var(--color-secondary-500)' },
-  { x: 80, y: 190, color: 'var(--color-primary-500)' },
-  { x: 350, y: 150, color: 'var(--color-primary-500)' },
-  { x: 360, y: 220, color: 'var(--color-secondary-500)' },
-  { x: 120, y: 70, color: 'var(--color-primary-500)' },
-]
+  { x: 130, y: 110, color: "var(--color-primary-500)" },
+  { x: 210, y: 80, color: "var(--color-secondary-500)" },
+  { x: 180, y: 190, color: "var(--color-primary-500)" },
+  { x: 270, y: 130, color: "var(--color-secondary-500)" },
+  { x: 80, y: 190, color: "var(--color-primary-500)" },
+  { x: 350, y: 150, color: "var(--color-primary-500)" },
+  { x: 360, y: 220, color: "var(--color-secondary-500)" },
+  { x: 120, y: 70, color: "var(--color-primary-500)" },
+];
 
 const goToMap = () => {
-  router.push('/map-search')
-}
+  router.push("/map-search");
+};
 </script>
 
 <style scoped>

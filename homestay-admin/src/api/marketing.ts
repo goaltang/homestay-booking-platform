@@ -111,10 +111,7 @@ export function getPromotionStatistics(params?: {
 
 // ========== ROI 分析 ==========
 
-export function getRoiOverview(params?: {
-  startDate?: string;
-  endDate?: string;
-}) {
+export function getRoiOverview(params?: { startDate?: string; endDate?: string }) {
   return request({
     url: "/api/admin/promotions/roi/overview",
     method: "get",
@@ -122,11 +119,7 @@ export function getRoiOverview(params?: {
   });
 }
 
-export function getRoiCampaigns(params?: {
-  startDate?: string;
-  endDate?: string;
-  limit?: number;
-}) {
+export function getRoiCampaigns(params?: { startDate?: string; endDate?: string; limit?: number }) {
   return request({
     url: "/api/admin/promotions/roi/campaigns",
     method: "get",

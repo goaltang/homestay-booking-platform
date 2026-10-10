@@ -108,8 +108,7 @@ const sendMessageHandler = async () => {
     messageContent.value = "";
     await nextTick();
     scrollToBottom();
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 const scrollToBottom = () => {

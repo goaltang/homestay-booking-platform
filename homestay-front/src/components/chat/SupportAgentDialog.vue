@@ -18,11 +18,7 @@
             <el-alert :title="msg.content" type="warning" :closable="false" show-icon />
           </div>
 
-          <div
-            v-else
-            class="message-item"
-            :class="{ 'message-self': msg.type === 'user' }"
-          >
+          <div v-else class="message-item" :class="{ 'message-self': msg.type === 'user' }">
             <div v-if="msg.type === 'agent'" class="message-avatar">
               <el-tag size="small" type="primary">AI</el-tag>
             </div>
@@ -41,7 +37,11 @@
                   >
                     确认执行
                   </el-button>
-                  <el-button size="small" :disabled="msg.confirming" @click="handleCancelAction(msg)">
+                  <el-button
+                    size="small"
+                    :disabled="msg.confirming"
+                    @click="handleCancelAction(msg)"
+                  >
                     取消
                   </el-button>
                 </div>
@@ -70,7 +70,9 @@
           type="textarea"
           :rows="2"
           :disabled="handedOff"
-          :placeholder="handedOff ? '已转接人工客服，请等待...' : '输入您的问题... (Enter发送，Shift+Enter换行)'"
+          :placeholder="
+            handedOff ? '已转接人工客服，请等待...' : '输入您的问题... (Enter发送，Shift+Enter换行)'
+          "
           @keydown="handleKeydown"
         />
         <el-button
@@ -166,7 +168,11 @@ const handleSend = async () => {
     }
   } catch {
     ElMessage.error("AI 客服响应失败，请稍后重试");
-    messages.value.push({ id: nextMsgId(), type: "agent", content: "抱歉，系统暂时无法响应，请稍后再试。" });
+    messages.value.push({
+      id: nextMsgId(),
+      type: "agent",
+      content: "抱歉，系统暂时无法响应，请稍后再试。",
+    });
   } finally {
     sending.value = false;
     await nextTick();
@@ -198,7 +204,7 @@ watch(
   () => messages.value.length,
   () => {
     nextTick(() => scrollToBottom());
-  },
+  }
 );
 </script>
 
@@ -276,7 +282,9 @@ watch(
   background-color: #fff;
   border: 1px solid #e4e7ed;
   border-radius: 8px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .action-card:hover {

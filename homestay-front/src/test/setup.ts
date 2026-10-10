@@ -262,11 +262,7 @@ const ElPopover = defineComponent({
   inheritAttrs: false,
   emits: ["hide"],
   setup(_, { slots }) {
-    return () =>
-      h("div", { class: "el-popover-stub" }, [
-        slots.reference?.(),
-        slots.default?.(),
-      ]);
+    return () => h("div", { class: "el-popover-stub" }, [slots.reference?.(), slots.default?.()]);
   },
 });
 

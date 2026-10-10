@@ -49,10 +49,7 @@ export function uploadHomestayImage(
     timeout: 60000,
   })
     .then((response) => {
-      console.log(
-        `${imageType === "cover" ? "封面" : "图片集"}图片上传成功:`,
-        response.data
-      );
+      console.log(`${imageType === "cover" ? "封面" : "图片集"}图片上传成功:`, response.data);
 
       if (response.data && response.data.data) {
         if (typeof response.data.data === "object") {
@@ -79,17 +76,10 @@ export function uploadHomestayImage(
       return response;
     })
     .catch((error) => {
-      console.error(
-        `${imageType === "cover" ? "封面" : "图片集"}图片上传失败:`,
-        error
-      );
+      console.error(`${imageType === "cover" ? "封面" : "图片集"}图片上传失败:`, error);
 
       if (error.response) {
-        console.error(
-          "服务器响应错误:",
-          error.response.status,
-          error.response.data
-        );
+        console.error("服务器响应错误:", error.response.status, error.response.data);
       } else if (error.request) {
         console.error("未收到响应，请检查服务器是否运行或网络连接");
       } else {
@@ -110,9 +100,7 @@ export function uploadHomestayImages(files: File[], homestayId: number) {
   });
   formData.append("homestayId", homestayId.toString());
 
-  console.log(
-    `开始批量上传民宿图片，民宿ID: ${homestayId}, 图片数量: ${files.length}`
-  );
+  console.log(`开始批量上传民宿图片，民宿ID: ${homestayId}, 图片数量: ${files.length}`);
 
   return request({
     url: "/api/homestay-images/upload-multiple",

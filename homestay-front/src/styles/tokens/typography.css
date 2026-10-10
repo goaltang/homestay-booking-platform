@@ -5,37 +5,39 @@
    Mono: JetBrains Mono（数据展示）
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 :root {
-  --font-display: 'Playfair Display', 'Noto Serif SC', Georgia, serif;
-  --font-body: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --font-display: "Playfair Display", "Noto Serif SC", Georgia, serif;
+  --font-body:
+    "Plus Jakarta Sans", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
 
   /* Font sizes */
-  --text-hero:     clamp(2rem, 5vw, 3rem);      /* 32-48px */
-  --text-h1:       clamp(1.75rem, 4vw, 2.25rem); /* 28-36px */
-  --text-h2:       clamp(1.375rem, 3vw, 1.75rem);/* 22-28px */
-  --text-h3:       clamp(1.125rem, 2vw, 1.375rem);/* 18-22px */
-  --text-body-lg:  clamp(1rem, 1.5vw, 1.125rem);  /* 16-18px */
-  --text-body:     clamp(0.9375rem, 1.2vw, 1rem); /* 15-16px */
-  --text-body-sm:  clamp(0.8125rem, 1vw, 0.875rem);/* 13-14px */
-  --text-caption:  clamp(0.6875rem, 0.8vw, 0.75rem);/* 11-12px */
-  --text-price:    clamp(1.25rem, 2.5vw, 1.5rem); /* 20-24px */
+  --text-hero: clamp(2rem, 5vw, 3rem); /* 32-48px */
+  --text-h1: clamp(1.75rem, 4vw, 2.25rem); /* 28-36px */
+  --text-h2: clamp(1.375rem, 3vw, 1.75rem); /* 22-28px */
+  --text-h3: clamp(1.125rem, 2vw, 1.375rem); /* 18-22px */
+  --text-body-lg: clamp(1rem, 1.5vw, 1.125rem); /* 16-18px */
+  --text-body: clamp(0.9375rem, 1.2vw, 1rem); /* 15-16px */
+  --text-body-sm: clamp(0.8125rem, 1vw, 0.875rem); /* 13-14px */
+  --text-caption: clamp(0.6875rem, 0.8vw, 0.75rem); /* 11-12px */
+  --text-price: clamp(1.25rem, 2.5vw, 1.5rem); /* 20-24px */
 
   /* Line heights */
-  --leading-tight:  1.1;
-  --leading-snug:   1.25;
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
   --leading-normal: 1.5;
   --leading-relaxed: 1.6;
-  --leading-loose:  1.75;
+  --leading-loose: 1.75;
 
   /* Font weights */
-  --weight-light:   300;
+  --weight-light: 300;
   --weight-regular: 400;
-  --weight-medium:  500;
+  --weight-medium: 500;
   --weight-semibold: 600;
-  --weight-bold:    700;
+  --weight-bold: 700;
 }
 
 /* Base typography */
@@ -48,7 +50,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-display);
   font-weight: var(--weight-bold);
   line-height: var(--leading-snug);

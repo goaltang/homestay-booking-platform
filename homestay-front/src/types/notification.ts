@@ -1,12 +1,7 @@
 import type { AxiosResponse } from "axios";
 
 export type NotificationCategory =
-  | "order"
-  | "message"
-  | "review"
-  | "homestay"
-  | "coupon"
-  | "system";
+  "order" | "message" | "review" | "homestay" | "coupon" | "system";
 
 export interface NotificationDto {
   id: number;

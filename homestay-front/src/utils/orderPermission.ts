@@ -72,10 +72,7 @@ export function isAdmin(userRole: string): boolean {
  * @param order 订单信息
  * @param user 用户身份
  */
-export function canAccessOrder(
-  order: OrderBasicInfo,
-  user: UserIdentity
-): boolean {
+export function canAccessOrder(order: OrderBasicInfo, user: UserIdentity): boolean {
   // 管理员可以访问所有订单
   if (isAdmin(user.role)) {
     return true;
@@ -115,12 +112,12 @@ export function canPerformActionOnStatus(
     case OrderAction.CANCEL:
       if (userRole === UserRole.USER) {
         // 用户只能取消待确认和已确认但未支付的订单
-        return [OrderStatus.PENDING, OrderStatus.CONFIRMED].includes(
-          orderStatus as OrderStatus
-        );
+        return [OrderStatus.PENDING, OrderStatus.CONFIRMED].includes(orderStatus as OrderStatus);
       } else if (userRole === UserRole.HOST) {
         // 房东可以取消待确认、已支付、待入住的订单（已支付会进入退款流程）
-        return [OrderStatus.PENDING, OrderStatus.PAID, OrderStatus.READY_FOR_CHECKIN].includes(orderStatus as OrderStatus);
+        return [OrderStatus.PENDING, OrderStatus.PAID, OrderStatus.READY_FOR_CHECKIN].includes(
+          orderStatus as OrderStatus
+        );
       }
       break;
 
@@ -134,26 +131,22 @@ export function canPerformActionOnStatus(
 
     case OrderAction.PAY:
       // 只有用户可以支付订单，且只能支付已确认的订单
-      return (
-        userRole === UserRole.USER && orderStatus === OrderStatus.CONFIRMED
-      );
+      return userRole === UserRole.USER && orderStatus === OrderStatus.CONFIRMED;
 
     case OrderAction.CHECK_IN:
       // 房东或房客可以办理入住，订单状态需为已支付或待入住
-      return (userRole === UserRole.HOST || userRole === UserRole.USER) &&
-        [OrderStatus.PAID, OrderStatus.READY_FOR_CHECKIN].includes(orderStatus as OrderStatus);
+      return (
+        (userRole === UserRole.HOST || userRole === UserRole.USER) &&
+        [OrderStatus.PAID, OrderStatus.READY_FOR_CHECKIN].includes(orderStatus as OrderStatus)
+      );
 
     case OrderAction.CHECK_OUT:
       // 只有房东可以办理退房，且只能处理已入住的订单
-      return (
-        userRole === UserRole.HOST && orderStatus === OrderStatus.CHECKED_IN
-      );
+      return userRole === UserRole.HOST && orderStatus === OrderStatus.CHECKED_IN;
 
     case OrderAction.REVIEW:
       // 只有用户可以评价订单，且只能评价已完成的订单
-      return (
-        userRole === UserRole.USER && orderStatus === OrderStatus.COMPLETED
-      );
+      return userRole === UserRole.USER && orderStatus === OrderStatus.COMPLETED;
 
     case OrderAction.EDIT:
       // 订单一旦创建就不能编辑
@@ -168,10 +161,7 @@ export function canPerformActionOnStatus(
 
     case OrderAction.RETRY_REFUND:
       // 用户可以对退款失败的订单重试退款
-      return (
-        userRole === UserRole.USER &&
-        orderStatus === OrderStatus.REFUND_FAILED
-      );
+      return userRole === UserRole.USER && orderStatus === OrderStatus.REFUND_FAILED;
 
     case OrderAction.VIEW:
       // 所有人都可以查看订单
@@ -209,18 +199,12 @@ export function checkOrderPermission(
  * @param order 订单信息
  * @param user 用户身份
  */
-export function getAvailableActions(
-  order: OrderBasicInfo,
-  user: UserIdentity
-): OrderAction[] {
+export function getAvailableActions(order: OrderBasicInfo, user: UserIdentity): OrderAction[] {
   const availableActions: OrderAction[] = [OrderAction.VIEW]; // 默认至少可以查看
 
   // 检查每个可能的操作
   for (const action of Object.values(OrderAction)) {
-    if (
-      action !== OrderAction.VIEW &&
-      checkOrderPermission(order, user, action)
-    ) {
+    if (action !== OrderAction.VIEW && checkOrderPermission(order, user, action)) {
       availableActions.push(action);
     }
   }

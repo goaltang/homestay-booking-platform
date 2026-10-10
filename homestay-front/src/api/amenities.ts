@@ -27,10 +27,7 @@ export const getAllAmenitiesByCategories = getAmenitiesByCategoryApi;
  * @param homestayId 房源ID
  * @param categoryCode 可选的分类编码
  */
-export const addAllAmenitiesToHomestayApi = (
-  homestayId: number,
-  categoryCode?: string
-) => {
+export const addAllAmenitiesToHomestayApi = (homestayId: number, categoryCode?: string) => {
   let url = `/api/amenities/add-all-to-homestay/${homestayId}`;
   if (categoryCode) {
     url += `?categoryCode=${categoryCode}`;
@@ -46,10 +43,7 @@ export const addAllAmenitiesToHomestayApi = (
  * @param homestayId 房源ID
  * @param categoryCode 可选的分类编码
  */
-export const removeAllAmenitiesFromHomestayApi = (
-  homestayId: number,
-  categoryCode?: string
-) => {
+export const removeAllAmenitiesFromHomestayApi = (homestayId: number, categoryCode?: string) => {
   let url = `/api/amenities/remove-all-from-homestay/${homestayId}`;
   if (categoryCode) {
     url += `?categoryCode=${categoryCode}`;
@@ -65,10 +59,7 @@ export const removeAllAmenitiesFromHomestayApi = (
  * @param homestayId 房源ID
  * @param amenityValue 设施编码
  */
-export const addAmenityToHomestayApi = (
-  homestayId: number,
-  amenityValue: string
-) => {
+export const addAmenityToHomestayApi = (homestayId: number, amenityValue: string) => {
   return request({
     url: `/api/amenities/add-to-homestay/${homestayId}/${amenityValue}`,
     method: "post",
@@ -80,10 +71,7 @@ export const addAmenityToHomestayApi = (
  * @param homestayId 房源ID
  * @param amenityValue 设施编码
  */
-export const removeAmenityFromHomestayApi = (
-  homestayId: number,
-  amenityValue: string
-) => {
+export const removeAmenityFromHomestayApi = (homestayId: number, amenityValue: string) => {
   return request({
     url: `/api/amenities/remove-from-homestay/${homestayId}/${amenityValue}`,
     method: "delete",

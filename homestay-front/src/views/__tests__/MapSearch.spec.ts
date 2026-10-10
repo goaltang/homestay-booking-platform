@@ -128,16 +128,18 @@ const createMapSearchMock = (): MapSearchMock => {
 
   const applySearchState = vi.fn(async () => {});
   const retrySearch = vi.fn(async () => {});
-  const setMapView = vi.fn((nextMapView: { centerLat?: number; centerLng?: number; zoom?: number }) => {
-    mapView.value = {
-      ...mapView.value,
-      ...nextMapView,
-    };
-    currentSearchContext.value = {
-      ...currentSearchContext.value,
-      mapView: mapView.value,
-    };
-  });
+  const setMapView = vi.fn(
+    (nextMapView: { centerLat?: number; centerLng?: number; zoom?: number }) => {
+      mapView.value = {
+        ...mapView.value,
+        ...nextMapView,
+      };
+      currentSearchContext.value = {
+        ...currentSearchContext.value,
+        mapView: mapView.value,
+      };
+    }
+  );
   const selectHomestay = vi.fn((id: number) => {
     selectedHomestayId.value = id;
     currentSearchContext.value = {
@@ -175,48 +177,53 @@ const createMapSearchMock = (): MapSearchMock => {
     };
     return location;
   });
-  const searchNearby = vi.fn(async (options?: {
-    latitude?: number;
-    longitude?: number;
-    radius?: number;
-    source?: "map-center" | "user";
-    fitView?: boolean;
-    filters?: Record<string, unknown>;
-  }) => {
-    searchMode.value = "nearby";
-    if (options?.radius !== undefined) {
-      nearbyRadius.value = options.radius;
+  const searchNearby = vi.fn(
+    async (options?: {
+      latitude?: number;
+      longitude?: number;
+      radius?: number;
+      source?: "map-center" | "user";
+      fitView?: boolean;
+      filters?: Record<string, unknown>;
+    }) => {
+      searchMode.value = "nearby";
+      if (options?.radius !== undefined) {
+        nearbyRadius.value = options.radius;
+      }
+      const nearbyOrigin =
+        options?.latitude !== undefined && options?.longitude !== undefined
+          ? {
+              latitude: options.latitude,
+              longitude: options.longitude,
+              source: options.source ?? "map-center",
+            }
+          : (currentSearchContext.value.nearbyOrigin ?? userLocation.value);
+      currentSearchContext.value = {
+        ...currentSearchContext.value,
+        mode: "nearby",
+        nearbyRadius: nearbyRadius.value,
+        nearbyOrigin: nearbyOrigin ?? null,
+      };
     }
-    const nearbyOrigin = options?.latitude !== undefined && options?.longitude !== undefined
-      ? {
-          latitude: options.latitude,
-          longitude: options.longitude,
-          source: options.source ?? "map-center",
-        }
-      : (currentSearchContext.value.nearbyOrigin ?? userLocation.value);
-    currentSearchContext.value = {
-      ...currentSearchContext.value,
-      mode: "nearby",
-      nearbyRadius: nearbyRadius.value,
-      nearbyOrigin: nearbyOrigin ?? null,
-    };
-  });
-  const searchByLandmark = vi.fn(async (
-    landmark: SearchOrigin,
-    options?: { radius?: number; filters?: Record<string, unknown>; fitView?: boolean }
-  ) => {
-    searchMode.value = "landmark";
-    if (options?.radius !== undefined) {
-      nearbyRadius.value = options.radius;
+  );
+  const searchByLandmark = vi.fn(
+    async (
+      landmark: SearchOrigin,
+      options?: { radius?: number; filters?: Record<string, unknown>; fitView?: boolean }
+    ) => {
+      searchMode.value = "landmark";
+      if (options?.radius !== undefined) {
+        nearbyRadius.value = options.radius;
+      }
+      activeLandmark.value = landmark;
+      currentSearchContext.value = {
+        ...currentSearchContext.value,
+        mode: "landmark",
+        nearbyRadius: nearbyRadius.value,
+        landmark,
+      };
     }
-    activeLandmark.value = landmark;
-    currentSearchContext.value = {
-      ...currentSearchContext.value,
-      mode: "landmark",
-      nearbyRadius: nearbyRadius.value,
-      landmark,
-    };
-  });
+  );
   const resetSearchMode = vi.fn(async () => {
     searchMode.value = "normal";
     activeLandmark.value = null;

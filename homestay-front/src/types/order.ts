@@ -67,10 +67,7 @@ export const statusTransitions: Record<OrderStatus, OrderStatus[]> = {
     OrderStatus.REFUND_PENDING,
     OrderStatus.CANCELLED_BY_HOST,
   ],
-  [OrderStatus.READY_FOR_CHECKIN]: [
-    OrderStatus.CHECKED_IN,
-    OrderStatus.REFUND_PENDING,
-  ],
+  [OrderStatus.READY_FOR_CHECKIN]: [OrderStatus.CHECKED_IN, OrderStatus.REFUND_PENDING],
   [OrderStatus.CHECKED_IN]: [OrderStatus.COMPLETED, OrderStatus.CHECKED_OUT],
   [OrderStatus.CHECKED_OUT]: [OrderStatus.COMPLETED],
   [OrderStatus.COMPLETED]: [],
@@ -83,10 +80,7 @@ export const statusTransitions: Record<OrderStatus, OrderStatus[]> = {
     OrderStatus.REFUND_FAILED,
     OrderStatus.DISPUTE_PENDING,
   ],
-  [OrderStatus.DISPUTE_PENDING]: [
-    OrderStatus.REFUNDED,
-    OrderStatus.PAID,
-  ],
+  [OrderStatus.DISPUTE_PENDING]: [OrderStatus.REFUNDED, OrderStatus.PAID],
   [OrderStatus.REFUNDED]: [],
   [OrderStatus.REFUND_FAILED]: [OrderStatus.REFUND_PENDING],
   [OrderStatus.REJECTED]: [],
@@ -180,39 +174,29 @@ export function getDisplayOrderStatusText(order: DisplayOrder): string {
 
   // 优先处理最终/关键状态
   if (isOrderCancelled(status)) return orderStatusText[status] || "已取消";
-  if (status === OrderStatus.REJECTED)
-    return orderStatusText[OrderStatus.REJECTED];
-  if (paymentStatus === "REFUNDED")
-    return orderStatusText[OrderStatus.REFUNDED];
-  if (status === OrderStatus.COMPLETED)
-    return orderStatusText[OrderStatus.COMPLETED];
-  if (status === OrderStatus.PAYMENT_FAILED)
-    return orderStatusText[OrderStatus.PAYMENT_FAILED];
-  if (status === OrderStatus.DISPUTE_PENDING)
-    return orderStatusText[OrderStatus.DISPUTE_PENDING];
+  if (status === OrderStatus.REJECTED) return orderStatusText[OrderStatus.REJECTED];
+  if (paymentStatus === "REFUNDED") return orderStatusText[OrderStatus.REFUNDED];
+  if (status === OrderStatus.COMPLETED) return orderStatusText[OrderStatus.COMPLETED];
+  if (status === OrderStatus.PAYMENT_FAILED) return orderStatusText[OrderStatus.PAYMENT_FAILED];
+  if (status === OrderStatus.DISPUTE_PENDING) return orderStatusText[OrderStatus.DISPUTE_PENDING];
 
   // 处理支付成功相关状态
   if (paymentStatus === "PAID") {
-    if (status === OrderStatus.CHECKED_IN)
-      return orderStatusText[OrderStatus.CHECKED_IN];
+    if (status === OrderStatus.CHECKED_IN) return orderStatusText[OrderStatus.CHECKED_IN];
     // if (status === OrderStatus.READY_FOR_CHECKIN) return orderStatusText[OrderStatus.READY_FOR_CHECKIN]; // 如果需要区分
     return orderStatusText[OrderStatus.PAID]; // PAID 状态优先显示已支付
   }
 
   // 处理待支付/支付中
-  if (status === OrderStatus.CONFIRMED && paymentStatus === "UNPAID")
-    return "待支付";
+  if (status === OrderStatus.CONFIRMED && paymentStatus === "UNPAID") return "待支付";
   if (status === OrderStatus.PAYMENT_PENDING)
     return orderStatusText[OrderStatus.PAYMENT_PENDING] || "待支付";
 
   // 处理待确认
-  if (status === OrderStatus.PENDING)
-    return orderStatusText[OrderStatus.PENDING];
+  if (status === OrderStatus.PENDING) return orderStatusText[OrderStatus.PENDING];
 
   // Fallback
-  console.warn(
-    `未处理的订单状态组合: status=${status}, paymentStatus=${paymentStatus}`
-  );
+  console.warn(`未处理的订单状态组合: status=${status}, paymentStatus=${paymentStatus}`);
   return orderStatusText[status] || status; // 尝试用映射，不行直接返回原始 status
 }
 
@@ -223,34 +207,26 @@ export function getDisplayOrderStatusType(order: DisplayOrder): string {
 
   // 优先处理最终/关键状态
   if (isOrderCancelled(status)) return orderStatusType[status] || "danger";
-  if (status === OrderStatus.REJECTED)
-    return orderStatusType[OrderStatus.REJECTED];
-  if (paymentStatus === "REFUNDED")
-    return orderStatusType[OrderStatus.REFUNDED];
-  if (status === OrderStatus.COMPLETED)
-    return orderStatusType[OrderStatus.COMPLETED];
-  if (status === OrderStatus.PAYMENT_FAILED)
-    return orderStatusType[OrderStatus.PAYMENT_FAILED];
-  if (status === OrderStatus.DISPUTE_PENDING)
-    return orderStatusType[OrderStatus.DISPUTE_PENDING];
+  if (status === OrderStatus.REJECTED) return orderStatusType[OrderStatus.REJECTED];
+  if (paymentStatus === "REFUNDED") return orderStatusType[OrderStatus.REFUNDED];
+  if (status === OrderStatus.COMPLETED) return orderStatusType[OrderStatus.COMPLETED];
+  if (status === OrderStatus.PAYMENT_FAILED) return orderStatusType[OrderStatus.PAYMENT_FAILED];
+  if (status === OrderStatus.DISPUTE_PENDING) return orderStatusType[OrderStatus.DISPUTE_PENDING];
 
   // 处理支付成功相关状态
   if (paymentStatus === "PAID") {
-    if (status === OrderStatus.CHECKED_IN)
-      return orderStatusType[OrderStatus.CHECKED_IN];
+    if (status === OrderStatus.CHECKED_IN) return orderStatusType[OrderStatus.CHECKED_IN];
     // if (status === OrderStatus.READY_FOR_CHECKIN) return orderStatusType[OrderStatus.READY_FOR_CHECKIN];
     return orderStatusType[OrderStatus.PAID]; // PAID 状态用 success
   }
 
   // 处理待支付/支付中
-  if (status === OrderStatus.CONFIRMED && paymentStatus === "UNPAID")
-    return "warning";
+  if (status === OrderStatus.CONFIRMED && paymentStatus === "UNPAID") return "warning";
   if (status === OrderStatus.PAYMENT_PENDING)
     return orderStatusType[OrderStatus.PAYMENT_PENDING] || "warning";
 
   // 处理待确认
-  if (status === OrderStatus.PENDING)
-    return orderStatusType[OrderStatus.PENDING];
+  if (status === OrderStatus.PENDING) return orderStatusType[OrderStatus.PENDING];
 
   // Fallback
   return orderStatusType[status] || "info"; // 默认为 info

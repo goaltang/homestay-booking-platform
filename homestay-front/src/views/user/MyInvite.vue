@@ -42,7 +42,7 @@
             <div class="code-value">{{ code.referralCode }}</div>
             <div class="code-meta">
               <el-tag :type="code.status === 'ACTIVE' ? 'success' : 'info'" size="small">
-                {{ code.status === 'ACTIVE' ? '有效' : '已用完' }}
+                {{ code.status === "ACTIVE" ? "有效" : "已用完" }}
               </el-tag>
               <span class="meta-text">有效期至 {{ formatDate(code.expireAt) }}</span>
               <span class="meta-text">已用 {{ code.usedCount }}/{{ code.maxUses }}</span>
@@ -79,7 +79,9 @@
       </template>
       <p class="tip-text">如果你有朋友分享的邀请码，可以在此输入领取奖励。</p>
       <el-input v-model="referralCode" placeholder="请输入邀请码" clearable style="width: 280px" />
-      <el-button type="primary" @click="claimReferral" :loading="claiming" style="margin-left: 12px">领取奖励</el-button>
+      <el-button type="primary" @click="claimReferral" :loading="claiming" style="margin-left: 12px"
+        >领取奖励</el-button
+      >
     </el-card>
 
     <!-- 邀请说明 -->
@@ -97,87 +99,91 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { CopyDocument } from '@element-plus/icons-vue'
-import api from '@/api'
-import dayjs from 'dayjs'
+import { ref, onMounted, computed } from "vue";
+import { ElMessage } from "element-plus";
+import { CopyDocument } from "@element-plus/icons-vue";
+import api from "@/api";
+import dayjs from "dayjs";
 
 interface ReferralCodeItem {
-  id: number
-  referralCode: string
-  status: string
-  usedCount: number
-  maxUses: number
-  expireAt: string
-  createdAt: string
+  id: number;
+  referralCode: string;
+  status: string;
+  usedCount: number;
+  maxUses: number;
+  expireAt: string;
+  createdAt: string;
 }
 
-const stats = ref<any>({})
-const myCodes = ref<ReferralCodeItem[]>([])
-const referralCode = ref('')
-const claiming = ref(false)
-const loading = ref(false)
+const stats = ref<any>({});
+const myCodes = ref<ReferralCodeItem[]>([]);
+const referralCode = ref("");
+const claiming = ref(false);
+const loading = ref(false);
 
 const shareLink = computed(() => {
-  const base = window.location.origin
-  const code = myCodes.value.find(c => c.status === 'ACTIVE')?.referralCode
-  return code ? `${base}/register?ref=${code}` : base + '/register'
-})
+  const base = window.location.origin;
+  const code = myCodes.value.find((c) => c.status === "ACTIVE")?.referralCode;
+  return code ? `${base}/register?ref=${code}` : base + "/register";
+});
 
 const fetchData = async () => {
-  loading.value = true
+  loading.value = true;
   try {
     const [statsRes, codesRes] = await Promise.all([
-      api.get('/api/coupons/referral/stats'),
-      api.get('/api/coupons/referral/my-codes')
-    ])
-    stats.value = statsRes.data || {}
-    myCodes.value = Array.isArray(codesRes.data) ? codesRes.data : []
+      api.get("/api/coupons/referral/stats"),
+      api.get("/api/coupons/referral/my-codes"),
+    ]);
+    stats.value = statsRes.data || {};
+    myCodes.value = Array.isArray(codesRes.data) ? codesRes.data : [];
   } catch (e) {
-    console.error('获取邀请数据失败', e)
+    console.error("获取邀请数据失败", e);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const claimReferral = async () => {
   if (!referralCode.value.trim()) {
-    ElMessage.warning('请输入邀请码')
-    return
+    ElMessage.warning("请输入邀请码");
+    return;
   }
-  claiming.value = true
+  claiming.value = true;
   try {
-    const res = await api.post(`/api/coupons/referral/${referralCode.value.trim()}/claim`)
-    ElMessage.success(res.data?.message || '领取成功')
-    referralCode.value = ''
-    fetchData()
+    const res = await api.post(`/api/coupons/referral/${referralCode.value.trim()}/claim`);
+    ElMessage.success(res.data?.message || "领取成功");
+    referralCode.value = "";
+    fetchData();
   } catch (e: any) {
   } finally {
-    claiming.value = false
+    claiming.value = false;
   }
-}
+};
 
 const formatDate = (date: string) => {
-  if (!date) return '-'
-  return dayjs(date).format('YYYY-MM-DD')
-}
+  if (!date) return "-";
+  return dayjs(date).format("YYYY-MM-DD");
+};
 
 const copyCode = (code: string) => {
-  navigator.clipboard.writeText(code).then(() => {
-    ElMessage.success('邀请码已复制')
-  }).catch(() => {
-  })
-}
+  navigator.clipboard
+    .writeText(code)
+    .then(() => {
+      ElMessage.success("邀请码已复制");
+    })
+    .catch(() => {});
+};
 
 const copyLink = () => {
-  navigator.clipboard.writeText(shareLink.value).then(() => {
-    ElMessage.success('分享链接已复制')
-  }).catch(() => {
-  })
-}
+  navigator.clipboard
+    .writeText(shareLink.value)
+    .then(() => {
+      ElMessage.success("分享链接已复制");
+    })
+    .catch(() => {});
+};
 
-onMounted(fetchData)
+onMounted(fetchData);
 </script>
 
 <style scoped>

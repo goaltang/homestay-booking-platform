@@ -40,18 +40,10 @@ export function getAllAvailableAmenities(onlyActive: boolean = true) {
     },
   }).then((response) => {
     // Extract the list from the nested structure
-    if (
-      response &&
-      response.success &&
-      response.data &&
-      Array.isArray(response.data.content)
-    ) {
+    if (response && response.success && response.data && Array.isArray(response.data.content)) {
       return response.data.content; // Return only the array of amenities
     } else {
-      console.error(
-        "Failed to fetch amenities or invalid response structure:",
-        response
-      );
+      console.error("Failed to fetch amenities or invalid response structure:", response);
       return []; // Return empty array on failure
     }
   });

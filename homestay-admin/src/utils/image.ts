@@ -80,9 +80,5 @@ export function isValidImageUrl(url: string): boolean {
   }
 
   // 简单的URL格式检查
-  return (
-    url.startsWith("http://") ||
-    url.startsWith("https://") ||
-    url.startsWith("/")
-  );
+  return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/");
 }

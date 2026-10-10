@@ -68,13 +68,17 @@
     <el-row :gutter="20" class="stats-row">
       <el-col :span="6">
         <el-card>
-          <div class="stat-value" style="color: #67c23a">¥{{ formatAmount(roiOverview.totalGmv) }}</div>
+          <div class="stat-value" style="color: #67c23a">
+            ¥{{ formatAmount(roiOverview.totalGmv) }}
+          </div>
           <div class="stat-label">优惠带动 GMV</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card>
-          <div class="stat-value" style="color: #f56c6c">¥{{ formatAmount(roiOverview.totalDiscountCost) }}</div>
+          <div class="stat-value" style="color: #f56c6c">
+            ¥{{ formatAmount(roiOverview.totalDiscountCost) }}
+          </div>
           <div class="stat-label">优惠总成本</div>
         </el-card>
       </el-col>
@@ -103,7 +107,9 @@
             <div class="bearer-item">
               <span class="bearer-name">平台承担</span>
               <el-progress
-                :percentage="calculatePercent(statistics.platformDiscount, statistics.totalDiscount)"
+                :percentage="
+                  calculatePercent(statistics.platformDiscount, statistics.totalDiscount)
+                "
                 color="#6366f1"
               />
               <span class="bearer-amount">¥{{ formatAmount(statistics.platformDiscount) }}</span>
@@ -135,9 +141,11 @@
             </div>
             <div class="summary-item">
               <div class="summary-value">
-                {{ statistics.totalUsageCount > 0
-                  ? ((statistics.usedCount / statistics.totalUsageCount) * 100).toFixed(1)
-                  : 0 }}%
+                {{
+                  statistics.totalUsageCount > 0
+                    ? ((statistics.usedCount / statistics.totalUsageCount) * 100).toFixed(1)
+                    : 0
+                }}%
               </div>
               <div class="summary-label">核销率</div>
             </div>
@@ -161,14 +169,10 @@
           </template>
         </el-table-column>
         <el-table-column label="GMV" width="120">
-          <template #default="{ row }">
-            ¥{{ formatAmount(row.gmv) }}
-          </template>
+          <template #default="{ row }"> ¥{{ formatAmount(row.gmv) }} </template>
         </el-table-column>
         <el-table-column label="优惠成本" width="120">
-          <template #default="{ row }">
-            ¥{{ formatAmount(row.discountCost) }}
-          </template>
+          <template #default="{ row }"> ¥{{ formatAmount(row.discountCost) }} </template>
         </el-table-column>
         <el-table-column label="订单数" width="90">
           <template #default="{ row }">
@@ -183,13 +187,14 @@
           </template>
         </el-table-column>
         <el-table-column label="核销率" width="90">
-          <template #default="{ row }">
-            {{ row.usageRate }}%
-          </template>
+          <template #default="{ row }"> {{ row.usageRate }}% </template>
         </el-table-column>
         <el-table-column label="预算使用率" width="120">
           <template #default="{ row }">
-            <el-progress :percentage="Math.min(row.budgetUsageRate || 0, 100)" :status="row.budgetUsageRate >= 80 ? 'exception' : ''" />
+            <el-progress
+              :percentage="Math.min(row.budgetUsageRate || 0, 100)"
+              :status="row.budgetUsageRate >= 80 ? 'exception' : ''"
+            />
           </template>
         </el-table-column>
       </el-table>
@@ -198,9 +203,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { getPromotionStatistics, getCampaigns, getRoiOverview, getRoiCampaigns } from '@/api/marketing';
+import { ref, reactive, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import {
+  getPromotionStatistics,
+  getCampaigns,
+  getRoiOverview,
+  getRoiCampaigns,
+} from "@/api/marketing";
 
 const statistics = reactive({
   totalDiscount: 0,
@@ -227,20 +237,20 @@ const topCampaigns = ref<any[]>([]);
 const roiCampaigns = ref<any[]>([]);
 const dateRange = ref<string[]>([]);
 const filterForm = reactive({
-  campaignType: '',
-  subsidyBearer: '',
+  campaignType: "",
+  subsidyBearer: "",
 });
 
 function formatAmount(amount: number) {
-  if (!amount) return '0.00';
+  if (!amount) return "0.00";
   return amount.toFixed(2);
 }
 
 function formatType(type: string) {
   const map: Record<string, string> = {
-    FLASH_SALE: '限时折扣',
-    FULL_REDUCTION: '满减',
-    HOMESTAY_DISCOUNT: '房源折扣',
+    FLASH_SALE: "限时折扣",
+    FULL_REDUCTION: "满减",
+    HOMESTAY_DISCOUNT: "房源折扣",
   };
   return map[type] || type;
 }
@@ -252,8 +262,8 @@ function calculatePercent(part: number, total: number) {
 
 const resetFilter = () => {
   dateRange.value = [];
-  filterForm.campaignType = '';
-  filterForm.subsidyBearer = '';
+  filterForm.campaignType = "";
+  filterForm.subsidyBearer = "";
   loadStatistics();
 };
 
@@ -270,7 +280,7 @@ const loadStatistics = async () => {
     const res: any = await getPromotionStatistics(params);
     Object.assign(statistics, res);
   } catch (e) {
-    ElMessage.error('加载统计数据失败');
+    ElMessage.error("加载统计数据失败");
   }
 
   // 加载 ROI 概览

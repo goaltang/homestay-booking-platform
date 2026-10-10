@@ -11,7 +11,12 @@
       <!-- 搜索筛选 -->
       <el-form :model="query" inline class="search-form">
         <el-form-item label="名称">
-          <el-input v-model="query.name" placeholder="模板名称" clearable @keyup.enter="handleSearch" />
+          <el-input
+            v-model="query.name"
+            placeholder="模板名称"
+            clearable
+            @keyup.enter="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" placeholder="全部" clearable>
@@ -57,22 +62,22 @@
         </el-table-column>
         <el-table-column prop="faceValue" label="面值" width="100">
           <template #default="{ row }">
-            {{ row.faceValue ? '¥' + row.faceValue : '-' }}
+            {{ row.faceValue ? "¥" + row.faceValue : "-" }}
           </template>
         </el-table-column>
         <el-table-column prop="discountRate" label="折扣率" width="90">
           <template #default="{ row }">
-            {{ row.discountRate ? (row.discountRate * 10) + '折' : '-' }}
+            {{ row.discountRate ? row.discountRate * 10 + "折" : "-" }}
           </template>
         </el-table-column>
         <el-table-column prop="thresholdAmount" label="使用门槛" width="120">
           <template #default="{ row }">
-            {{ row.thresholdAmount ? '满¥' + row.thresholdAmount : '无门槛' }}
+            {{ row.thresholdAmount ? "满¥" + row.thresholdAmount : "无门槛" }}
           </template>
         </el-table-column>
         <el-table-column prop="totalStock" label="库存" width="100">
           <template #default="{ row }">
-            {{ row.issuedCount || 0 }} / {{ row.totalStock || '∞' }}
+            {{ row.issuedCount || 0 }} / {{ row.totalStock || "∞" }}
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
@@ -83,7 +88,13 @@
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="handleEditWithDate(row)">编辑</el-button>
-            <el-button v-if="row.status === 'DRAFT'" type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button
+              v-if="row.status === 'DRAFT'"
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -99,7 +110,11 @@
     </el-card>
 
     <!-- 创建/编辑模板对话框 -->
-    <el-dialog v-model="dialogVisible" :title="editMode ? '编辑模板' : '创建优惠券模板'" width="600px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editMode ? '编辑模板' : '创建优惠券模板'"
+      width="600px"
+    >
       <el-form ref="formRef" :model="form" label-width="120px">
         <el-form-item label="模板名称" prop="name">
           <el-input v-model="form.name" />
@@ -170,21 +185,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useCrud } from '@/composables/useCrud'
+import { ref, computed } from "vue";
+import { ElMessage } from "element-plus";
+import { useCrud } from "@/composables/useCrud";
 import {
-  getCouponTemplates, createCouponTemplate,
-  updateCouponTemplate, deleteCouponTemplate,
-} from '@/api/marketing'
+  getCouponTemplates,
+  createCouponTemplate,
+  updateCouponTemplate,
+  deleteCouponTemplate,
+} from "@/api/marketing";
 
-const submitLoading = ref(false)
-const dateRange = ref<[Date, Date] | null>(null)
+const submitLoading = ref(false);
+const dateRange = ref<[Date, Date] | null>(null);
 
 const formatLocalDateTime = (date: Date) => {
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-}
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
 
 // 包装列表 API：前端 page 从 1 开始，后端从 0 开始
 const wrappedListApi = async (params: any) => {
@@ -194,48 +211,57 @@ const wrappedListApi = async (params: any) => {
     name: params.name,
     status: params.status,
     subsidyBearer: params.subsidyBearer,
-  })
-  const data = res.data || res
+  });
+  const data = res.data || res;
   return {
     content: data.content || data || [],
     totalElements: data.totalElements || data.total || 0,
-  }
-}
+  };
+};
 
 // 包装提交 API：把 dateRange 转成 ISO 字符串
 const wrapPayload = (formData: any) => {
-  const payload = { ...formData }
+  const payload = { ...formData };
   if (dateRange.value && dateRange.value.length === 2) {
-    payload.validStartAt = formatLocalDateTime(dateRange.value[0])
-    payload.validEndAt = formatLocalDateTime(dateRange.value[1])
+    payload.validStartAt = formatLocalDateTime(dateRange.value[0]);
+    payload.validEndAt = formatLocalDateTime(dateRange.value[1]);
   }
-  return payload
-}
+  return payload;
+};
 
 const wrappedCreateApi = async (data: any) => {
-  return createCouponTemplate(wrapPayload(data))
-}
+  return createCouponTemplate(wrapPayload(data));
+};
 
 const wrappedUpdateApi = async (id: number | string, data: any) => {
-  return updateCouponTemplate(Number(id), wrapPayload(data))
-}
+  return updateCouponTemplate(Number(id), wrapPayload(data));
+};
 
 const {
-  loading, tableData, query, pagination,
-  dialogVisible, editMode, formRef, form,
-  getList, handleAdd, handleDelete, handlePageChange,
+  loading,
+  tableData,
+  query,
+  pagination,
+  dialogVisible,
+  editMode,
+  formRef,
+  form,
+  getList,
+  handleAdd,
+  handleDelete,
+  handlePageChange,
 } = useCrud({
   listApi: wrappedListApi,
   createApi: wrappedCreateApi,
   updateApi: wrappedUpdateApi,
   deleteApi: deleteCouponTemplate,
-  defaultQuery: { name: '', status: '', subsidyBearer: '' },
+  defaultQuery: { name: "", status: "", subsidyBearer: "" },
   defaultForm: {
-    name: '',
-    couponType: 'CASH',
-    subsidyBearer: 'PLATFORM',
-    stackGroup: 'DEFAULT',
-    autoIssueTrigger: 'NONE',
+    name: "",
+    couponType: "CASH",
+    subsidyBearer: "PLATFORM",
+    stackGroup: "DEFAULT",
+    autoIssueTrigger: "NONE",
     isNewUserCoupon: false,
     faceValue: 0,
     discountRate: 0,
@@ -243,78 +269,83 @@ const {
     maxDiscount: 0,
     totalStock: 100,
     perUserLimit: 1,
-    validType: 'FIXED_TIME',
-    status: 'ACTIVE',
-    validStartAt: '',
-    validEndAt: '',
+    validType: "FIXED_TIME",
+    status: "ACTIVE",
+    validStartAt: "",
+    validEndAt: "",
   },
-})
+});
 
 const validateCouponForm = () => {
   if (!form.name?.trim()) {
-    ElMessage.warning('请填写模板名称')
-    return false
+    ElMessage.warning("请填写模板名称");
+    return false;
   }
-  if (form.couponType === 'DISCOUNT') {
-    const rate = Number(form.discountRate)
+  if (form.couponType === "DISCOUNT") {
+    const rate = Number(form.discountRate);
     if (!rate || rate <= 0 || rate >= 1) {
-      ElMessage.warning('折扣率必须大于 0 且小于 1')
-      return false
+      ElMessage.warning("折扣率必须大于 0 且小于 1");
+      return false;
     }
   } else if (!Number(form.faceValue) || Number(form.faceValue) <= 0) {
-    ElMessage.warning('面值必须大于 0')
-    return false
+    ElMessage.warning("面值必须大于 0");
+    return false;
   }
-  if (form.couponType === 'FULL_REDUCTION' && (!Number(form.thresholdAmount) || Number(form.thresholdAmount) <= 0)) {
-    ElMessage.warning('满减券必须设置大于 0 的使用门槛')
-    return false
+  if (
+    form.couponType === "FULL_REDUCTION" &&
+    (!Number(form.thresholdAmount) || Number(form.thresholdAmount) <= 0)
+  ) {
+    ElMessage.warning("满减券必须设置大于 0 的使用门槛");
+    return false;
   }
-  if (form.validType !== 'AFTER_CLAIM_DAYS' && (!dateRange.value || dateRange.value.length !== 2)) {
-    ElMessage.warning('请选择有效期')
-    return false
+  if (form.validType !== "AFTER_CLAIM_DAYS" && (!dateRange.value || dateRange.value.length !== 2)) {
+    ElMessage.warning("请选择有效期");
+    return false;
   }
-  return true
-}
+  return true;
+};
 
 // UI 分页显示（+1）
 const pageUI = computed({
   get: () => pagination.page + 1,
-  set: (val: number) => { pagination.page = val - 1 },
-})
+  set: (val: number) => {
+    pagination.page = val - 1;
+  },
+});
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 0
-  getList()
-}
+  pagination.page = 0;
+  getList();
+};
 
 const clearSearch = () => {
-  query.name = ''
-  query.status = ''
-  query.subsidyBearer = ''
-  pagination.page = 0
-  getList()
-}
+  query.name = "";
+  query.status = "";
+  query.subsidyBearer = "";
+  pagination.page = 0;
+  getList();
+};
 
 // 覆盖 handleAdd，清空日期范围
-const _rawAdd = handleAdd
+const _rawAdd = handleAdd;
 const handleAddClean = () => {
-  _rawAdd()
-  delete (form as any).id
-  dateRange.value = null
-}
+  _rawAdd();
+  delete (form as any).id;
+  dateRange.value = null;
+};
 
 // 覆盖 handleEdit，同步日期范围（编辑逻辑见 handleEditWithDate）
 const handleEditWithDate = (row: any) => {
   // 手动处理编辑
-  editMode.value = true
+  editMode.value = true;
   Object.assign(form, {
     id: row.id,
     name: row.name,
     couponType: row.couponType,
-    subsidyBearer: row.subsidyBearer || 'PLATFORM',
-    stackGroup: row.stackGroup || 'DEFAULT',
-    autoIssueTrigger: row.autoIssueTrigger || 'NONE',
+    subsidyBearer: row.subsidyBearer || "PLATFORM",
+    stackGroup: row.stackGroup || "DEFAULT",
+    autoIssueTrigger: row.autoIssueTrigger || "NONE",
     isNewUserCoupon: row.isNewUserCoupon || false,
     faceValue: row.faceValue || 0,
     discountRate: row.discountRate || 0,
@@ -322,58 +353,67 @@ const handleEditWithDate = (row: any) => {
     maxDiscount: row.maxDiscount || 0,
     totalStock: row.totalStock || 100,
     perUserLimit: row.perUserLimit || 1,
-    validType: row.validType || 'FIXED_TIME',
-    status: row.status || 'ACTIVE',
-  })
+    validType: row.validType || "FIXED_TIME",
+    status: row.status || "ACTIVE",
+  });
   if (row.validStartAt && row.validEndAt) {
-    dateRange.value = [new Date(row.validStartAt), new Date(row.validEndAt)]
+    dateRange.value = [new Date(row.validStartAt), new Date(row.validEndAt)];
   } else {
-    dateRange.value = null
+    dateRange.value = null;
   }
-  dialogVisible.value = true
-}
+  dialogVisible.value = true;
+};
 
 // 覆盖 handleSubmit，增加 submitLoading 和日期范围处理
 const handleSubmit = async () => {
-  if (!formRef.value) return
+  if (!formRef.value) return;
   await formRef.value.validate(async (valid: boolean) => {
-    if (!valid) return
-    if (!validateCouponForm()) return
-    submitLoading.value = true
+    if (!valid) return;
+    if (!validateCouponForm()) return;
+    submitLoading.value = true;
     try {
       if (editMode.value && (form as any).id) {
-        await wrappedUpdateApi((form as any).id, form)
-        ElMessage.success('更新成功')
+        await wrappedUpdateApi((form as any).id, form);
+        ElMessage.success("更新成功");
       } else {
-        await wrappedCreateApi(form)
-        ElMessage.success('创建成功')
+        await wrappedCreateApi(form);
+        ElMessage.success("创建成功");
       }
-      dialogVisible.value = false
-      dateRange.value = null
-      await getList()
+      dialogVisible.value = false;
+      dateRange.value = null;
+      await getList();
     } catch (e: any) {
-      ElMessage.error(e?.response?.data?.error || e?.response?.data || '操作失败')
+      ElMessage.error(e?.response?.data?.error || e?.response?.data || "操作失败");
     } finally {
-      submitLoading.value = false
+      submitLoading.value = false;
     }
-  })
-}
+  });
+};
 
 // 格式化函数
 const formatType = (type: string) => {
-  const map: Record<string, string> = { CASH: '现金券', DISCOUNT: '折扣券', FULL_REDUCTION: '满减券' }
-  return map[type] || type
-}
+  const map: Record<string, string> = {
+    CASH: "现金券",
+    DISCOUNT: "折扣券",
+    FULL_REDUCTION: "满减券",
+  };
+  return map[type] || type;
+};
 
 const formatBearer = (bearer: string) => {
-  const map: Record<string, string> = { PLATFORM: '平台', HOST: '房东', MIXED: '混合' }
-  return map[bearer] || bearer
-}
+  const map: Record<string, string> = { PLATFORM: "平台", HOST: "房东", MIXED: "混合" };
+  return map[bearer] || bearer;
+};
 
 const formatStatusType = (status: string) => {
-  const map: Record<string, any> = { ACTIVE: 'success', PAUSED: 'warning', DRAFT: 'info', EXPIRED: 'danger' }
-  return map[status] || 'info'
-}
+  const map: Record<string, any> = {
+    ACTIVE: "success",
+    PAUSED: "warning",
+    DRAFT: "info",
+    EXPIRED: "danger",
+  };
+  return map[status] || "info";
+};
 </script>
 
 <style scoped>

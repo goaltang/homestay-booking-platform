@@ -22,32 +22,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Notification, Close } from '@element-plus/icons-vue'
-import { getAnnouncements, type Announcement } from '@/api/announcement'
+import { ref, onMounted } from "vue";
+import { Notification, Close } from "@element-plus/icons-vue";
+import { getAnnouncements, type Announcement } from "@/api/announcement";
 
-const showBar = ref(true)
-const announcements = ref<Announcement[]>([])
+const showBar = ref(true);
+const announcements = ref<Announcement[]>([]);
 
 const loadAnnouncements = async () => {
   try {
-    const res = await getAnnouncements({ page: 0, size: 3 })
+    const res = await getAnnouncements({ page: 0, size: 3 });
     if (res.data?.success && Array.isArray(res.data.data)) {
-      announcements.value = res.data.data
+      announcements.value = res.data.data;
     }
   } catch {
     // 静默失败，不影响首页加载
   }
-}
+};
 
 const handleClick = (item: Announcement) => {
   // 可跳转到公告详情页，或弹出对话框
-  console.log('公告点击:', item)
-}
+  console.log("公告点击:", item);
+};
 
 onMounted(() => {
-  loadAnnouncements()
-})
+  loadAnnouncements();
+});
 </script>
 
 <style scoped>

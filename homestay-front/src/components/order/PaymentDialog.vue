@@ -14,16 +14,28 @@
       </template>
       <template v-else-if="paymentQrCode">
         <div class="payment-qr-info">
-          <p class="payment-amount">支付金额: <span>¥{{ totalAmount }}</span></p>
+          <p class="payment-amount">
+            支付金额: <span>¥{{ totalAmount }}</span>
+          </p>
           <div class="qr-code-wrapper">
-            <img v-if="paymentQrCode.startsWith('http')" :src="paymentQrCode" alt="支付二维码" class="qr-image" />
+            <img
+              v-if="paymentQrCode.startsWith('http')"
+              :src="paymentQrCode"
+              alt="支付二维码"
+              class="qr-image"
+            />
             <qrcode-vue v-else :value="paymentQrCode" :size="200" level="H" />
           </div>
           <p class="payment-tip">请使用支付宝扫描二维码完成支付</p>
 
           <div class="mock-pay-section" v-if="isDev">
             <el-divider>测试专用</el-divider>
-            <el-button type="success" @click="handleManualPay" :loading="payLoading" icon="CircleCheck">
+            <el-button
+              type="success"
+              @click="handleManualPay"
+              :loading="payLoading"
+              icon="CircleCheck"
+            >
               模拟直接支付 (调用 payOrder API)
             </el-button>
             <p class="mock-tip">提示：此按钮将显式触发后端支付确认逻辑</p>
@@ -47,7 +59,9 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="emit('update:modelValue', false)">取消支付</el-button>
-        <el-button type="success" @click="checkPaymentStatus" :loading="checkingStatus">已完成支付</el-button>
+        <el-button type="success" @click="checkPaymentStatus" :loading="checkingStatus"
+          >已完成支付</el-button
+        >
       </span>
     </template>
   </el-dialog>

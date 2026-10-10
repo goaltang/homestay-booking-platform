@@ -1,7 +1,12 @@
 import request from "../utils/request";
 import { normalizePageResponse } from "@/api/response";
 
-export function getGroups(params: { page?: number; size?: number; keyword?: string; ownerId?: number }) {
+export function getGroups(params: {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  ownerId?: number;
+}) {
   return request({
     url: "/api/admin/groups",
     method: "get",

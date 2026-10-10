@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { ref } from "vue";
 import type {
   SearchFilters,
   MapViewState,
@@ -6,16 +6,16 @@ import type {
   CurrentSearchContext,
   NormalSearchSnapshot,
   LandmarkCandidate,
-} from '@/composables/useMapSearch';
+} from "@/composables/useMapSearch";
 
-type SearchMode = 'normal' | 'nearby' | 'landmark';
+type SearchMode = "normal" | "nearby" | "landmark";
 
 export function useMapSearchState() {
   // 搜索模式状态机核心状态
-  const searchMode = ref<SearchMode>('normal');
+  const searchMode = ref<SearchMode>("normal");
   const nearbyRadius = ref<number>(5);
   const currentSearchContext = ref<CurrentSearchContext>({
-    mode: 'normal',
+    mode: "normal",
     filters: {},
     viewportSearchEnabled: true,
     mapView: {},
@@ -69,14 +69,14 @@ export function useMapSearchState() {
   };
 
   const getSearchAreaContext = () => {
-    if (searchMode.value === 'nearby' && nearbySearchOrigin.value) {
+    if (searchMode.value === "nearby" && nearbySearchOrigin.value) {
       return {
         center: nearbySearchOrigin.value,
         radiusKm: nearbyRadius.value,
       };
     }
 
-    if (searchMode.value === 'landmark' && activeLandmark.value) {
+    if (searchMode.value === "landmark" && activeLandmark.value) {
       return {
         center: activeLandmark.value,
         radiusKm: nearbyRadius.value,
@@ -112,9 +112,9 @@ export function useMapSearchState() {
       latitude: landmark.latitude,
       longitude: landmark.longitude,
       name: landmark.name,
-      source: 'landmark',
+      source: "landmark",
     };
-    searchMode.value = 'landmark';
+    searchMode.value = "landmark";
     nearbySearchOrigin.value = null;
     useClusterMode.value = false;
     syncSearchContext();
@@ -130,7 +130,7 @@ export function useMapSearchState() {
       syncMapViewState: () => void;
     }
   ) => {
-    searchMode.value = 'normal';
+    searchMode.value = "normal";
     deps?.clearSpecialSearchContext();
     if (options?.filters) {
       filters.value = cloneFilters(options.filters);
@@ -162,12 +162,12 @@ export function useMapSearchState() {
     filters.value = cloneFilters(nextFilters);
     syncSearchContext();
 
-    if (searchMode.value === 'nearby') {
+    if (searchMode.value === "nearby") {
       await executors?.searchNearby({ filters: nextFilters, fitView: options?.fitView });
       return;
     }
 
-    if (searchMode.value === 'landmark' && activeLandmark.value) {
+    if (searchMode.value === "landmark" && activeLandmark.value) {
       await executors?.searchByLandmark(activeLandmark.value, {
         filters: nextFilters,
         fitView: options?.fitView,
@@ -175,8 +175,9 @@ export function useMapSearchState() {
       return;
     }
 
-    searchMode.value = 'normal';
-    filters.value = executors?.applyViewportBounds(cloneFilters(nextFilters)) ?? cloneFilters(nextFilters);
+    searchMode.value = "normal";
+    filters.value =
+      executors?.applyViewportBounds(cloneFilters(nextFilters)) ?? cloneFilters(nextFilters);
     rememberNormalSearchSnapshot();
     syncSearchContext();
     await executors?.loadHomestays({ fitView: options?.fitView ?? true });
@@ -193,26 +194,26 @@ export function useMapSearchState() {
   ) => {
     useClusterMode.value = false;
 
-    if (mode === 'nearby') {
+    if (mode === "nearby") {
       await deps.searchNearby();
       return;
     }
 
-    if (mode === 'landmark') {
+    if (mode === "landmark") {
       if (activeLandmark.value) {
         await deps.searchByLandmark(activeLandmark.value, {
           radius: nearbyRadius.value,
           filters: filters.value,
         });
       } else {
-        searchMode.value = 'landmark';
+        searchMode.value = "landmark";
         deps.clearSearchContextOverlays();
         syncSearchContext();
       }
       return;
     }
 
-    if (mode === 'normal') {
+    if (mode === "normal") {
       await deps.resetSearchMode({ reload: true });
     }
   };

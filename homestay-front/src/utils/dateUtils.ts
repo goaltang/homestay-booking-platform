@@ -19,10 +19,7 @@ export function formatDate(date: Date): string {
  * @param endDate 结束日期
  * @returns 格式化后的日期范围字符串
  */
-export function formatDateRange(
-  startDate: string | Date,
-  endDate: string | Date
-): string {
+export function formatDateRange(startDate: string | Date, endDate: string | Date): string {
   if (!startDate || !endDate) return "";
 
   // 如果输入是字符串，尝试转换为Date对象

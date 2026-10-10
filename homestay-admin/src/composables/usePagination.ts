@@ -1,8 +1,8 @@
-import { ref } from 'vue'
+import { ref } from "vue";
 
 export interface PaginationApiParams {
-  page: number
-  size: number
+  page: number;
+  size: number;
 }
 
 /**
@@ -18,30 +18,30 @@ export interface PaginationApiParams {
  * const { pageIndex, pageSize, currentChange, sizeChange, reset, buildParams } = usePagination(20)
  */
 export function usePagination(initialSize = 20) {
-  const pageIndex = ref(1)
-  const pageSize = ref(initialSize)
+  const pageIndex = ref(1);
+  const pageSize = ref(initialSize);
 
   /** 页码变化（el-pagination @current-change） */
   const currentChange = (val: number) => {
-    pageIndex.value = val
-  }
+    pageIndex.value = val;
+  };
 
   /** 每页条数变化（el-pagination @size-change）：重置回第 1 页 */
   const sizeChange = (val: number) => {
-    pageSize.value = val
-    pageIndex.value = 1
-  }
+    pageSize.value = val;
+    pageIndex.value = 1;
+  };
 
   /** 重置页码为 1 */
   const reset = () => {
-    pageIndex.value = 1
-  }
+    pageIndex.value = 1;
+  };
 
   /** 构建后端 API 参数（page 0-based） */
   const buildParams = (): PaginationApiParams => ({
     page: pageIndex.value - 1,
     size: pageSize.value,
-  })
+  });
 
   return {
     pageIndex,
@@ -50,7 +50,7 @@ export function usePagination(initialSize = 20) {
     sizeChange,
     reset,
     buildParams,
-  }
+  };
 }
 
-export default usePagination
+export default usePagination;

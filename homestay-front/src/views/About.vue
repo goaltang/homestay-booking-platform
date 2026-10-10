@@ -55,7 +55,10 @@
           <p class="section-desc">轻松三步，开启您的特色住宿之旅</p>
         </div>
         <el-steps :active="activeStep" finish-status="success" align-center class="steps">
-          <el-step title="搜索房源" description="浏览精选民宿，设置目的地、入住日期，筛选心仪的住宿" />
+          <el-step
+            title="搜索房源"
+            description="浏览精选民宿，设置目的地、入住日期，筛选心仪的住宿"
+          />
           <el-step title="预订支付" description="选择心仪房源，完成在线预订，支持支付宝安全支付" />
           <el-step title="入住体验" description="收到入住凭证，办理入住，享受温馨舒适的住宿体验" />
         </el-steps>
@@ -173,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from "vue";
 import {
   House,
   User,
@@ -186,25 +189,25 @@ import {
   Bell,
   Message,
   Phone,
-  OfficeBuilding
-} from '@element-plus/icons-vue'
+  OfficeBuilding,
+} from "@element-plus/icons-vue";
 
-const activeStep = ref(0)
-const activeHostStep = ref(0)
+const activeStep = ref(0);
+const activeHostStep = ref(0);
 
 onMounted(() => {
   // 依次展示步骤
-  let step = 0
+  let step = 0;
   const stepInterval = setInterval(() => {
     if (step < 3) {
-      activeStep.value = step
-      activeHostStep.value = step
-      step++
+      activeStep.value = step;
+      activeHostStep.value = step;
+      step++;
     } else {
-      clearInterval(stepInterval)
+      clearInterval(stepInterval);
     }
-  }, 400)
-})
+  }, 400);
+});
 </script>
 
 <style scoped>

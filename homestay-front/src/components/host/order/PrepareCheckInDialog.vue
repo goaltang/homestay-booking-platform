@@ -9,12 +9,16 @@
     <div v-if="order" class="prepare-checkin-content">
       <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px">
         <template #title>
-          <span>为订单 <strong>#{{ order.id }}</strong> 设置入住凭证</span>
+          <span
+            >为订单 <strong>#{{ order.id }}</strong> 设置入住凭证</span
+          >
         </template>
       </el-alert>
 
       <el-descriptions :column="2" border size="small" style="margin-bottom: 20px">
-        <el-descriptions-item label="房源">{{ order.homestayTitle || order.homestayName }}</el-descriptions-item>
+        <el-descriptions-item label="房源">{{
+          order.homestayTitle || order.homestayName
+        }}</el-descriptions-item>
         <el-descriptions-item label="客户">{{ order.guestName }}</el-descriptions-item>
         <el-descriptions-item label="入住日期">{{ order.checkInDate }}</el-descriptions-item>
         <el-descriptions-item label="退房日期">{{ order.checkOutDate }}</el-descriptions-item>

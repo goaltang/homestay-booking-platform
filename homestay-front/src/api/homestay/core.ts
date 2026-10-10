@@ -19,11 +19,7 @@ export function getHomestays(params?: {
     .then((response) => {
       console.log("获取房源列表成功(无版本路径):", response.data);
 
-      if (
-        response.data &&
-        typeof response.data === "object" &&
-        response.data.success === false
-      ) {
+      if (response.data && typeof response.data === "object" && response.data.success === false) {
         console.warn("后端返回错误响应:", response.data);
         const fallbackResponse = {
           ...response,
@@ -57,10 +53,7 @@ export function getHomestayById(id: number, referringCriteria?: string) {
     params: params,
   })
     .then((response) => {
-      console.log(
-        `房源详情获取成功(无版本路径), ID: ${id}, 数据:`,
-        response.data
-      );
+      console.log(`房源详情获取成功(无版本路径), ID: ${id}, 数据:`, response.data);
       return response;
     })
     .catch((error) => {
@@ -96,15 +89,10 @@ export function createHomestay(data: Omit<Homestay, "id">) {
   const cleanData: Record<string, any> = { ...data };
 
   if (cleanData.amenities && Array.isArray(cleanData.amenities)) {
-    if (
-      cleanData.amenities.length > 0 &&
-      typeof cleanData.amenities[0] === "object"
-    ) {
+    if (cleanData.amenities.length > 0 && typeof cleanData.amenities[0] === "object") {
       cleanData.amenities = cleanData.amenities
         .map((amenity: any) =>
-          typeof amenity === "string"
-            ? amenity
-            : amenity.value || amenity.code || ""
+          typeof amenity === "string" ? amenity : amenity.value || amenity.code || ""
         )
         .filter(Boolean);
     }
@@ -151,22 +139,17 @@ export function createHomestay(data: Omit<Homestay, "id">) {
       ) {
         console.log(`设施可能未成功保存，尝试使用addAllAmenitiesToHomestay...`);
 
-        return import("../amenities").then(
-          ({ addAllAmenitiesToHomestayApi }) => {
-            return addAllAmenitiesToHomestayApi(newHomestayId)
-              .then(() => {
-                console.log(`使用addAllAmenitiesToHomestay添加设施成功`);
-                return response;
-              })
-              .catch((error) => {
-                console.error(
-                  `使用addAllAmenitiesToHomestay添加设施失败:`,
-                  error
-                );
-                return response;
-              });
-          }
-        );
+        return import("../amenities").then(({ addAllAmenitiesToHomestayApi }) => {
+          return addAllAmenitiesToHomestayApi(newHomestayId)
+            .then(() => {
+              console.log(`使用addAllAmenitiesToHomestay添加设施成功`);
+              return response;
+            })
+            .catch((error) => {
+              console.error(`使用addAllAmenitiesToHomestay添加设施失败:`, error);
+              return response;
+            });
+        });
       }
 
       return response;
@@ -180,10 +163,7 @@ export function createHomestay(data: Omit<Homestay, "id">) {
 /**
  * 更新房源信息
  */
-export function updateHomestay(
-  id: number,
-  data: Partial<Homestay>
-): Promise<any> {
+export function updateHomestay(id: number, data: Partial<Homestay>): Promise<any> {
   const cleanData: Record<string, any> = { ...data };
 
   if (cleanData.amenities && Array.isArray(cleanData.amenities)) {
@@ -277,11 +257,7 @@ export function deactivateHomestay(id: number) {
 /**
  * 获取已上架房源列表
  */
-export function getActiveHomestays(params?: {
-  page?: number;
-  size?: number;
-  featured?: boolean;
-}) {
+export function getActiveHomestays(params?: { page?: number; size?: number; featured?: boolean }) {
   console.log("获取已上架房源列表，参数:", params);
   return request({
     url: "/api/homestays/status/ACTIVE",

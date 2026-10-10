@@ -231,7 +231,7 @@ const router = createRouter({
       component: () => import("../views/host/HostOnboarding.vue"),
       meta: {
         title: "房东信息完善",
-        requiresAuth: true
+        requiresAuth: true,
       },
     },
     {

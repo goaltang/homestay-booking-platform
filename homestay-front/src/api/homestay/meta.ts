@@ -1,9 +1,6 @@
 import request from "../../utils/request";
 import { ElMessage } from "element-plus";
-import type {
-  HomestayType,
-  AmenityCategoryOption,
-} from "../../types/homestay";
+import type { HomestayType, AmenityCategoryOption } from "../../types/homestay";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 let homestayTypesCache: Promise<HomestayType[]> | null = null;
@@ -31,9 +28,7 @@ export function getHomestayTypes(): Promise<HomestayType[]> {
       if (response && response.data) {
         return response.data as HomestayType[];
       } else {
-        console.warn(
-          "/api/homestay-types response or response.data is missing."
-        );
+        console.warn("/api/homestay-types response or response.data is missing.");
         return [];
       }
     })
@@ -119,9 +114,7 @@ export function getHomestayAmenities() {
 /**
  * 获取按分类分组的可用设施列表
  */
-export function getAvailableAmenitiesGrouped(): Promise<
-  AmenityCategoryOption[]
-> {
+export function getAvailableAmenitiesGrouped(): Promise<AmenityCategoryOption[]> {
   console.log("尝试获取按分类分组的可用设施列表...");
   return request({
     url: "/api/amenities/by-categories",
@@ -138,10 +131,7 @@ export function getAvailableAmenitiesGrouped(): Promise<
         console.log("成功获取按分类分组的可用设施列表:", response.data.data);
         return response.data.data as AmenityCategoryOption[];
       } else {
-        console.warn(
-          "获取按分类分组的设施列表时返回的数据格式不符合预期:",
-          response?.data
-        );
+        console.warn("获取按分类分组的设施列表时返回的数据格式不符合预期:", response?.data);
         return [];
       }
     })

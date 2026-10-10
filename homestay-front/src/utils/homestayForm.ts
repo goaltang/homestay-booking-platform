@@ -27,9 +27,7 @@ export function getHomestayTypeText(
 }
 
 /** 处理设施数据，标准化为 { value, label } 数组 */
-export function processAmenities(
-  amenitiesData: any[]
-): { value: string; label?: string }[] {
+export function processAmenities(amenitiesData: any[]): { value: string; label?: string }[] {
   if (!amenitiesData || !Array.isArray(amenitiesData)) {
     console.warn("设施数据无效，返回空数组");
     return [];

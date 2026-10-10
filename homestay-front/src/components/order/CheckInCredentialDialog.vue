@@ -12,7 +12,7 @@
           {{ credential.checkInMethod === "MANUAL" ? "人工办理" : "自助入住" }}
         </el-descriptions-item>
         <el-descriptions-item label="入住码">
-          <span style="font-weight: bold; font-size: 20px; color: var(--el-color-primary);">
+          <span style="font-weight: bold; font-size: 20px; color: var(--el-color-primary)">
             {{ credential.checkInCode }}
           </span>
         </el-descriptions-item>
@@ -32,7 +32,7 @@
           {{ credential.remark }}
         </el-descriptions-item>
       </el-descriptions>
-      <el-alert type="info" :closable="false" style="margin-top: 15px;">
+      <el-alert type="info" :closable="false" style="margin-top: 15px">
         请保管好您的入住码，到达后可用于自助办理入住。
       </el-alert>
     </div>

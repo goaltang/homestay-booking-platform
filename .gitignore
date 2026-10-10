@@ -66,8 +66,8 @@ tools/code-stats/*.txt
 .qwen/
 .cursor/
 .vscode/
-CLAUDE.md
-QWEN.md
+CLAUDE.local.md
+QWEN.local.md
 
 # --- 绘图文件扩展 ---
 **/*.drawio

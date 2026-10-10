@@ -28,7 +28,11 @@
                 <template v-for="subItem in item.children" :key="subItem.id">
                   <el-sub-menu v-if="subItem.children" :index="subItem.index">
                     <template #title>{{ subItem.title }}</template>
-                    <el-menu-item v-for="three in subItem.children" :key="three.id" :index="three.index">
+                    <el-menu-item
+                      v-for="three in subItem.children"
+                      :key="three.id"
+                      :index="three.index"
+                    >
                       {{ three.title }}
                     </el-menu-item>
                   </el-sub-menu>
@@ -96,63 +100,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { Fold, Expand, CaretBottom } from '@element-plus/icons-vue'
-import { ElMessageBox } from 'element-plus'
-import { useUserStore } from '@/stores/user'
-import { menuData } from '@/config/menu'
-import { routeProgress } from '@/router'
-import type { Menus } from '@/types/menu'
+import { ref, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { Fold, Expand, CaretBottom } from "@element-plus/icons-vue";
+import { ElMessageBox } from "element-plus";
+import { useUserStore } from "@/stores/user";
+import { menuData } from "@/config/menu";
+import { routeProgress } from "@/router";
+import type { Menus } from "@/types/menu";
 
-const route = useRoute()
-const router = useRouter()
-const userStore = useUserStore()
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
 
 // 折叠状态持久化，刷新后保持
-const COLLAPSE_KEY = 'admin_sidebar_collapsed'
-const isCollapse = ref(localStorage.getItem(COLLAPSE_KEY) === '1')
+const COLLAPSE_KEY = "admin_sidebar_collapsed";
+const isCollapse = ref(localStorage.getItem(COLLAPSE_KEY) === "1");
 
-const username = computed(() => userStore.username || '管理员')
+const username = computed(() => userStore.username || "管理员");
 
 const toggleSidebar = () => {
-  isCollapse.value = !isCollapse.value
-  localStorage.setItem(COLLAPSE_KEY, isCollapse.value ? '1' : '0')
-}
+  isCollapse.value = !isCollapse.value;
+  localStorage.setItem(COLLAPSE_KEY, isCollapse.value ? "1" : "0");
+};
 
 // 多级面包屑：从菜单树反查当前路由的层级链（首页 / 一级 / 二级 / 三级）
 const breadcrumbItems = computed(() => {
-  const chain: string[] = []
+  const chain: string[] = [];
   const find = (items: Menus[], path: string): boolean => {
     for (const item of items) {
       if (item.index === path) {
-        chain.push(item.title)
-        return true
+        chain.push(item.title);
+        return true;
       }
       if (item.children) {
-        chain.push(item.title)
-        if (find(item.children, path)) return true
-        chain.pop()
+        chain.push(item.title);
+        if (find(item.children, path)) return true;
+        chain.pop();
       }
     }
-    return false
-  }
-  if (find(menuData, route.path)) return chain
+    return false;
+  };
+  if (find(menuData, route.path)) return chain;
   // 兜底：未匹配到菜单的路由（如编辑页）显示自身标题
-  const title = route.meta?.title as string | undefined
-  return title ? ['首页', title] : ['首页']
-})
+  const title = route.meta?.title as string | undefined;
+  return title ? ["首页", title] : ["首页"];
+});
 
 const handleLogout = () => {
-  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
+  ElMessageBox.confirm("确定要退出登录吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
   }).then(() => {
-    userStore.logout()
-    router.push('/login')
-  })
-}
+    userStore.logout();
+    router.push("/login");
+  });
+};
 </script>
 
 <style scoped lang="scss">

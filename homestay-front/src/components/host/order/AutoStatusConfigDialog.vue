@@ -8,9 +8,15 @@
   >
     <div v-if="config" class="auto-config-content">
       <el-descriptions title="配置信息" :column="2" border>
-        <el-descriptions-item label="自动入住时间">{{ config.autoCheckInTime }}</el-descriptions-item>
-        <el-descriptions-item label="自动完成时间">{{ config.autoCheckOutTime }}</el-descriptions-item>
-        <el-descriptions-item label="错过入住处理时间">{{ config.cancelMissedCheckInTime }}</el-descriptions-item>
+        <el-descriptions-item label="自动入住时间">{{
+          config.autoCheckInTime
+        }}</el-descriptions-item>
+        <el-descriptions-item label="自动完成时间">{{
+          config.autoCheckOutTime
+        }}</el-descriptions-item>
+        <el-descriptions-item label="错过入住处理时间">{{
+          config.cancelMissedCheckInTime
+        }}</el-descriptions-item>
         <el-descriptions-item label="检查频率">{{ config.checkInterval }}</el-descriptions-item>
       </el-descriptions>
 
@@ -18,7 +24,9 @@
 
       <div v-if="config.rules" class="rules-content">
         <el-card v-for="(rule, key) in config.rules" :key="key" class="rule-card" shadow="never">
-          <template #header><span class="rule-title">{{ key }}</span></template>
+          <template #header
+            ><span class="rule-title">{{ key }}</span></template
+          >
           <p class="rule-description">{{ rule }}</p>
         </el-card>
       </div>

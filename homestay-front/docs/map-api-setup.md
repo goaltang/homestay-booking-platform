@@ -29,17 +29,11 @@
 
 ### 4. 配置代码
 
-1. 复制获得的 API Key
-2. 打开 `src/utils/mapService.ts`
-3. 替换以下代码中的 API Key：
+在本地配置或环境变量中设置 Key，不写入源码或提交：
 
-```typescript
-const AMAP_CONFIG = {
-  apiKey: "your-actual-api-key-here", // 🔑 在这里粘贴你的API Key
-  version: "2.0",
-  plugins: ["AMap.Geocoder", "AMap.PlaceSearch"],
-};
-```
+- 前端配置入口：`src/utils/amapConfig.ts`，读取 `VITE_AMAP_API_KEY`、`VITE_AMAP_WEB_SERVICE_KEY` 等环境变量。
+- 地理编码和 POI 建议通过后端 `/api/map/geocode`、`/api/map/poi-suggestions` 调用，后端通过 `AMAP_API_KEY` 环境变量配置高德 Web 服务 Key。
+- 详情页静态地图和周边设施查询仍由浏览器调用高德 Web 服务，使用 `VITE_AMAP_WEB_SERVICE_KEY`。
 
 ## 🚀 功能特性
 
@@ -50,7 +44,7 @@ const AMAP_CONFIG = {
 - 🔍 **周边搜索**：查找附近的设施（地铁站、商场、医院等）
 - 🛡️ **隐私保护**：坐标随机偏移保护用户隐私
 - 📱 **响应式设计**：适配移动端显示
-- 🎭 **模拟模式**：无 API Key 时使用模拟数据
+- **失败反馈**：请求失败时保留已有结果或显示错误
 
 ### 🔮 待实现功能
 
@@ -61,13 +55,14 @@ const AMAP_CONFIG = {
 
 ## 💡 使用说明
 
-### 模拟模式
+### 请求失败
 
-如果还没有申请 API Key，系统会自动进入模拟模式：
+系统不自动进入模拟模式。未配置 Key、服务不可用或定位失败时：
 
-- 显示预设城市坐标
-- 使用占位图作为地图
-- 提供模拟的周边设施数据
+- 首次定位失败显示“地图加载失败”，不生成城市中心或北京坐标。
+- 同一房源重复定位失败时保留已加载的地图；切换房源时重置地图状态。
+- 地图图片加载失败显示错误占位。
+- 周边设施查询失败保留已有结果并显示失败提示；成功的空查询结果则正常清空列表。
 
 ### 生产模式
 

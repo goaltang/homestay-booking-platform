@@ -184,7 +184,5 @@ export function formatDateTime(dateTimeString: string): string {
   const minutes = date.getMinutes();
   return `${year}-${month.toString().padStart(2, "0")}-${day
     .toString()
-    .padStart(2, "0")} ${hours.toString().padStart(2, "0")}:${minutes
-    .toString()
-    .padStart(2, "0")}`;
+    .padStart(2, "0")} ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }

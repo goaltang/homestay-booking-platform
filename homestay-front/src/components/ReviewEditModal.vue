@@ -88,21 +88,19 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          确认修改
-        </el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting"> 确认修改 </el-button>
       </span>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, nextTick } from 'vue';
-import type { FormInstance, FormRules, UploadFile, UploadRawFile } from 'element-plus';
-import { ElMessage } from 'element-plus';
-import { Plus } from '@element-plus/icons-vue';
-import { updateReview, updateReviewImages } from '@/api/review';
-import request from '@/utils/request';
+import { ref, reactive, watch, nextTick } from "vue";
+import type { FormInstance, FormRules, UploadFile, UploadRawFile } from "element-plus";
+import { ElMessage } from "element-plus";
+import { Plus } from "@element-plus/icons-vue";
+import { updateReview, updateReviewImages } from "@/api/review";
+import request from "@/utils/request";
 
 // 定义评价数据接口
 interface ReviewData {
@@ -126,8 +124,8 @@ const props = defineProps<{
 
 // 定义 emits
 const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void;
-  (e: 'submitted', updatedReview: ReviewData): void;
+  (e: "update:visible", value: boolean): void;
+  (e: "submitted", updatedReview: ReviewData): void;
 }>();
 
 const editFormRef = ref<FormInstance>();
@@ -140,7 +138,7 @@ const imageFileList = ref<UploadFile[]>([]);
 const formData = reactive<ReviewData>({
   id: 0,
   rating: 0,
-  content: '',
+  content: "",
   cleanlinessRating: 0,
   accuracyRating: 0,
   communicationRating: 0,
@@ -151,48 +149,55 @@ const formData = reactive<ReviewData>({
 
 // 表单验证规则
 const formRules = reactive<FormRules>({
-  rating: [{ required: true, message: '请选择评分', trigger: 'change' }],
-  content: [{ required: true, message: '请输入评价内容', trigger: 'blur' }],
+  rating: [{ required: true, message: "请选择评分", trigger: "change" }],
+  content: [{ required: true, message: "请输入评价内容", trigger: "blur" }],
 });
 
 // 监听 props.reviewData 变化，填充表单
-watch(() => props.reviewData, (newVal) => {
-  if (newVal && props.visible) {
-    nextTick(() => {
-      editFormRef.value?.resetFields();
-      formData.id = newVal.id;
-      formData.rating = newVal.rating;
-      formData.content = newVal.content;
-      formData.cleanlinessRating = newVal.cleanlinessRating || 0;
-      formData.accuracyRating = newVal.accuracyRating || 0;
-      formData.communicationRating = newVal.communicationRating || 0;
-      formData.locationRating = newVal.locationRating || 0;
-      formData.checkInRating = newVal.checkInRating || 0;
-      formData.valueRating = newVal.valueRating || 0;
+watch(
+  () => props.reviewData,
+  (newVal) => {
+    if (newVal && props.visible) {
+      nextTick(() => {
+        editFormRef.value?.resetFields();
+        formData.id = newVal.id;
+        formData.rating = newVal.rating;
+        formData.content = newVal.content;
+        formData.cleanlinessRating = newVal.cleanlinessRating || 0;
+        formData.accuracyRating = newVal.accuracyRating || 0;
+        formData.communicationRating = newVal.communicationRating || 0;
+        formData.locationRating = newVal.locationRating || 0;
+        formData.checkInRating = newVal.checkInRating || 0;
+        formData.valueRating = newVal.valueRating || 0;
 
-      // 初始化图片列表
-      imageFileList.value = (newVal.images || []).map((url, index) => ({
-        name: `image-${index}`,
-        url: url,
-        uid: Date.now() + index,
-      } as UploadFile));
-    });
-  } else {
-    nextTick(() => {
-      editFormRef.value?.resetFields();
-      formData.id = 0;
-      formData.rating = 0;
-      formData.content = '';
-      formData.cleanlinessRating = 0;
-      formData.accuracyRating = 0;
-      formData.communicationRating = 0;
-      formData.locationRating = 0;
-      formData.checkInRating = 0;
-      formData.valueRating = 0;
-      imageFileList.value = [];
-    });
-  }
-}, { immediate: true, deep: true });
+        // 初始化图片列表
+        imageFileList.value = (newVal.images || []).map(
+          (url, index) =>
+            ({
+              name: `image-${index}`,
+              url: url,
+              uid: Date.now() + index,
+            }) as UploadFile
+        );
+      });
+    } else {
+      nextTick(() => {
+        editFormRef.value?.resetFields();
+        formData.id = 0;
+        formData.rating = 0;
+        formData.content = "";
+        formData.cleanlinessRating = 0;
+        formData.accuracyRating = 0;
+        formData.communicationRating = 0;
+        formData.locationRating = 0;
+        formData.checkInRating = 0;
+        formData.valueRating = 0;
+        imageFileList.value = [];
+      });
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 // 处理图片选择
 const handleImageChange = (_file: UploadFile, files: UploadFile[]) => {
@@ -207,10 +212,10 @@ const handleImageRemove = (_file: UploadFile, files: UploadFile[]) => {
 // 上传图片并获取URL
 const uploadImages = async (): Promise<string[]> => {
   const existingUrls = imageFileList.value
-    .filter(f => f.url && !f.url.startsWith('blob:'))
-    .map(f => f.url!);
+    .filter((f) => f.url && !f.url.startsWith("blob:"))
+    .map((f) => f.url!);
 
-  const newFiles = imageFileList.value.filter(f => !f.url || f.url.startsWith('blob:'));
+  const newFiles = imageFileList.value.filter((f) => !f.url || f.url.startsWith("blob:"));
   if (newFiles.length === 0) {
     return existingUrls;
   }
@@ -222,18 +227,18 @@ const uploadImages = async (): Promise<string[]> => {
 
     try {
       const formDataUpload = new FormData();
-      formDataUpload.append('file', rawFile);
+      formDataUpload.append("file", rawFile);
       const response = await request({
-        url: '/api/files/upload',
-        method: 'post',
+        url: "/api/files/upload",
+        method: "post",
         data: formDataUpload,
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
       if (response.data?.url) {
         urls.push(response.data.url);
       }
     } catch (error) {
-      console.error('图片上传失败:', error);
+      console.error("图片上传失败:", error);
     }
   }
   return [...existingUrls, ...urls];
@@ -241,7 +246,7 @@ const uploadImages = async (): Promise<string[]> => {
 
 // 关闭弹窗
 const handleClose = () => {
-  emit('update:visible', false);
+  emit("update:visible", false);
 };
 
 // 提交表单
@@ -257,32 +262,40 @@ const handleSubmit = async () => {
           rating: formData.rating,
           content: formData.content,
         };
-        if (formData.cleanlinessRating && formData.cleanlinessRating > 0) payload.cleanlinessRating = formData.cleanlinessRating;
-        if (formData.accuracyRating && formData.accuracyRating > 0) payload.accuracyRating = formData.accuracyRating;
-        if (formData.communicationRating && formData.communicationRating > 0) payload.communicationRating = formData.communicationRating;
-        if (formData.locationRating && formData.locationRating > 0) payload.locationRating = formData.locationRating;
-        if (formData.checkInRating && formData.checkInRating > 0) payload.checkInRating = formData.checkInRating;
-        if (formData.valueRating && formData.valueRating > 0) payload.valueRating = formData.valueRating;
+        if (formData.cleanlinessRating && formData.cleanlinessRating > 0)
+          payload.cleanlinessRating = formData.cleanlinessRating;
+        if (formData.accuracyRating && formData.accuracyRating > 0)
+          payload.accuracyRating = formData.accuracyRating;
+        if (formData.communicationRating && formData.communicationRating > 0)
+          payload.communicationRating = formData.communicationRating;
+        if (formData.locationRating && formData.locationRating > 0)
+          payload.locationRating = formData.locationRating;
+        if (formData.checkInRating && formData.checkInRating > 0)
+          payload.checkInRating = formData.checkInRating;
+        if (formData.valueRating && formData.valueRating > 0)
+          payload.valueRating = formData.valueRating;
         await updateReview(formData.id, payload);
 
         // 2. 更新评价图片
         const allImageUrls = await uploadImages();
         if (allImageUrls.length < imageFileList.value.length) {
-            const failedCount = imageFileList.value.length - allImageUrls.length;
-            ElMessage.warning(`图片上传部分失败，成功 ${allImageUrls.length} 张，失败 ${failedCount} 张`);
+          const failedCount = imageFileList.value.length - allImageUrls.length;
+          ElMessage.warning(
+            `图片上传部分失败，成功 ${allImageUrls.length} 张，失败 ${failedCount} 张`
+          );
         }
         await updateReviewImages(formData.id, allImageUrls);
 
-        ElMessage.success('评价修改成功');
-        emit('submitted', { ...formData, images: allImageUrls });
+        ElMessage.success("评价修改成功");
+        emit("submitted", { ...formData, images: allImageUrls });
         handleClose();
       } catch (error: any) {
-        console.error('修改评价失败:', error);
+        console.error("修改评价失败:", error);
       } finally {
         submitting.value = false;
       }
     } else {
-      console.log('表单验证失败');
+      console.log("表单验证失败");
     }
   });
 };

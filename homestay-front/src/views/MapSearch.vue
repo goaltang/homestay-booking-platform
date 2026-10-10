@@ -26,8 +26,12 @@
                 <LocationInformation v-else />
               </el-icon>
               <div class="suggestion-content">
-                <div class="suggestion-name" :class="{'is-current': item.type === 'current'}">{{ item.name }}</div>
-                <div v-if="item.secondaryText" class="suggestion-desc">{{ item.secondaryText }}</div>
+                <div class="suggestion-name" :class="{ 'is-current': item.type === 'current' }">
+                  {{ item.name }}
+                </div>
+                <div v-if="item.secondaryText" class="suggestion-desc">
+                  {{ item.secondaryText }}
+                </div>
               </div>
             </div>
           </template>
@@ -63,14 +67,20 @@
       <div class="filter-item">
         <el-popover placement="bottom" :width="240" trigger="click">
           <template #reference>
-            <el-button class="filter-btn" :class="{'is-active': guestCount}">
-              {{ guestCount ? `${guestCount}位房客` : '添加房客' }}
+            <el-button class="filter-btn" :class="{ 'is-active': guestCount }">
+              {{ guestCount ? `${guestCount}位房客` : "添加房客" }}
             </el-button>
           </template>
           <div class="popover-content">
             <div class="popover-row">
               <span>入住人数</span>
-              <el-input-number v-model="guestCount" :min="1" :max="20" @change="triggerAutoSearch" size="small" />
+              <el-input-number
+                v-model="guestCount"
+                :min="1"
+                :max="20"
+                @change="triggerAutoSearch"
+                size="small"
+              />
             </div>
           </div>
         </el-popover>
@@ -79,28 +89,54 @@
       <div class="filter-item">
         <el-popover placement="bottom" :width="320" trigger="click" @hide="triggerAutoSearch">
           <template #reference>
-            <el-button class="filter-btn" :class="{'is-active': minPrice || maxPrice}">
+            <el-button class="filter-btn" :class="{ 'is-active': minPrice || maxPrice }">
               {{ priceLabel }}
             </el-button>
           </template>
           <div class="popover-content">
             <div class="price-range-inputs">
-              <el-input-number v-model="minPrice" :min="0" :max="minPriceUpperBound" placeholder="最低价" :controls="false" />
+              <el-input-number
+                v-model="minPrice"
+                :min="0"
+                :max="minPriceUpperBound"
+                placeholder="最低价"
+                :controls="false"
+              />
               <span class="range-sep">-</span>
-              <el-input-number v-model="maxPrice" :min="maxPriceLowerBound" :max="99999" placeholder="最高价" :controls="false" />
+              <el-input-number
+                v-model="maxPrice"
+                :min="maxPriceLowerBound"
+                :max="99999"
+                placeholder="最高价"
+                :controls="false"
+              />
             </div>
-            <div style="margin-top: 12px; text-align: right;">
-              <el-button size="small" text @click="minPrice = undefined; maxPrice = undefined;">重置</el-button>
+            <div style="margin-top: 12px; text-align: right">
+              <el-button
+                size="small"
+                text
+                @click="
+                  minPrice = undefined;
+                  maxPrice = undefined;
+                "
+                >重置</el-button
+              >
               <el-button size="small" type="primary" @click="triggerAutoSearch">确定</el-button>
             </div>
           </div>
         </el-popover>
       </div>
-      
-      <el-button v-if="hasActiveFilters" text @click="handleReset" class="clear-btn">清除条件</el-button>
+
+      <el-button v-if="hasActiveFilters" text @click="handleReset" class="clear-btn"
+        >清除条件</el-button
+      >
 
       <div class="top-actions">
-        <el-switch v-model="viewportSearchEnabled" active-text="仅看当前视野" @change="handleViewportModeChange" />
+        <el-switch
+          v-model="viewportSearchEnabled"
+          active-text="仅看当前视野"
+          @change="handleViewportModeChange"
+        />
         <el-tooltip content="使用聚合模式查看房源分布" placement="bottom">
           <el-button
             :type="useClusterMode ? 'primary' : 'default'"
@@ -121,26 +157,31 @@
     </div>
 
     <div class="main-content">
-      <div class="left-list" :class="{'is-mobile-expanded': isMobileListExpanded, 'dragging': isMobileListDragging}">
-        <div class="mobile-drawer-handle"
+      <div
+        class="left-list"
+        :class="{ 'is-mobile-expanded': isMobileListExpanded, dragging: isMobileListDragging }"
+      >
+        <div
+          class="mobile-drawer-handle"
           @touchstart="onHandleTouchStart"
           @touchmove.prevent="onHandleTouchMove"
-          @touchend="onHandleTouchEnd">
+          @touchend="onHandleTouchEnd"
+        >
           <div class="handle-bar"></div>
           <span class="handle-text">{{ homestays.length }} 个房源</span>
         </div>
 
         <div v-if="isLoading && homestays.length === 0" class="list-wrapper skeleton-wrapper">
           <div class="list-header">
-            <span class="count-text skeleton-text" style="width: 120px;"></span>
+            <span class="count-text skeleton-text" style="width: 120px"></span>
           </div>
           <div class="list-scroll">
             <div v-for="n in 4" :key="n" class="skeleton-card">
               <div class="skeleton-image"></div>
               <div class="skeleton-body">
-                <div class="skeleton-line" style="width: 70%;"></div>
-                <div class="skeleton-line" style="width: 50%;"></div>
-                <div class="skeleton-line" style="width: 40%;"></div>
+                <div class="skeleton-line" style="width: 70%"></div>
+                <div class="skeleton-line" style="width: 50%"></div>
+                <div class="skeleton-line" style="width: 40%"></div>
               </div>
             </div>
           </div>
@@ -155,9 +196,11 @@
         <div v-else-if="homestays.length === 0" class="state-container empty-state">
           <el-icon :size="48" color="#ccc"><LocationInformation /></el-icon>
           <p>暂无符合条件的房源</p>
-          <p class="hint-text" style="color: #64748b;">请尝试缩放地图或调整筛选条件</p>
+          <p class="hint-text" style="color: #64748b">请尝试缩放地图或调整筛选条件</p>
           <div class="empty-actions">
-            <el-button type="primary" plain size="small" @click="handleReset">清除所有筛选</el-button>
+            <el-button type="primary" plain size="small" @click="handleReset"
+              >清除所有筛选</el-button
+            >
             <el-button size="small" @click="handleExitSpecialSearch">查看全城房源</el-button>
           </div>
         </div>
@@ -182,7 +225,14 @@
       </div>
 
       <div ref="mapContainerRef" class="right-map">
-        <div v-if="isMapReady && !mapError" class="map-locate-btn" @click="handleUseCurrentLocation" aria-label="定位到当前位置" role="button" tabindex="0">
+        <div
+          v-if="isMapReady && !mapError"
+          class="map-locate-btn"
+          @click="handleUseCurrentLocation"
+          aria-label="定位到当前位置"
+          role="button"
+          tabindex="0"
+        >
           <el-icon><Location /></el-icon>
         </div>
 
@@ -191,7 +241,14 @@
             <span class="map-context-card__title">{{ mapSearchContextTitle }}</span>
             <div class="radius-control">
               <span class="radius-label">半径 {{ nearbyRadius }}km</span>
-              <el-slider v-model="nearbyRadius" :min="1" :max="20" :step="1" style="width: 120px;" @change="handleRadiusChange" />
+              <el-slider
+                v-model="nearbyRadius"
+                :min="1"
+                :max="20"
+                :step="1"
+                style="width: 120px"
+                @change="handleRadiusChange"
+              />
             </div>
           </div>
           <el-button size="small" text @click="handleExitSpecialSearch">退出</el-button>
@@ -209,7 +266,13 @@
       </div>
     </div>
 
-    <el-drawer v-model="isMobileFilterOpen" direction="btt" size="70%" :with-header="false" class="mobile-filter-drawer">
+    <el-drawer
+      v-model="isMobileFilterOpen"
+      direction="btt"
+      size="70%"
+      :with-header="false"
+      class="mobile-filter-drawer"
+    >
       <div class="mobile-filter-content">
         <h3 class="drawer-title">筛选条件</h3>
         <div class="mobile-filter-section">
@@ -220,33 +283,75 @@
             :props="{ checkStrictly: true, emitPath: true }"
             placeholder="选择地区"
             clearable
-            style="width: 100%;"
+            style="width: 100%"
             @change="handleRegionChange"
           />
         </div>
         <div class="mobile-filter-section">
           <label class="section-label">入住日期</label>
-          <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="入住日期" end-placeholder="退房日期" value-format="YYYY-MM-DD" :disabled-date="disabledDate" style="width: 100%;" @change="handleDateChange" />
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="入住日期"
+            end-placeholder="退房日期"
+            value-format="YYYY-MM-DD"
+            :disabled-date="disabledDate"
+            style="width: 100%"
+            @change="handleDateChange"
+          />
         </div>
         <div class="mobile-filter-section">
           <label class="section-label">入住人数</label>
-          <el-input-number v-model="guestCount" :min="1" :max="20" @change="triggerAutoSearch" style="width: 100%;" />
+          <el-input-number
+            v-model="guestCount"
+            :min="1"
+            :max="20"
+            @change="triggerAutoSearch"
+            style="width: 100%"
+          />
         </div>
         <div class="mobile-filter-section">
           <label class="section-label">价格区间</label>
           <div class="price-range-inputs">
-            <el-input-number v-model="minPrice" :min="0" :max="minPriceUpperBound" placeholder="最低价" @change="triggerAutoSearch" :controls="false" />
+            <el-input-number
+              v-model="minPrice"
+              :min="0"
+              :max="minPriceUpperBound"
+              placeholder="最低价"
+              @change="triggerAutoSearch"
+              :controls="false"
+            />
             <span class="range-sep">-</span>
-            <el-input-number v-model="maxPrice" :min="maxPriceLowerBound" :max="99999" placeholder="最高价" @change="triggerAutoSearch" :controls="false" />
+            <el-input-number
+              v-model="maxPrice"
+              :min="maxPriceLowerBound"
+              :max="99999"
+              placeholder="最高价"
+              @change="triggerAutoSearch"
+              :controls="false"
+            />
           </div>
         </div>
         <div class="mobile-filter-section switch-section">
-          <el-switch v-model="viewportSearchEnabled" active-text="仅看当前视野" @change="handleViewportModeChange" />
-          <el-button :type="useClusterMode ? 'primary' : 'default'" size="small" :icon="Grid" @click="handleToggleCluster">聚合</el-button>
+          <el-switch
+            v-model="viewportSearchEnabled"
+            active-text="仅看当前视野"
+            @change="handleViewportModeChange"
+          />
+          <el-button
+            :type="useClusterMode ? 'primary' : 'default'"
+            size="small"
+            :icon="Grid"
+            @click="handleToggleCluster"
+            >聚合</el-button
+          >
         </div>
         <div class="mobile-filter-footer">
           <el-button @click="handleReset">清除条件</el-button>
-          <el-button type="primary" @click="isMobileFilterOpen = false">查看 {{ homestays.length }} 个房源</el-button>
+          <el-button type="primary" @click="isMobileFilterOpen = false"
+            >查看 {{ homestays.length }} 个房源</el-button
+          >
         </div>
       </div>
     </el-drawer>
@@ -254,17 +359,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { Grid, Loading, Location, LocationInformation, Search, Filter } from '@element-plus/icons-vue';
-import { searchAmapPoiSuggestions } from '@/utils/mapService';
-import { useMapSearch, type MapHomestay } from '@/composables/useMapSearch';
-import { useMapSearchQuerySync, type QuerySyncFormState, type HydratedQueryState } from '@/composables/useMapSearchQuerySync';
-import MapHomestayCard from '@/components/homestay/MapHomestayCard.vue';
-import { trackClick, trackSearch } from '@/api/tracking';
-import { regionData } from 'element-china-area-data';
-import { debounce } from 'lodash-es';
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import {
+  Grid,
+  Loading,
+  Location,
+  LocationInformation,
+  Search,
+  Filter,
+} from "@element-plus/icons-vue";
+import { searchAmapPoiSuggestions } from "@/utils/mapService";
+import { useMapSearch, type MapHomestay } from "@/composables/useMapSearch";
+import {
+  useMapSearchQuerySync,
+  type QuerySyncFormState,
+  type HydratedQueryState,
+} from "@/composables/useMapSearchQuerySync";
+import MapHomestayCard from "@/components/homestay/MapHomestayCard.vue";
+import { trackClick, trackSearch } from "@/api/tracking";
+import { regionData } from "element-china-area-data";
+import { debounce } from "lodash-es";
 
 const router = useRouter();
 const route = useRoute();
@@ -313,7 +429,7 @@ const guestCount = ref<number | undefined>(undefined);
 const checkInDate = ref<string | undefined>(undefined);
 const checkOutDate = ref<string | undefined>(undefined);
 
-const globalSearchKeyword = ref('');
+const globalSearchKeyword = ref("");
 const isSearchingSuggestions = ref(false);
 const isMobileListExpanded = ref(false);
 const isMobileFilterOpen = ref(false);
@@ -326,11 +442,7 @@ const isLandmarkDirty = ref(false);
 const hasRestoredRouteState = ref(false);
 const skipNextRouteReplay = ref(false);
 
-const {
-  hydrateFiltersFromQuery,
-  getMapViewFromQuery,
-  syncQueryFromForm,
-} = useMapSearchQuerySync({
+const { hydrateFiltersFromQuery, getMapViewFromQuery, syncQueryFromForm } = useMapSearchQuerySync({
   router,
   route,
   skipNextRouteReplay,
@@ -343,40 +455,51 @@ const priceLabel = computed(() => {
   if (minPrice.value && maxPrice.value) return `¥${minPrice.value} - ¥${maxPrice.value}`;
   if (minPrice.value) return `¥${minPrice.value} 起`;
   if (maxPrice.value) return `¥${maxPrice.value} 以内`;
-  return '价格区间';
+  return "价格区间";
 });
 
 const hasActiveFilters = computed(() => {
-  return !!(globalSearchKeyword.value || dateRange.value || guestCount.value || minPrice.value || maxPrice.value || selectedRegion.value.length);
+  return !!(
+    globalSearchKeyword.value ||
+    dateRange.value ||
+    guestCount.value ||
+    minPrice.value ||
+    maxPrice.value ||
+    selectedRegion.value.length
+  );
 });
 
-const resolvedLandmarkName = computed(() => (resolvedLandmark.value?.name ?? '').trim());
-const currentAppliedLandmarkName = computed(() => activeLandmark.value?.name?.trim() || resolvedLandmarkName.value);
+const resolvedLandmarkName = computed(() => (resolvedLandmark.value?.name ?? "").trim());
+const currentAppliedLandmarkName = computed(
+  () => activeLandmark.value?.name?.trim() || resolvedLandmarkName.value
+);
 const hasResolvedLandmark = computed(
   () =>
-    landmarkLat.value !== undefined
-    && landmarkLng.value !== undefined
-    && Boolean(resolvedLandmarkName.value)
+    landmarkLat.value !== undefined &&
+    landmarkLng.value !== undefined &&
+    Boolean(resolvedLandmarkName.value)
 );
 
 const showMapSearchContextCard = computed(() => {
-  return currentSearchContext.value.mode === 'nearby' || currentSearchContext.value.mode === 'landmark';
+  return (
+    currentSearchContext.value.mode === "nearby" || currentSearchContext.value.mode === "landmark"
+  );
 });
 
 const mapSearchContextTitle = computed(() => {
-  if (currentSearchContext.value.mode === 'landmark') {
+  if (currentSearchContext.value.mode === "landmark") {
     return currentAppliedLandmarkName.value
       ? `地标：${currentAppliedLandmarkName.value}`
-      : '地标周边搜索';
+      : "地标周边搜索";
   }
 
-  if (currentSearchContext.value.mode === 'nearby') {
-    return currentSearchContext.value.nearbyOrigin?.source === 'user'
-      ? '当前位置附近'
-      : '地图中心附近';
+  if (currentSearchContext.value.mode === "nearby") {
+    return currentSearchContext.value.nearbyOrigin?.source === "user"
+      ? "当前位置附近"
+      : "地图中心附近";
   }
 
-  return '';
+  return "";
 });
 
 const buildFiltersFromForm = () => {
@@ -400,15 +523,15 @@ const buildFiltersFromForm = () => {
 
 const getBackendRegionCode = (
   code: string | undefined,
-  level: 'province' | 'city' | 'district'
+  level: "province" | "city" | "district"
 ) => {
   if (!code) return undefined;
 
-  if (level === 'province' && code.length === 2) {
+  if (level === "province" && code.length === 2) {
     return `${code}0000`;
   }
 
-  if (level === 'city' && code.length === 4) {
+  if (level === "city" && code.length === 4) {
     return `${code}00`;
   }
 
@@ -417,9 +540,9 @@ const getBackendRegionCode = (
 
 const getBackendRegionCodes = (region: string[]) => {
   return [
-    getBackendRegionCode(region[0], 'province'),
-    getBackendRegionCode(region[1], 'city'),
-    getBackendRegionCode(region[2], 'district'),
+    getBackendRegionCode(region[0], "province"),
+    getBackendRegionCode(region[1], "city"),
+    getBackendRegionCode(region[2], "district"),
   ];
 };
 
@@ -488,7 +611,7 @@ const applyRouteStateFromQuery = async () => {
     setMapView(restoredMapView);
   }
 
-  if (searchMode.value === 'landmark' && hasResolvedLandmark.value) {
+  if (searchMode.value === "landmark" && hasResolvedLandmark.value) {
     await searchByLandmark(
       {
         latitude: landmarkLat.value!,
@@ -504,7 +627,7 @@ const applyRouteStateFromQuery = async () => {
     return;
   }
 
-  if (searchMode.value === 'nearby') {
+  if (searchMode.value === "nearby") {
     await searchNearby({
       radius: nearbyRadius.value,
       filters: nextFilters,
@@ -542,7 +665,7 @@ const onHandleTouchMove = (e: TouchEvent) => {
   const deltaY = e.touches[0].clientY - dragStartY;
   let newTranslateY = dragStartTranslateY + deltaY;
   newTranslateY = Math.max(0, Math.min(newTranslateY, dragListHeight - 60));
-  const listEl = document.querySelector('.left-list') as HTMLElement | null;
+  const listEl = document.querySelector(".left-list") as HTMLElement | null;
   if (listEl) {
     listEl.style.transform = `translateY(${newTranslateY}px)`;
   }
@@ -552,9 +675,9 @@ const onHandleTouchEnd = (e: TouchEvent) => {
   if (!isMobileListDragging.value) return;
   isMobileListDragging.value = false;
   const deltaY = e.changedTouches[0].clientY - dragStartY;
-  const listEl = document.querySelector('.left-list') as HTMLElement | null;
+  const listEl = document.querySelector(".left-list") as HTMLElement | null;
   if (listEl) {
-    listEl.style.transform = '';
+    listEl.style.transform = "";
   }
   const threshold = (dragListHeight - 60) * 0.25;
   if (isMobileListExpanded.value) {
@@ -580,24 +703,28 @@ const triggerAutoSearch = debounce(async () => {
   const filters = buildFiltersFromForm();
 
   // 保持当前搜索模式，仅更新筛选条件
-  if (searchMode.value === 'landmark' && hasResolvedLandmark.value) {
+  if (searchMode.value === "landmark" && hasResolvedLandmark.value) {
     await searchByLandmark(
-      { latitude: landmarkLat.value!, longitude: landmarkLng.value!, name: resolvedLandmarkName.value || undefined },
+      {
+        latitude: landmarkLat.value!,
+        longitude: landmarkLng.value!,
+        name: resolvedLandmarkName.value || undefined,
+      },
       { radius: nearbyRadius.value, filters, fitView: false }
     );
-    await syncQueryFromForm(buildQueryState(), 'push', { skipRouteReplay: true });
+    await syncQueryFromForm(buildQueryState(), "push", { skipRouteReplay: true });
     return;
   }
 
-  if (searchMode.value === 'nearby') {
+  if (searchMode.value === "nearby") {
     await searchNearby({ radius: nearbyRadius.value, filters, fitView: false });
-    await syncQueryFromForm(buildQueryState(), 'push', { skipRouteReplay: true });
+    await syncQueryFromForm(buildQueryState(), "push", { skipRouteReplay: true });
     return;
   }
 
   // normal 模式
   await resetSearchMode({ filters });
-  const changed = await syncQueryFromForm(buildQueryState(), 'push');
+  const changed = await syncQueryFromForm(buildQueryState(), "push");
   if (!changed) {
     await applyRouteStateFromQuery();
   }
@@ -614,7 +741,7 @@ const handleRegionChange = () => {
 const queryGlobalSuggestions = async (queryString: string, callback: any) => {
   const keyword = queryString.trim();
   if (!keyword) {
-    callback([{ type: 'current', name: '我的当前位置' }]);
+    callback([{ type: "current", name: "我的当前位置" }]);
     return;
   }
   isSearchingSuggestions.value = true;
@@ -623,8 +750,8 @@ const queryGlobalSuggestions = async (queryString: string, callback: any) => {
     const suggestions = await searchAmapPoiSuggestions(keyword, { city, limit: 10 });
     const options = suggestions.map((s: any) => ({
       ...s,
-      type: 'landmark',
-      secondaryText: [s.district, s.address].filter(Boolean).join(' · ')
+      type: "landmark",
+      secondaryText: [s.district, s.address].filter(Boolean).join(" · "),
     }));
     callback(options);
   } catch (e) {
@@ -635,33 +762,33 @@ const queryGlobalSuggestions = async (queryString: string, callback: any) => {
 };
 
 const handleSelectSuggestion = async (item: any) => {
-  if (item.type === 'current') {
-    globalSearchKeyword.value = '我的当前位置';
+  if (item.type === "current") {
+    globalSearchKeyword.value = "我的当前位置";
     await handleUseCurrentLocation();
     return;
   }
-  
+
   globalSearchKeyword.value = item.name;
   trackSearch({
     keyword: item.name,
-    cityCode: getLandmarkSuggestionCity()
+    cityCode: getLandmarkSuggestionCity(),
   });
   landmarkLat.value = item.latitude;
   landmarkLng.value = item.longitude;
   resolvedLandmark.value = { ...item, name: item.name, secondaryText: item.secondaryText };
-  
+
   useClusterMode.value = false;
   await searchByLandmark(
     { latitude: item.latitude, longitude: item.longitude, name: item.name },
     { radius: nearbyRadius.value, filters: buildFiltersFromForm(), fitView: true }
   );
-  await syncQueryFromForm(buildQueryState(), 'push', { skipRouteReplay: true });
+  await syncQueryFromForm(buildQueryState(), "push", { skipRouteReplay: true });
 };
 
 const handleClearSearch = () => {
-  globalSearchKeyword.value = '';
+  globalSearchKeyword.value = "";
   clearResolvedLandmark();
-  searchMode.value = 'normal';
+  searchMode.value = "normal";
   triggerAutoSearch();
 };
 
@@ -669,22 +796,26 @@ const handleSearchEnter = async () => {
   const keyword = globalSearchKeyword.value.trim();
   if (!keyword) return;
 
-  if (keyword === '我的当前位置') {
+  if (keyword === "我的当前位置") {
     await handleUseCurrentLocation();
     return;
   }
 
   // 如果当前输入匹配已解析的地标，仅刷新筛选条件
-  if (searchMode.value === 'landmark' && resolvedLandmarkName.value === keyword && hasResolvedLandmark.value) {
+  if (
+    searchMode.value === "landmark" &&
+    resolvedLandmarkName.value === keyword &&
+    hasResolvedLandmark.value
+  ) {
     trackSearch({
       keyword,
-      cityCode: getLandmarkSuggestionCity()
+      cityCode: getLandmarkSuggestionCity(),
     });
     await searchByLandmark(
       { latitude: landmarkLat.value!, longitude: landmarkLng.value!, name: keyword },
       { radius: nearbyRadius.value, filters: buildFiltersFromForm(), fitView: true }
     );
-    await syncQueryFromForm(buildQueryState(), 'push', { skipRouteReplay: true });
+    await syncQueryFromForm(buildQueryState(), "push", { skipRouteReplay: true });
     return;
   }
 
@@ -694,16 +825,19 @@ const handleSearchEnter = async () => {
     const suggestions = await searchAmapPoiSuggestions(keyword, { city, limit: 1 });
     if (suggestions.length > 0) {
       const s = suggestions[0];
-      await handleSelectSuggestion({ ...s, type: 'landmark', secondaryText: [s.district, s.address].filter(Boolean).join(' · ') });
+      await handleSelectSuggestion({
+        ...s,
+        type: "landmark",
+        secondaryText: [s.district, s.address].filter(Boolean).join(" · "),
+      });
     } else {
       trackSearch({
         keyword,
-        cityCode: getLandmarkSuggestionCity()
+        cityCode: getLandmarkSuggestionCity(),
       });
-      ElMessage.warning('未找到匹配地点，请尝试其他关键词');
+      ElMessage.warning("未找到匹配地点，请尝试其他关键词");
     }
-  } catch (e) {
-  }
+  } catch (e) {}
 };
 
 const disabledDate = (time: Date) => {
@@ -714,7 +848,7 @@ const disabledDate = (time: Date) => {
 
 const handleViewportModeChange = async (enabled: boolean) => {
   viewportSearchEnabled.value = enabled;
-  const changed = await syncQueryFromForm(buildQueryState(), 'push');
+  const changed = await syncQueryFromForm(buildQueryState(), "push");
   if (!changed) {
     await applyRouteStateFromQuery();
   }
@@ -722,7 +856,7 @@ const handleViewportModeChange = async (enabled: boolean) => {
 
 const handleReset = async () => {
   selectedRegion.value = [];
-  globalSearchKeyword.value = '';
+  globalSearchKeyword.value = "";
   dateRange.value = null;
   minPrice.value = undefined;
   maxPrice.value = undefined;
@@ -734,7 +868,7 @@ const handleReset = async () => {
   nearbyRadius.value = 5;
 
   await resetSearchMode({ filters: buildFiltersFromForm() });
-  const changed = await syncQueryFromForm(buildQueryState(), 'push');
+  const changed = await syncQueryFromForm(buildQueryState(), "push");
   if (!changed) {
     await applyRouteStateFromQuery();
   }
@@ -771,11 +905,11 @@ const handleCardHover = (id: number | null) => {
 };
 
 const handleRadiusChange = async () => {
-  if (searchMode.value === 'normal') {
+  if (searchMode.value === "normal") {
     return;
   }
 
-  const changed = await syncQueryFromForm(buildQueryState(), 'push');
+  const changed = await syncQueryFromForm(buildQueryState(), "push");
   if (!changed) {
     await applyRouteStateFromQuery();
   }
@@ -784,23 +918,23 @@ const handleRadiusChange = async () => {
 const handleUseCurrentLocation = async () => {
   const location = await locateUser({ recenter: true });
   if (!location) {
-    ElMessage.error(locationError.value || '定位失败，请检查浏览器权限设置');
-    globalSearchKeyword.value = '';
+    ElMessage.error(locationError.value || "定位失败，请检查浏览器权限设置");
+    globalSearchKeyword.value = "";
     return;
   }
 
-  globalSearchKeyword.value = '我的当前位置';
+  globalSearchKeyword.value = "我的当前位置";
   rememberNormalSearchSnapshot();
   useClusterMode.value = false;
   await searchNearby({
     latitude: location.latitude,
     longitude: location.longitude,
     radius: nearbyRadius.value,
-    source: 'user',
+    source: "user",
     filters: buildFiltersFromForm(),
     fitView: true,
   });
-  await syncQueryFromForm(buildQueryState(), 'push', { skipRouteReplay: true });
+  await syncQueryFromForm(buildQueryState(), "push", { skipRouteReplay: true });
 };
 
 const handleToggleCluster = async () => {
@@ -816,10 +950,10 @@ const handleToggleCluster = async () => {
 };
 
 const handleExitSpecialSearch = async () => {
-  globalSearchKeyword.value = '';
+  globalSearchKeyword.value = "";
   clearResolvedLandmark();
   await resetSearchMode({ filters: buildFiltersFromForm() });
-  const changed = await syncQueryFromForm(buildQueryState(), 'push');
+  const changed = await syncQueryFromForm(buildQueryState(), "push");
   if (!changed) {
     await applyRouteStateFromQuery();
   }
@@ -830,7 +964,7 @@ const scrollToSelectedCard = () => {
 
   const card = listRef.value.querySelector(`[data-id="${selectedHomestayId.value}"]`);
   if (card) {
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 };
 
@@ -869,14 +1003,14 @@ watch(
     }
 
     if (
-      nextMapView.centerLat === undefined
-      || nextMapView.centerLng === undefined
-      || nextMapView.zoom === undefined
+      nextMapView.centerLat === undefined ||
+      nextMapView.centerLng === undefined ||
+      nextMapView.zoom === undefined
     ) {
       return;
     }
 
-    await syncQueryFromForm(buildQueryState(), 'replace', { skipRouteReplay: true });
+    await syncQueryFromForm(buildQueryState(), "replace", { skipRouteReplay: true });
   },
   { deep: true }
 );
@@ -1221,8 +1355,12 @@ onUnmounted(() => {
   animation: skeleton-shimmer 1.5s infinite;
 }
 @keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .map-overlay {
@@ -1291,7 +1429,7 @@ onUnmounted(() => {
     z-index: 30;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  
+
   .left-list.is-mobile-expanded {
     transform: translateY(0);
   }
@@ -1306,7 +1444,7 @@ onUnmounted(() => {
     border-radius: 20px 20px 0 0;
     border-bottom: 1px solid #f1f5f9;
   }
-  
+
   .handle-bar {
     width: 40px;
     height: 4px;
@@ -1314,13 +1452,13 @@ onUnmounted(() => {
     border-radius: 2px;
     margin-bottom: 8px;
   }
-  
+
   .handle-text {
     font-size: 14px;
     font-weight: 600;
     color: #334155;
   }
-  
+
   .list-header {
     display: none;
   }
@@ -1354,12 +1492,37 @@ onUnmounted(() => {
   border-color: #ff385c;
   transform: scale(1.15);
 }
-.map-info-window { width: 240px; font-family: sans-serif; }
-.map-info-window .info-image { width: 100%; height: 140px; background-size: cover; border-radius: 8px 8px 0 0; }
-.map-info-window .info-content { padding: 12px; }
-.map-info-window h4 { margin: 0 0 8px 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.map-info-window .info-price { margin: 0 0 4px 0; font-size: 16px; color: #ff385c; font-weight: 600; }
-.map-info-window .info-rating { margin: 0; font-size: 12px; color: #717171; }
+.map-info-window {
+  width: 240px;
+  font-family: sans-serif;
+}
+.map-info-window .info-image {
+  width: 100%;
+  height: 140px;
+  background-size: cover;
+  border-radius: 8px 8px 0 0;
+}
+.map-info-window .info-content {
+  padding: 12px;
+}
+.map-info-window h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.map-info-window .info-price {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #ff385c;
+  font-weight: 600;
+}
+.map-info-window .info-rating {
+  margin: 0;
+  font-size: 12px;
+  color: #717171;
+}
 .info-detail-btn {
   width: 100%;
   padding: 8px 0;

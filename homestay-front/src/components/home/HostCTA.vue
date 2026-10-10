@@ -51,13 +51,13 @@
 </template>
 
 <script setup lang="ts">
-import { HomeFilled, ArrowRight } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
+import { HomeFilled, ArrowRight } from "@element-plus/icons-vue";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 const goToHost = () => {
-  router.push('/host/onboarding')
-}
+  router.push("/host/onboarding");
+};
 </script>
 
 <style scoped>
@@ -71,7 +71,12 @@ const goToHost = () => {
   align-items: center;
   background:
     radial-gradient(circle at 86% 18%, rgba(249, 224, 210, 0.16), transparent 24%),
-    linear-gradient(135deg, var(--color-neutral-900) 0%, var(--color-primary-900) 52%, var(--color-primary-700) 100%);
+    linear-gradient(
+      135deg,
+      var(--color-neutral-900) 0%,
+      var(--color-primary-900) 52%,
+      var(--color-primary-700) 100%
+    );
   border-radius: var(--radius-md);
   overflow: hidden;
   padding: 48px;

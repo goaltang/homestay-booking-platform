@@ -93,15 +93,11 @@ export const parsePrice = (homestay: HomestayDetail | null): number => {
   return 0;
 };
 
-export const calculateNights = (
-  checkIn: Date | null,
-  checkOut: Date | null
-): number => {
+export const calculateNights = (checkIn: Date | null, checkOut: Date | null): number => {
   if (!checkIn || !checkOut) return 0;
   const days = differenceInCalendarDays(checkOut, checkIn);
   return days > 0 ? days : 0;
 };
-
 
 // 图片处理工具
 export const processImages = (homestay: HomestayDetail | null): string[] => {
@@ -110,9 +106,7 @@ export const processImages = (homestay: HomestayDetail | null): string[] => {
   const rawImageUrls =
     homestay.images && Array.isArray(homestay.images)
       ? (homestay.images
-          .map((img: string | { url: string }) =>
-            typeof img === "string" ? img : img?.url
-          )
+          .map((img: string | { url: string }) => (typeof img === "string" ? img : img?.url))
           .filter(Boolean) as string[])
       : [];
 
@@ -146,18 +140,18 @@ export const formatPropertyType = (type?: string): string => {
     COURTYARD: "四合院/院子",
     HOTEL: "酒店公寓",
     // 兼容旧中文值（迁移前的数据）
-    "整套公寓": "整套公寓",
-    "整套房子": "整套公寓",
-    "复式住宅": "复式住宅",
-    "Loft": "复式住宅",
-    "独立房间": "独立房间",
-    "单间": "独立房间",
-    "别墅": "别墅",
-    "洋房": "别墅",
-    "四合院": "四合院/院子",
-    "家庭旅馆": "四合院/院子",
-    "院子": "四合院/院子",
-    "酒店公寓": "酒店公寓",
+    整套公寓: "整套公寓",
+    整套房子: "整套公寓",
+    复式住宅: "复式住宅",
+    Loft: "复式住宅",
+    独立房间: "独立房间",
+    单间: "独立房间",
+    别墅: "别墅",
+    洋房: "别墅",
+    四合院: "四合院/院子",
+    家庭旅馆: "四合院/院子",
+    院子: "四合院/院子",
+    酒店公寓: "酒店公寓",
     // 旧版英文 code
     TRADITIONAL: "传统民居",
     APARTMENT: "公寓",
@@ -254,7 +248,7 @@ export const fetchCalculatePrice = async (
       basePrice,
       cleaningFee: 0,
       serviceFee: 0,
-      totalPrice: basePrice
+      totalPrice: basePrice,
     };
   }
 };

@@ -47,10 +47,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Location, Star, Lightning } from '@element-plus/icons-vue';
-import { codeToText } from 'element-china-area-data';
-import type { MapHomestay } from '@/composables/useMapSearch';
+import { computed } from "vue";
+import { Location, Star, Lightning } from "@element-plus/icons-vue";
+import { codeToText } from "element-china-area-data";
+import type { MapHomestay } from "@/composables/useMapSearch";
 
 interface Props {
   homestay: MapHomestay;
@@ -71,18 +71,18 @@ const emit = defineEmits<{
 
 // 处理图片URL
 const imageUrl = computed(() => {
-  const defaultImage = 'https://picsum.photos/300/200';
+  const defaultImage = "https://picsum.photos/300/200";
   if (!props.homestay.coverImage) return defaultImage;
 
-  if (props.homestay.coverImage.startsWith('http')) {
+  if (props.homestay.coverImage.startsWith("http")) {
     return props.homestay.coverImage;
   }
 
-  const cleanUrl = props.homestay.coverImage.startsWith('/')
+  const cleanUrl = props.homestay.coverImage.startsWith("/")
     ? props.homestay.coverImage
     : `/${props.homestay.coverImage}`;
 
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
   return `${baseUrl}${cleanUrl}`;
 });
 
@@ -95,7 +95,7 @@ const locationText = computed(() => {
   if (props.homestay.districtCode && codeToText[props.homestay.districtCode]) {
     parts.push(codeToText[props.homestay.districtCode]);
   }
-  return parts.join(' · ');
+  return parts.join(" · ");
 });
 
 // 特征文本
@@ -106,36 +106,36 @@ const featuresText = computed(() => {
   }
   if (props.homestay.propertyType) {
     const typeMap: Record<string, string> = {
-      'ENTIRE': '整套公寓',
-      'PRIVATE': '独立房间',
-      'LOFT': '复式住宅',
-      'VILLA': '别墅',
-      'STUDIO': '开间/单间',
-      'TOWNHOUSE': '联排别墅',
-      'COURTYARD': '四合院/院子',
-      'HOTEL': '酒店公寓',
-      'SHARED': '合住房间',
+      ENTIRE: "整套公寓",
+      PRIVATE: "独立房间",
+      LOFT: "复式住宅",
+      VILLA: "别墅",
+      STUDIO: "开间/单间",
+      TOWNHOUSE: "联排别墅",
+      COURTYARD: "四合院/院子",
+      HOTEL: "酒店公寓",
+      SHARED: "合住房间",
     };
     parts.push(typeMap[props.homestay.propertyType] || props.homestay.propertyType);
   }
-  return parts.join(' · ');
+  return parts.join(" · ");
 });
 
 // 方法
 const handleClick = () => {
-  emit('click', props.homestay);
+  emit("click", props.homestay);
 };
 
 const handleMouseEnter = () => {
-  emit('hover', props.homestay.id);
+  emit("hover", props.homestay.id);
 };
 
 const handleMouseLeave = () => {
-  emit('hover', null);
+  emit("hover", null);
 };
 
 const handleViewDetail = () => {
-  emit('viewDetail', props.homestay.id);
+  emit("viewDetail", props.homestay.id);
 };
 </script>
 

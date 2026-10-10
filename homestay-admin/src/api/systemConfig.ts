@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request from "@/utils/request";
 
 export interface SystemConfig {
   id?: number;
@@ -45,7 +45,7 @@ export interface ApiResponse<T = any> {
 }
 
 export function getAllConfigsApi(): Promise<ApiResponse<SystemConfig[]>> {
-  return request.get('/api/admin/system/configs');
+  return request.get("/api/admin/system/configs");
 }
 
 export function getConfigsByCategoryApi(category: string): Promise<ApiResponse<SystemConfig[]>> {
@@ -57,35 +57,48 @@ export function getConfigByKeyApi(key: string): Promise<ApiResponse<SystemConfig
 }
 
 export function getConfigsByKeysApi(keys: string[]): Promise<ApiResponse<Record<string, string>>> {
-  return request.post('/api/admin/system/configs/batch', keys);
+  return request.post("/api/admin/system/configs/batch", keys);
 }
 
-export function createConfigApi(config: SystemConfig, operator?: string, ipAddress?: string): Promise<ApiResponse<SystemConfig>> {
-  return request.post('/api/admin/system/configs', config, {
-    params: { operator, ipAddress }
+export function createConfigApi(
+  config: SystemConfig,
+  operator?: string,
+  ipAddress?: string
+): Promise<ApiResponse<SystemConfig>> {
+  return request.post("/api/admin/system/configs", config, {
+    params: { operator, ipAddress },
   });
 }
 
-export function updateConfigApi(key: string, config: SystemConfig, operator?: string, ipAddress?: string): Promise<ApiResponse<SystemConfig>> {
+export function updateConfigApi(
+  key: string,
+  config: SystemConfig,
+  operator?: string,
+  ipAddress?: string
+): Promise<ApiResponse<SystemConfig>> {
   return request.put(`/api/admin/system/configs/key/${key}`, config, {
-    params: { operator, ipAddress }
+    params: { operator, ipAddress },
   });
 }
 
-export function deleteConfigApi(id: number, operator?: string, ipAddress?: string): Promise<ApiResponse<null>> {
+export function deleteConfigApi(
+  id: number,
+  operator?: string,
+  ipAddress?: string
+): Promise<ApiResponse<null>> {
   return request.delete(`/api/admin/system/configs/${id}`, {
-    params: { operator, ipAddress }
+    params: { operator, ipAddress },
   });
 }
 
 export function initDefaultConfigsApi(): Promise<ApiResponse<null>> {
-  return request.post('/api/admin/system/configs/init');
+  return request.post("/api/admin/system/configs/init");
 }
 
 export function getOperationLogsApi(params: LogQueryParams): Promise<ApiResponse<OperationLog[]>> {
-  return request.get('/api/admin/system/logs', { params });
+  return request.get("/api/admin/system/logs", { params });
 }
 
 export function getRecentLogsApi(limit: number = 50): Promise<ApiResponse<OperationLog[]>> {
-  return request.get('/api/admin/system/logs/recent', { params: { limit } });
+  return request.get("/api/admin/system/logs/recent", { params: { limit } });
 }

@@ -79,9 +79,7 @@ export function useIdCardUpload(
           }
 
           if (photoUrl) {
-            ElMessage.success(
-              `${type === "idCardFront" ? "身份证正面" : "身份证背面"}上传成功`
-            );
+            ElMessage.success(`${type === "idCardFront" ? "身份证正面" : "身份证背面"}上传成功`);
 
             const fileData = {
               name: `${type === "idCardFront" ? "身份证正面" : "身份证背面"}.jpg`,

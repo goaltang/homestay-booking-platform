@@ -29,10 +29,7 @@ export function parseAvatarUrl(response: any): string {
   return "";
 }
 
-export function useAvatarUpload(
-  formData: AvatarForm,
-  onAvatarUpdated: (url: string) => void
-) {
+export function useAvatarUpload(formData: AvatarForm, onAvatarUpdated: (url: string) => void) {
   const handleAvatarSuccess = (response: any) => {
     const avatarUrl = parseAvatarUrl(response);
 

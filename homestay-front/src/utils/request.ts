@@ -56,11 +56,7 @@ const publicPaths = [
 ];
 
 // 仅 GET 公开（同名路径下的写操作仍需认证）
-const publicGetPaths = [
-  "/api/homestays/",
-  "/api/recommendations/",
-  "/api/files/",
-];
+const publicGetPaths = ["/api/homestays/", "/api/recommendations/", "/api/files/"];
 
 // 公开前缀下的私有端点：即便命中上面的公开前缀也必须认证
 const authRequiredPaths = [
@@ -103,7 +99,7 @@ request.interceptors.request.use(
   (error) => {
     console.error("Request interceptor error:", error);
     return Promise.reject(error);
-  },
+  }
 );
 
 request.interceptors.response.use(
@@ -156,7 +152,7 @@ request.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 export default request;

@@ -1,10 +1,7 @@
 import request from "@/utils/request"; // Assuming request utility exists
 
 // Upload cover image
-export function uploadHomestayCoverImage(
-  homestayId: number,
-  file: File
-): Promise<any> {
+export function uploadHomestayCoverImage(homestayId: number, file: File): Promise<any> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("homestayId", String(homestayId));
@@ -21,10 +18,7 @@ export function uploadHomestayCoverImage(
 }
 
 // Upload multiple images
-export function uploadHomestayMultipleImages(
-  homestayId: number,
-  files: File[]
-): Promise<any[]> {
+export function uploadHomestayMultipleImages(homestayId: number, files: File[]): Promise<any[]> {
   const formData = new FormData();
   files.forEach((file) => formData.append("files", file));
   formData.append("homestayId", String(homestayId));

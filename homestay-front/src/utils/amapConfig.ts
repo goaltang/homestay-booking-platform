@@ -5,17 +5,13 @@ const normalizeEnv = (value?: string) => value?.trim() || "";
 
 const apiKeyFromEnv = normalizeEnv(import.meta.env.VITE_AMAP_API_KEY);
 const webServiceKeyFromEnv = normalizeEnv(import.meta.env.VITE_AMAP_WEB_SERVICE_KEY);
-const securityJsCodeFromEnv = normalizeEnv(
-  import.meta.env.VITE_AMAP_SECURITY_JS_CODE
-);
+const securityJsCodeFromEnv = normalizeEnv(import.meta.env.VITE_AMAP_SECURITY_JS_CODE);
 const serviceHostFromEnv = normalizeEnv(import.meta.env.VITE_AMAP_SERVICE_HOST);
 
 let hasWarnedForMissingSecurityConfig = false;
 
 if (!apiKeyFromEnv) {
-  console.error(
-    "[AMap] VITE_AMAP_API_KEY is not set. Please configure it in your .env file."
-  );
+  console.error("[AMap] VITE_AMAP_API_KEY is not set. Please configure it in your .env file.");
 }
 if (!webServiceKeyFromEnv) {
   console.error(

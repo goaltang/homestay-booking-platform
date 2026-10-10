@@ -31,7 +31,7 @@
               :stroke-width="8"
             />
             <span class="budget-text">
-              {{ row.budgetUsed || 0 }} / {{ row.budgetTotal || '∞' }}
+              {{ row.budgetUsed || 0 }} / {{ row.budgetTotal || "∞" }}
               <el-tag v-if="row.budgetAlertTriggered" size="small" type="warning">预警</el-tag>
             </span>
           </div>
@@ -46,11 +46,7 @@
       </el-table-column>
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button
-            v-if="row.status === 'ACTIVE'"
-            size="small"
-            @click="handlePause(row.id)"
-          >
+          <el-button v-if="row.status === 'ACTIVE'" size="small" @click="handlePause(row.id)">
             暂停
           </el-button>
           <el-button
@@ -102,10 +98,22 @@
           />
         </el-form-item>
         <el-form-item label="预算上限">
-          <el-input-number v-model="form.budgetTotal" :min="0" :precision="2" placeholder="不填表示无限制" />
+          <el-input-number
+            v-model="form.budgetTotal"
+            :min="0"
+            :precision="2"
+            placeholder="不填表示无限制"
+          />
         </el-form-item>
         <el-form-item label="预警阈值">
-          <el-input-number v-model="form.budgetAlertThreshold" :min="0" :max="1" :precision="2" :step="0.05" placeholder="如 0.8" />
+          <el-input-number
+            v-model="form.budgetAlertThreshold"
+            :min="0"
+            :max="1"
+            :precision="2"
+            :step="0.05"
+            placeholder="如 0.8"
+          />
           <span class="form-tip">预算使用率达到该值时预警</span>
         </el-form-item>
         <el-form-item label="优先级">
@@ -121,7 +129,14 @@
         <div v-for="(rule, index) in form.rules" :key="index" class="rule-card">
           <div class="rule-header">
             <span>规则 {{ index + 1 }}</span>
-            <el-button v-if="form.rules.length > 1" type="danger" size="small" text @click="removeRule(index)">删除</el-button>
+            <el-button
+              v-if="form.rules.length > 1"
+              type="danger"
+              size="small"
+              text
+              @click="removeRule(index)"
+              >删除</el-button
+            >
           </div>
           <el-form-item label="规则类型">
             <el-select v-model="rule.ruleType" placeholder="选择规则类型">
@@ -130,7 +145,10 @@
               <el-option label="满减" value="FULL_REDUCTION" />
             </el-select>
           </el-form-item>
-          <el-form-item label="优惠金额" v-if="rule.ruleType === 'AMOUNT_OFF' || rule.ruleType === 'FULL_REDUCTION'">
+          <el-form-item
+            label="优惠金额"
+            v-if="rule.ruleType === 'AMOUNT_OFF' || rule.ruleType === 'FULL_REDUCTION'"
+          >
             <el-input-number v-model="rule.discountAmount" :min="0" :precision="2" />
           </el-form-item>
           <el-form-item label="折扣率" v-if="rule.ruleType === 'PERCENT_OFF'">
@@ -138,10 +156,20 @@
             <span class="form-tip">如 0.85 表示 8.5 折</span>
           </el-form-item>
           <el-form-item label="最大优惠">
-            <el-input-number v-model="rule.maxDiscount" :min="0" :precision="2" placeholder="可选" />
+            <el-input-number
+              v-model="rule.maxDiscount"
+              :min="0"
+              :precision="2"
+              placeholder="可选"
+            />
           </el-form-item>
           <el-form-item label="门槛金额">
-            <el-input-number v-model="rule.thresholdAmount" :min="0" :precision="2" placeholder="可选" />
+            <el-input-number
+              v-model="rule.thresholdAmount"
+              :min="0"
+              :precision="2"
+              placeholder="可选"
+            />
           </el-form-item>
           <el-form-item label="最少入住">
             <el-input-number v-model="rule.minNights" :min="1" placeholder="可选" />
@@ -322,10 +350,10 @@ async function handleCreate() {
 
   submitting.value = true;
   try {
-    const rules = form.rules.map(r => ({
+    const rules = form.rules.map((r) => ({
       ruleType: r.ruleType,
-      discountAmount: r.ruleType !== 'PERCENT_OFF' ? r.discountAmount : null,
-      discountRate: r.ruleType === 'PERCENT_OFF' ? r.discountRate : null,
+      discountAmount: r.ruleType !== "PERCENT_OFF" ? r.discountAmount : null,
+      discountRate: r.ruleType === "PERCENT_OFF" ? r.discountRate : null,
       maxDiscount: r.maxDiscount,
       thresholdAmount: r.thresholdAmount,
       minNights: r.minNights,

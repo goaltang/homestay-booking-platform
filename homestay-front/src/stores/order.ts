@@ -106,9 +106,7 @@ export const useOrderStore = defineStore("order", () => {
   // Getters
   const orderById = computed(() => {
     return (id: number) =>
-      orders.value.find((o) => o.id === id) ||
-      statsOrders.value.find((o) => o.id === id) ||
-      null;
+      orders.value.find((o) => o.id === id) || statsOrders.value.find((o) => o.id === id) || null;
   });
 
   // Helpers
@@ -185,12 +183,14 @@ export const useOrderStore = defineStore("order", () => {
   }
 
   // Actions
-  async function fetchOrders(params: {
-    page?: number;
-    size?: number;
-    status?: string;
-    tab?: string;
-  } = {}) {
+  async function fetchOrders(
+    params: {
+      page?: number;
+      size?: number;
+      status?: string;
+      tab?: string;
+    } = {}
+  ) {
     loading.value = true;
     try {
       const res = await getMyOrders({
@@ -312,8 +312,7 @@ export const useOrderStore = defineStore("order", () => {
       } else if (status === "PENDING") {
         counts.PENDING++;
       } else if (
-        (status === "CONFIRMED" &&
-          (paymentStatus === "UNPAID" || !paymentStatus)) ||
+        (status === "CONFIRMED" && (paymentStatus === "UNPAID" || !paymentStatus)) ||
         status === "PAYMENT_PENDING"
       ) {
         counts.NEED_PAYMENT++;

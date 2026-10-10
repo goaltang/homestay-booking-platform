@@ -1,7 +1,13 @@
 <template>
   <div class="container">
     <div class="handle-box">
-      <el-input v-model="query.keyword" placeholder="搜索标题" class="handle-input mr10" clearable @keyup.enter="handleSearch" />
+      <el-input
+        v-model="query.keyword"
+        placeholder="搜索标题"
+        class="handle-input mr10"
+        clearable
+        @keyup.enter="handleSearch"
+      />
       <el-button :icon="Search" type="primary" @click="handleSearch">搜索</el-button>
       <el-button :icon="Refresh" circle @click="clearSearch" />
       <el-button :icon="Plus" type="success" class="ml10" @click="handleAdd">新增 Banner</el-button>
@@ -20,9 +26,23 @@
         <el-table-column label="预览" width="120">
           <template #default="scope">
             <div v-if="scope.row.imageUrl" class="banner-preview">
-              <el-image :src="scope.row.imageUrl" fit="cover" :preview-src-list="[scope.row.imageUrl]" style="width: 100px; height: 60px; border-radius: 4px;" />
+              <el-image
+                :src="scope.row.imageUrl"
+                fit="cover"
+                :preview-src-list="[scope.row.imageUrl]"
+                style="width: 100px; height: 60px; border-radius: 4px"
+              />
             </div>
-            <div v-else-if="scope.row.bgGradient" class="banner-preview" :style="{ background: scope.row.bgGradient, width: '100px', height: '60px', borderRadius: '4px' }" />
+            <div
+              v-else-if="scope.row.bgGradient"
+              class="banner-preview"
+              :style="{
+                background: scope.row.bgGradient,
+                width: '100px',
+                height: '60px',
+                borderRadius: '4px',
+              }"
+            />
             <span v-else class="text-gray">无预览</span>
           </template>
         </el-table-column>
@@ -32,7 +52,13 @@
         <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
         <el-table-column label="状态" width="90" align="center">
           <template #default="scope">
-            <el-switch v-model="scope.row.enabled" inline-prompt active-text="启用" inactive-text="禁用" @change="handleToggle(scope.row)" />
+            <el-switch
+              v-model="scope.row.enabled"
+              inline-prompt
+              active-text="启用"
+              inactive-text="禁用"
+              @change="handleToggle(scope.row)"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="updatedAt" label="更新时间" width="160">
@@ -42,35 +68,72 @@
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right" align="center">
           <template #default="scope">
-            <el-button type="primary" link size="small" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button type="primary" link size="small" @click="handleEdit(scope.row)"
+              >编辑</el-button
+            >
+            <el-button type="danger" link size="small" @click="handleDelete(scope.row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
 
       <div class="pagination">
-        <el-pagination background layout="total, sizes, prev, pager, next, jumper"
-          :current-page="pagination.page + 1" :page-size="pagination.size" :page-sizes="[10, 20, 50]"
-          :total="pagination.total" @current-change="(p: number) => handlePageChange(p - 1)"
-          @size-change="handleSizeChange" />
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          :current-page="pagination.page + 1"
+          :page-size="pagination.size"
+          :page-sizes="[10, 20, 50]"
+          :total="pagination.total"
+          @current-change="(p: number) => handlePageChange(p - 1)"
+          @size-change="handleSizeChange"
+        />
       </div>
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑 Banner' : '新增 Banner'" width="600px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="isEdit ? '编辑 Banner' : '新增 Banner'"
+      width="600px"
+      destroy-on-close
+    >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="标题" prop="title">
-          <el-input v-model="form.title" placeholder="请输入 Banner 标题" maxlength="200" show-word-limit />
+          <el-input
+            v-model="form.title"
+            placeholder="请输入 Banner 标题"
+            maxlength="200"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="副标题" prop="subtitle">
-          <el-input v-model="form.subtitle" type="textarea" :rows="2" placeholder="请输入副标题描述" maxlength="500" show-word-limit />
+          <el-input
+            v-model="form.subtitle"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入副标题描述"
+            maxlength="500"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="背景图片">
           <div class="upload-wrapper">
-            <el-upload class="banner-uploader" action="#" :auto-upload="false" :show-file-list="false"
-              :on-change="handleImageChange" accept="image/*">
+            <el-upload
+              class="banner-uploader"
+              action="#"
+              :auto-upload="false"
+              :show-file-list="false"
+              :on-change="handleImageChange"
+              accept="image/*"
+            >
               <div v-if="form.imageUrl" class="upload-preview">
-                <el-image :src="form.imageUrl" fit="cover" style="width: 200px; height: 120px; border-radius: 6px;" />
+                <el-image
+                  :src="form.imageUrl"
+                  fit="cover"
+                  style="width: 200px; height: 120px; border-radius: 6px"
+                />
                 <div class="upload-overlay">
                   <el-icon size="20"><RefreshRight /></el-icon>
                   <span>更换图片</span>
@@ -81,13 +144,24 @@
                 <span>点击上传背景图</span>
               </div>
             </el-upload>
-            <el-button v-if="form.imageUrl" type="danger" link size="small" @click="form.imageUrl = ''">移除图片</el-button>
+            <el-button
+              v-if="form.imageUrl"
+              type="danger"
+              link
+              size="small"
+              @click="form.imageUrl = ''"
+              >移除图片</el-button
+            >
           </div>
           <div class="form-tip">支持 JPG、PNG、GIF，建议尺寸 1200×400</div>
         </el-form-item>
         <el-form-item label="渐变背景">
           <el-input v-model="form.bgGradient" placeholder="CSS 渐变，如 linear-gradient(...)" />
-          <div v-if="form.bgGradient && !form.imageUrl" class="gradient-preview" :style="{ background: form.bgGradient }">
+          <div
+            v-if="form.bgGradient && !form.imageUrl"
+            class="gradient-preview"
+            :style="{ background: form.bgGradient }"
+          >
             预览
           </div>
           <div class="form-tip">无图片时显示渐变背景，有图片时优先显示图片</div>
@@ -112,191 +186,201 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, RefreshRight } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules, UploadFile } from 'element-plus'
+import { ref, reactive, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { Search, Refresh, Plus, RefreshRight } from "@element-plus/icons-vue";
+import type { FormInstance, FormRules, UploadFile } from "element-plus";
 import {
-  getBannerPage, createBanner, updateBanner, deleteBanner, toggleBannerEnabled, type Banner
-} from '@/api/banner'
-import { uploadSingleFile } from '@/api/file'
+  getBannerPage,
+  createBanner,
+  updateBanner,
+  deleteBanner,
+  toggleBannerEnabled,
+  type Banner,
+} from "@/api/banner";
+import { uploadSingleFile } from "@/api/file";
 
-const loading = ref(false)
-const submitting = ref(false)
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref<FormInstance>()
+const loading = ref(false);
+const submitting = ref(false);
+const dialogVisible = ref(false);
+const isEdit = ref(false);
+const formRef = ref<FormInstance>();
 
-const tableData = ref<Banner[]>([])
+const tableData = ref<Banner[]>([]);
 
 const query = reactive({
-  keyword: ''
-})
+  keyword: "",
+});
 
 const pagination = reactive({
   page: 0,
   size: 10,
-  total: 0
-})
+  total: 0,
+});
 
 const form = reactive<Banner>({
-  title: '',
-  subtitle: '',
-  imageUrl: '',
-  linkUrl: '',
-  bgGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  title: "",
+  subtitle: "",
+  imageUrl: "",
+  linkUrl: "",
+  bgGradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
   sortOrder: 0,
-  enabled: true
-})
+  enabled: true,
+});
 
 const rules: FormRules = {
-  title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
-  linkUrl: [{ required: true, message: '请输入跳转链接', trigger: 'blur' }]
-}
+  title: [{ required: true, message: "请输入标题", trigger: "blur" }],
+  linkUrl: [{ required: true, message: "请输入跳转链接", trigger: "blur" }],
+};
 
 const loadData = async () => {
-  loading.value = true
+  loading.value = true;
   try {
     const res: any = await getBannerPage({
       page: pagination.page,
       size: pagination.size,
-      keyword: query.keyword || undefined
-    })
+      keyword: query.keyword || undefined,
+    });
     if (res.success || res.data?.success) {
-      const data = res.data || res
-      tableData.value = data.data || []
-      pagination.total = data.total || 0
+      const data = res.data || res;
+      tableData.value = data.data || [];
+      pagination.total = data.total || 0;
     }
   } catch (error) {
-    console.error('加载 Banner 失败:', error)
-    ElMessage.error('加载失败')
+    console.error("加载 Banner 失败:", error);
+    ElMessage.error("加载失败");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleSearch = () => {
-  pagination.page = 0
-  loadData()
-}
+  pagination.page = 0;
+  loadData();
+};
 
 const clearSearch = () => {
-  query.keyword = ''
-  pagination.page = 0
-  loadData()
-}
+  query.keyword = "";
+  pagination.page = 0;
+  loadData();
+};
 
 const handlePageChange = (page: number) => {
-  pagination.page = page
-  loadData()
-}
+  pagination.page = page;
+  loadData();
+};
 
 const handleSizeChange = (size: number) => {
-  pagination.size = size
-  pagination.page = 0
-  loadData()
-}
+  pagination.size = size;
+  pagination.page = 0;
+  loadData();
+};
 
 const resetForm = () => {
-  form.id = undefined
-  form.title = ''
-  form.subtitle = ''
-  form.imageUrl = ''
-  form.linkUrl = ''
-  form.bgGradient = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-  form.sortOrder = 0
-  form.enabled = true
-}
+  form.id = undefined;
+  form.title = "";
+  form.subtitle = "";
+  form.imageUrl = "";
+  form.linkUrl = "";
+  form.bgGradient = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+  form.sortOrder = 0;
+  form.enabled = true;
+};
 
 const handleAdd = () => {
-  isEdit.value = false
-  resetForm()
-  dialogVisible.value = true
-}
+  isEdit.value = false;
+  resetForm();
+  dialogVisible.value = true;
+};
 
 const handleEdit = (row: Banner) => {
-  isEdit.value = true
-  Object.assign(form, row)
-  dialogVisible.value = true
-}
+  isEdit.value = true;
+  Object.assign(form, row);
+  dialogVisible.value = true;
+};
 
 const handleImageChange = async (uploadFile: UploadFile) => {
-  const rawFile = uploadFile.raw
-  if (!rawFile) return
+  const rawFile = uploadFile.raw;
+  if (!rawFile) return;
   try {
-    ElMessage.info('正在上传...')
-    const url = await uploadSingleFile(rawFile, 'banner')
+    ElMessage.info("正在上传...");
+    const url = await uploadSingleFile(rawFile, "banner");
     if (url) {
-      form.imageUrl = url
-      ElMessage.success('上传成功')
+      form.imageUrl = url;
+      ElMessage.success("上传成功");
     }
   } catch (error) {
-    ElMessage.error('上传失败')
+    ElMessage.error("上传失败");
   }
-}
+};
 
 const handleSubmit = async () => {
-  if (!formRef.value) return
+  if (!formRef.value) return;
   await formRef.value.validate(async (valid) => {
-    if (!valid) return
-    submitting.value = true
+    if (!valid) return;
+    submitting.value = true;
     try {
       if (isEdit.value && form.id) {
-        await updateBanner(form.id, { ...form })
-        ElMessage.success('更新成功')
+        await updateBanner(form.id, { ...form });
+        ElMessage.success("更新成功");
       } else {
-        await createBanner({ ...form })
-        ElMessage.success('创建成功')
+        await createBanner({ ...form });
+        ElMessage.success("创建成功");
       }
-      dialogVisible.value = false
-      loadData()
+      dialogVisible.value = false;
+      loadData();
     } catch (error) {
-      console.error('保存失败:', error)
-      ElMessage.error('保存失败')
+      console.error("保存失败:", error);
+      ElMessage.error("保存失败");
     } finally {
-      submitting.value = false
+      submitting.value = false;
     }
-  })
-}
+  });
+};
 
 const handleToggle = async (row: Banner) => {
-  if (!row.id) return
+  if (!row.id) return;
   try {
-    await toggleBannerEnabled(row.id)
-    ElMessage.success('状态更新成功')
+    await toggleBannerEnabled(row.id);
+    ElMessage.success("状态更新成功");
   } catch (error) {
-    ElMessage.error('操作失败')
-    row.enabled = !row.enabled
+    ElMessage.error("操作失败");
+    row.enabled = !row.enabled;
   }
-}
+};
 
 const handleDelete = (row: Banner) => {
-  if (!row.id) return
-  ElMessageBox.confirm(`确定要删除 Banner「${row.title}」吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await deleteBanner(row.id!)
-    ElMessage.success('删除成功')
-    loadData()
-  }).catch(() => {
-    // cancelled
+  if (!row.id) return;
+  ElMessageBox.confirm(`确定要删除 Banner「${row.title}」吗？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
   })
-}
+    .then(async () => {
+      await deleteBanner(row.id!);
+      ElMessage.success("删除成功");
+      loadData();
+    })
+    .catch(() => {
+      // cancelled
+    });
+};
 
 const formatDate = (dateStr?: string) => {
-  if (!dateStr) return '-'
-  const d = new Date(dateStr)
-  return d.toLocaleString('zh-CN', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit'
-  })
-}
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return d.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 onMounted(() => {
-  loadData()
-})
+  loadData();
+});
 </script>
 
 <style scoped>

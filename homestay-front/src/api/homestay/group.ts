@@ -8,12 +8,14 @@ export function getHomestayGroups(): Promise<HomestayGroup[]> {
   return request({
     url: "/api/host/groups",
     method: "get",
-  }).then((response) => {
-    return response.data || [];
-  }).catch((error) => {
-    console.error("获取房源分组列表失败:", error);
-    return [];
-  });
+  })
+    .then((response) => {
+      return response.data || [];
+    })
+    .catch((error) => {
+      console.error("获取房源分组列表失败:", error);
+      return [];
+    });
 }
 
 /**
@@ -95,10 +97,7 @@ export function removeHomestaysFromGroup(homestayIds: number[]) {
 /**
  * 获取分组下的房源列表
  */
-export function getHomestaysByGroup(
-  groupId: number,
-  params?: { page?: number; size?: number }
-) {
+export function getHomestaysByGroup(groupId: number, params?: { page?: number; size?: number }) {
   return request({
     url: `/api/host/groups/${groupId}/homestays`,
     method: "get",

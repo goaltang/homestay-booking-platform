@@ -94,11 +94,7 @@
 
           <!-- 房客选择面板 -->
           <transition name="panel">
-            <div
-              v-if="showGuestPanel"
-              class="guest-panel"
-              @click.stop
-            >
+            <div v-if="showGuestPanel" class="guest-panel" @click.stop>
               <div class="guest-row">
                 <div class="guest-info">
                   <span class="guest-label">成人</span>
@@ -112,7 +108,12 @@
                     @click="adjustGuest('adults', -1)"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <path
+                        d="M2 6H10"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                      />
                     </svg>
                   </button>
                   <span class="guest-count">{{ guestCounts.adults }}</span>
@@ -123,7 +124,12 @@
                     @click="adjustGuest('adults', 1)"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6H10M6 2V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <path
+                        d="M2 6H10M6 2V10"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -142,7 +148,12 @@
                     @click="adjustGuest('children', -1)"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <path
+                        d="M2 6H10"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                      />
                     </svg>
                   </button>
                   <span class="guest-count">{{ guestCounts.children }}</span>
@@ -153,7 +164,12 @@
                     @click="adjustGuest('children', 1)"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6H10M6 2V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <path
+                        d="M2 6H10M6 2V10"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -172,7 +188,12 @@
                     @click="adjustGuest('infants', -1)"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <path
+                        d="M2 6H10"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                      />
                     </svg>
                   </button>
                   <span class="guest-count">{{ guestCounts.infants }}</span>
@@ -183,7 +204,12 @@
                     @click="adjustGuest('infants', 1)"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6H10M6 2V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <path
+                        d="M2 6H10M6 2V10"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -203,7 +229,16 @@
             @click="handleSearch"
           >
             <span class="search-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.35-4.35" />
               </svg>
@@ -218,89 +253,86 @@
 
       <!-- 搜索建议面板 -->
       <transition name="suggestions">
-        <SearchSuggestions
-          v-if="showSuggestions"
-          @select="selectSuggestion"
-        />
+        <SearchSuggestions v-if="showSuggestions" @select="selectSuggestion" />
       </transition>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { ElMessage } from 'element-plus'
-import { regionData } from 'element-china-area-data'
-import SearchSuggestions from './SearchSuggestions.vue'
-import { useSearchSuggestions } from '@/composables/useSearchSuggestions'
-import { trackSearch } from '@/api/tracking'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { ElMessage } from "element-plus";
+import { regionData } from "element-china-area-data";
+import SearchSuggestions from "./SearchSuggestions.vue";
+import { useSearchSuggestions } from "@/composables/useSearchSuggestions";
+import { trackSearch } from "@/api/tracking";
 
-const { addToRecentSearches } = useSearchSuggestions()
+const { addToRecentSearches } = useSearchSuggestions();
 
 /* ─── Props & Emits ─── */
 interface SearchParamsProps {
-  selectedRegion?: string[]
-  keyword?: string
-  checkIn?: string | null
-  checkOut?: string | null
-  guestCount?: number
+  selectedRegion?: string[];
+  keyword?: string;
+  checkIn?: string | null;
+  checkOut?: string | null;
+  guestCount?: number;
 }
 
 interface Props {
-  loading?: boolean
-  initialParams?: SearchParamsProps
+  loading?: boolean;
+  initialParams?: SearchParamsProps;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  initialParams: () => ({})
-})
+  initialParams: () => ({}),
+});
 
 const emit = defineEmits<{
-  search: [params: any]
-  reset: []
-}>()
+  search: [params: any];
+  reset: [];
+}>();
 
 /* ─── Reactive State ─── */
 const searchParams = reactive({
   selectedRegion: [] as string[],
-  keyword: '',
+  keyword: "",
   checkIn: null as string | null,
   checkOut: null as string | null,
-  guestCount: 1
-})
+  guestCount: 1,
+});
 
 const guestCounts = reactive({
   adults: 1,
   children: 0,
-  infants: 0
-})
+  infants: 0,
+});
 
-const activeField = ref<string | null>(null)
-const showGuestPanel = ref(false)
-const showSuggestions = ref(false)
+const activeField = ref<string | null>(null);
+const showGuestPanel = ref(false);
+const showSuggestions = ref(false);
 
 /* ─── Refs ─── */
-const locationRef = ref<any>(null)
-const keywordRef = ref<HTMLInputElement | null>(null)
-const checkInRef = ref<any>(null)
-const checkOutRef = ref<any>(null)
+const locationRef = ref<any>(null);
+const keywordRef = ref<HTMLInputElement | null>(null);
+const checkInRef = ref<any>(null);
+const checkOutRef = ref<any>(null);
 
 /* ─── Constants ─── */
-const regionOptions = regionData
+const regionOptions = regionData;
 const cascaderProps = {
-  value: 'value',
-  label: 'label',
-  children: 'children',
-  checkStrictly: true
-}
+  value: "value",
+  label: "label",
+  children: "children",
+  checkStrictly: true,
+};
 
 /* ─── Computed ─── */
 const guestDisplayText = computed(() => {
-  const total = guestCounts.adults + guestCounts.children
-  if (total === 1) return '1位房客'
-  return `${total}位房客`
-})
+  const total = guestCounts.adults + guestCounts.children;
+  if (total === 1) return "1位房客";
+  return `${total}位房客`;
+});
 
 const canSearch = computed(() => {
   return (
@@ -308,166 +340,166 @@ const canSearch = computed(() => {
     searchParams.selectedRegion.length > 0 ||
     searchParams.checkIn !== null ||
     searchParams.checkOut !== null
-  )
-})
+  );
+});
 
 /* ─── Watchers ─── */
 watch(
   () => props.initialParams,
   (newParams) => {
-    if (!newParams) return
+    if (!newParams) return;
     if (newParams.selectedRegion !== undefined) {
-      searchParams.selectedRegion = [...newParams.selectedRegion]
+      searchParams.selectedRegion = [...newParams.selectedRegion];
     }
     if (newParams.keyword !== undefined) {
-      searchParams.keyword = newParams.keyword
+      searchParams.keyword = newParams.keyword;
     }
     if (newParams.checkIn !== undefined) {
-      searchParams.checkIn = newParams.checkIn
+      searchParams.checkIn = newParams.checkIn;
     }
     if (newParams.checkOut !== undefined) {
-      searchParams.checkOut = newParams.checkOut
+      searchParams.checkOut = newParams.checkOut;
     }
     if (newParams.guestCount !== undefined) {
-      const count = Math.max(1, newParams.guestCount)
-      searchParams.guestCount = count
-      guestCounts.adults = count
-      guestCounts.children = 0
-      guestCounts.infants = 0
+      const count = Math.max(1, newParams.guestCount);
+      searchParams.guestCount = count;
+      guestCounts.adults = count;
+      guestCounts.children = 0;
+      guestCounts.infants = 0;
     }
   },
   { immediate: true, deep: true }
-)
+);
 
 /* ─── Methods ─── */
 const focusField = (field: string) => {
-  activeField.value = field
-  if (field === 'location') {
-    showSuggestions.value = true
-    showGuestPanel.value = false
-  } else if (field === 'guests') {
-    showGuestPanel.value = !showGuestPanel.value
-    showSuggestions.value = false
+  activeField.value = field;
+  if (field === "location") {
+    showSuggestions.value = true;
+    showGuestPanel.value = false;
+  } else if (field === "guests") {
+    showGuestPanel.value = !showGuestPanel.value;
+    showSuggestions.value = false;
   } else {
-    showSuggestions.value = false
-    showGuestPanel.value = false
+    showSuggestions.value = false;
+    showGuestPanel.value = false;
   }
-}
+};
 
 const toggleGuestPanel = () => {
-  showGuestPanel.value = !showGuestPanel.value
-  showSuggestions.value = false
-  activeField.value = showGuestPanel.value ? 'guests' : null
-}
+  showGuestPanel.value = !showGuestPanel.value;
+  showSuggestions.value = false;
+  activeField.value = showGuestPanel.value ? "guests" : null;
+};
 
 const onCascaderVisibleChange = (visible: boolean, field: string) => {
   if (visible) {
-    activeField.value = field
-    showSuggestions.value = false
-    showGuestPanel.value = false
+    activeField.value = field;
+    showSuggestions.value = false;
+    showGuestPanel.value = false;
   } else {
-    activeField.value = null
+    activeField.value = null;
   }
-}
+};
 
 const handleLocationChange = () => {
-  showSuggestions.value = false
-  activeField.value = null
-}
+  showSuggestions.value = false;
+  activeField.value = null;
+};
 
 const disabledCheckInDate = (time: Date) => {
-  return time.getTime() < Date.now() - 8.64e7
-}
+  return time.getTime() < Date.now() - 8.64e7;
+};
 
 const disabledCheckOutDate = (time: Date) => {
-  if (!searchParams.checkIn) return time.getTime() < Date.now()
-  return time.getTime() <= new Date(searchParams.checkIn).getTime()
-}
+  if (!searchParams.checkIn) return time.getTime() < Date.now();
+  return time.getTime() <= new Date(searchParams.checkIn).getTime();
+};
 
 const handleCheckInChange = (value: string | null) => {
   if (value && searchParams.checkOut) {
-    const checkIn = new Date(value)
-    const checkOut = new Date(searchParams.checkOut)
+    const checkIn = new Date(value);
+    const checkOut = new Date(searchParams.checkOut);
     if (checkOut <= checkIn) {
-      const nextDay = new Date(checkIn)
-      nextDay.setDate(nextDay.getDate() + 1)
-      searchParams.checkOut = nextDay.toISOString().split('T')[0]
+      const nextDay = new Date(checkIn);
+      nextDay.setDate(nextDay.getDate() + 1);
+      searchParams.checkOut = nextDay.toISOString().split("T")[0];
     }
   }
-}
+};
 
-const adjustGuest = (type: 'adults' | 'children' | 'infants', delta: number) => {
-  const next = guestCounts[type] + delta
-  const min = type === 'adults' ? 1 : 0
-  const max = type === 'adults' ? 20 : type === 'children' ? 10 : 5
-  if (next < min || next > max) return
-  guestCounts[type] = next
-  searchParams.guestCount = guestCounts.adults + guestCounts.children
-}
+const adjustGuest = (type: "adults" | "children" | "infants", delta: number) => {
+  const next = guestCounts[type] + delta;
+  const min = type === "adults" ? 1 : 0;
+  const max = type === "adults" ? 20 : type === "children" ? 10 : 5;
+  if (next < min || next > max) return;
+  guestCounts[type] = next;
+  searchParams.guestCount = guestCounts.adults + guestCounts.children;
+};
 
 const selectSuggestion = (suggestion: { label: string; value: string[] }) => {
-  searchParams.selectedRegion = suggestion.value
-  showSuggestions.value = false
-  addToRecentSearches(suggestion)
-}
+  searchParams.selectedRegion = suggestion.value;
+  showSuggestions.value = false;
+  addToRecentSearches(suggestion);
+};
 
 const handleSearch = () => {
-  if (!canSearch.value) return
-  const keyword = searchParams.keyword.trim()
-  const selectedRegion = [...searchParams.selectedRegion]
+  if (!canSearch.value) return;
+  const keyword = searchParams.keyword.trim();
+  const selectedRegion = [...searchParams.selectedRegion];
 
   trackSearch({
     keyword: keyword || undefined,
-    cityCode: selectedRegion[1] || selectedRegion[0]
-  })
+    cityCode: selectedRegion[1] || selectedRegion[0],
+  });
 
-  emit('search', {
+  emit("search", {
     ...searchParams,
     keyword,
-    selectedRegion
-  })
-}
+    selectedRegion,
+  });
+};
 
 const handleReset = () => {
-  searchParams.selectedRegion = []
-  searchParams.keyword = ''
-  searchParams.checkIn = null
-  searchParams.checkOut = null
-  searchParams.guestCount = 1
-  guestCounts.adults = 1
-  guestCounts.children = 0
-  guestCounts.infants = 0
-  showGuestPanel.value = false
-  showSuggestions.value = false
-  activeField.value = null
-  ElMessage.success('搜索条件已重置')
-  emit('reset')
-}
+  searchParams.selectedRegion = [];
+  searchParams.keyword = "";
+  searchParams.checkIn = null;
+  searchParams.checkOut = null;
+  searchParams.guestCount = 1;
+  guestCounts.adults = 1;
+  guestCounts.children = 0;
+  guestCounts.infants = 0;
+  showGuestPanel.value = false;
+  showSuggestions.value = false;
+  activeField.value = null;
+  ElMessage.success("搜索条件已重置");
+  emit("reset");
+};
 
 /* ─── Click Outside ─── */
 const handleClickOutside = (e: MouseEvent) => {
-  const target = e.target as HTMLElement
-  const container = document.querySelector('.search-wrapper')
+  const target = e.target as HTMLElement;
+  const container = document.querySelector(".search-wrapper");
   if (container && !container.contains(target)) {
-    showGuestPanel.value = false
-    showSuggestions.value = false
-    activeField.value = null
+    showGuestPanel.value = false;
+    showSuggestions.value = false;
+    activeField.value = null;
   }
-}
+};
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+  document.addEventListener("click", handleClickOutside);
+});
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+  document.removeEventListener("click", handleClickOutside);
+});
 
 /* ─── Expose ─── */
 defineExpose({
   searchParams,
-  resetParams: handleReset
-})
+  resetParams: handleReset,
+});
 </script>
 
 <style scoped>

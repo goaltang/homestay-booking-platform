@@ -1,11 +1,5 @@
 // 房源状态
-export type HomestayStatus =
-  | "DRAFT"
-  | "PENDING"
-  | "ACTIVE"
-  | "INACTIVE"
-  | "REJECTED"
-  | "SUSPENDED";
+export type HomestayStatus = "DRAFT" | "PENDING" | "ACTIVE" | "INACTIVE" | "REJECTED" | "SUSPENDED";
 
 // 订单状态
 export type OrderStatus =
@@ -43,14 +37,14 @@ export type PaymentMethod = "ALIPAY" | "WECHAT_PAY" | "OTHER"; // 根据实际�
 
 // 房源类型代码（与 homestay_types.code 一致）
 export type PropertyTypeCode =
-  | "ENTIRE"   // 整套公寓
-  | "PRIVATE"  // 独立房间
-  | "LOFT"     // 复式住宅
-  | "VILLA"    // 别墅
-  | "STUDIO"   // 开间/单间
+  | "ENTIRE" // 整套公寓
+  | "PRIVATE" // 独立房间
+  | "LOFT" // 复式住宅
+  | "VILLA" // 别墅
+  | "STUDIO" // 开间/单间
   | "TOWNHOUSE" // 联排别墅
   | "COURTYARD" // 四合院/院子
-  | "HOTEL";   // 酒店公寓
+  | "HOTEL"; // 酒店公寓
 
 // 兼容旧名称（已废弃，请使用 PropertyTypeCode）
 export type HomestayType = PropertyTypeCode;

@@ -22,14 +22,22 @@
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
             <el-tag :type="row.enabled ? 'success' : 'info'" size="small">
-              {{ row.enabled ? '启用' : '禁用' }}
+              {{ row.enabled ? "启用" : "禁用" }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" @click="openGroupFormDialog(row)">编辑</el-button>
-            <el-button v-if="!row.isDefault" size="small" type="danger" @click="handleDeleteGroup(row.id)">删除</el-button>
+            <el-button size="small" type="primary" @click="openGroupFormDialog(row)"
+              >编辑</el-button
+            >
+            <el-button
+              v-if="!row.isDefault"
+              size="small"
+              type="danger"
+              @click="handleDeleteGroup(row.id)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -50,7 +58,12 @@
         <el-input v-model="groupForm.code" placeholder="英文标识，如 sea-view" />
       </el-form-item>
       <el-form-item label="描述">
-        <el-input v-model="groupForm.description" type="textarea" :rows="3" placeholder="分组描述" />
+        <el-input
+          v-model="groupForm.description"
+          type="textarea"
+          :rows="3"
+          placeholder="分组描述"
+        />
       </el-form-item>
       <el-form-item label="图标">
         <el-input v-model="groupForm.icon" placeholder="图标名称" />
@@ -67,16 +80,20 @@
     </el-form>
     <template #footer>
       <el-button @click="groupFormDialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="handleSaveGroup" :loading="groupFormLoading">保存</el-button>
+      <el-button type="primary" @click="handleSaveGroup" :loading="groupFormLoading"
+        >保存</el-button
+      >
     </template>
   </el-dialog>
 
   <!-- 批量分组对话框 -->
   <el-dialog v-model="batchGroupDialogVisible" title="批量分配分组" width="400px">
-    <p>已选择 <strong>{{ selectedRows.length }}</strong> 个房源</p>
-    <el-form style="margin-top: 16px;">
+    <p>
+      已选择 <strong>{{ selectedRows.length }}</strong> 个房源
+    </p>
+    <el-form style="margin-top: 16px">
       <el-form-item label="选择分组">
-        <el-select v-model="batchGroupTargetId" placeholder="请选择分组" style="width: 100%;">
+        <el-select v-model="batchGroupTargetId" placeholder="请选择分组" style="width: 100%">
           <el-option label="移除分组（未分组）" :value="0" />
           <el-option v-for="g in groups" :key="g.id" :label="g.name" :value="g.id" />
         </el-select>
@@ -84,7 +101,9 @@
     </el-form>
     <template #footer>
       <el-button @click="batchGroupDialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="handleBatchGroup" :loading="batchGroupLoading">确认</el-button>
+      <el-button type="primary" @click="handleBatchGroup" :loading="batchGroupLoading"
+        >确认</el-button
+      >
     </template>
   </el-dialog>
 </template>
@@ -206,11 +225,15 @@ const handleSaveGroup = async () => {
 
 const handleDeleteGroup = async (id: number) => {
   try {
-    await ElMessageBox.confirm("删除分组后，该分组下的房源将变为未分组状态，确定要删除吗？", "删除确认", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-    });
+    await ElMessageBox.confirm(
+      "删除分组后，该分组下的房源将变为未分组状态，确定要删除吗？",
+      "删除确认",
+      {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      }
+    );
     await deleteHomestayGroup(id);
     ElMessage.success("分组已删除");
     await fetchGroups();
