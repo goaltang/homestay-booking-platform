@@ -12,23 +12,6 @@
                 <Timer />
               </el-icon>
               最后更新: {{ formatDateTime(lastUpdateTime) }}
-              <el-tag
-                :type="dataSource === 'real' ? 'success' : 'warning'"
-                size="small"
-                style="margin-left: 8px"
-              >
-                {{ dataSource === "real" ? "真实数据" : "演示数据" }}
-              </el-tag>
-              <el-button
-                v-if="dataSource === 'demo'"
-                link
-                type="warning"
-                size="small"
-                style="margin-left: 8px"
-                @click="checkDataSource"
-              >
-                查看详情
-              </el-button>
             </div>
           </div>
           <div class="header-actions">
@@ -295,7 +278,6 @@ const exporting = ref(false);
 const dateRange = ref<string[]>([]);
 const reviewerFilter = ref("");
 const lastUpdateTime = ref<string>("");
-const dataSource = ref<"real" | "demo">("demo");
 
 // 统计数据
 const statistics = reactive({
@@ -390,9 +372,8 @@ const loadStatistics = async () => {
     // 计算图表数据
     calculateTrendData(auditHistory.list);
 
-    // 设置最后更新时间和数据源
+    // 设置最后更新时间
     lastUpdateTime.value = new Date().toISOString();
-    dataSource.value = "real";
 
     // 数据加载完成后初始化图表
     await nextTick();
@@ -403,92 +384,13 @@ const loadStatistics = async () => {
 
     // 检查是否是认证错误
     if (error.response?.status === 401 || error.response?.status === 403) {
-      ElMessage.warning("请先登录以查看真实数据，当前显示演示数据");
+      ElMessage.warning("请先登录以查看统计数据");
     } else {
-      ElMessage.error("获取统计数据失败，显示演示数据");
+      ElMessage.error("获取统计数据失败");
     }
-
-    // 使用模拟数据
-    loadMockData();
-
-    // 设置最后更新时间和数据源
-    lastUpdateTime.value = new Date().toISOString();
-    dataSource.value = "demo";
-
-    // 模拟数据加载完成后也初始化图表
-    await nextTick();
-    initTrendChart();
-    initPieChart();
   } finally {
     loading.value = false;
   }
-};
-
-// 模拟数据（用于演示）
-const loadMockData = () => {
-  Object.assign(statistics, {
-    totalReviews: 245,
-    approvedCount: 198,
-    rejectedCount: 47,
-    approvalRate: 81,
-    rejectionRate: 19,
-    avgProcessTime: 4,
-  });
-
-  reviewerStats.value = [
-    {
-      reviewerName: "张管理员",
-      totalReviews: 89,
-      approvedCount: 76,
-      rejectedCount: 13,
-      approvalRate: 85,
-      avgProcessTime: 3.2,
-      efficiency: "高效",
-      lastActiveTime: new Date().toISOString(),
-    },
-    {
-      reviewerName: "李管理员",
-      totalReviews: 67,
-      approvedCount: 52,
-      rejectedCount: 15,
-      approvalRate: 78,
-      avgProcessTime: 4.1,
-      efficiency: "良好",
-      lastActiveTime: new Date().toISOString(),
-    },
-    {
-      reviewerName: "王管理员",
-      totalReviews: 89,
-      approvedCount: 70,
-      rejectedCount: 19,
-      approvalRate: 79,
-      avgProcessTime: 5.2,
-      efficiency: "一般",
-      lastActiveTime: new Date().toISOString(),
-    },
-  ];
-
-  topRejectionReasons.value = [
-    { reason: "图片质量不佳", count: 15, percentage: 100 },
-    { reason: "信息不完整", count: 12, percentage: 80 },
-    { reason: "价格不合理", count: 8, percentage: 53 },
-    { reason: "描述与实际不符", count: 6, percentage: 40 },
-    { reason: "违反平台规定", count: 4, percentage: 27 },
-  ];
-
-  Object.assign(efficiencyStats, {
-    fast: 35,
-    normal: 58,
-    slow: 7,
-  });
-
-  // 更新图表数据
-  trendData.value = {
-    dates: ["12/1", "12/2", "12/3", "12/4", "12/5", "12/6", "12/7"],
-    totalReviews: [12, 19, 15, 8, 21, 17, 14],
-    approved: [10, 15, 12, 6, 17, 14, 11],
-    rejected: [2, 4, 3, 2, 4, 3, 3],
-  };
 };
 
 // 计算审核员统计
@@ -780,15 +682,6 @@ const initPieChart = () => {
 };
 
 // 事件处理
-// 查看演示数据说明
-const checkDataSource = () => {
-  ElMessageBox.alert(
-    '数据加载失败或暂无真实数据时，页面展示演示数据（带"演示数据"标签）。点击"刷新数据"可重新拉取真实统计。',
-    "演示数据说明",
-    { confirmButtonText: "知道了", type: "info" }
-  );
-};
-
 // 查看审核员详情
 const viewReviewerDetails = (reviewerName: string) => {
   const reviewer = reviewerStats.value.find((r: any) => r.reviewerName === reviewerName);

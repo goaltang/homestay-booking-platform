@@ -67,35 +67,6 @@ export function getHomestayHostInfo(homestayId: number) {
     })
     .catch((error) => {
       console.error(`获取房源房东信息失败，房源ID: ${homestayId}`, error);
-
-      // 如果是开发环境且请求失败，返回模拟数据
-      if (process.env.NODE_ENV === "development") {
-        console.log("使用房东模拟数据");
-        return {
-          data: {
-            id: 101,
-            name: "张晓明",
-            avatar: "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
-            rating: 4.92,
-            accommodations: 156,
-            years: 5,
-            responseRate: "99%",
-            responseTime: "1小时内",
-            companions: [
-              {
-                name: "李华",
-                avatar: "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
-              },
-              {
-                name: "王芳",
-                avatar: "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
-              },
-            ],
-          },
-        };
-      }
-
-      // 如果不是开发环境，继续抛出错误
       throw error;
     });
 }

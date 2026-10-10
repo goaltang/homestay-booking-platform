@@ -238,47 +238,10 @@ const loadAuditHistory = async () => {
     pagination.total = result.total || 0;
   } catch (error) {
     console.error("获取审核历史失败:", error);
-    ElMessage.error("获取审核历史失败，显示模拟数据");
-    // 加载模拟数据
-    loadMockData();
+    ElMessage.error("获取审核历史失败");
   } finally {
     loading.value = false;
   }
-};
-
-// 模拟数据
-const loadMockData = () => {
-  auditHistory.value = [
-    {
-      id: 1,
-      homestayId: 101,
-      homestayTitle: "温馨海景公寓",
-      reviewerId: 1,
-      reviewerName: "张管理员",
-      oldStatus: "PENDING",
-      newStatus: "ACTIVE",
-      actionType: "APPROVE",
-      reviewReason: "房源信息完整，图片清晰，符合平台标准",
-      reviewNotes: "优质房源，推荐上架",
-      createdAt: new Date().toISOString(),
-      ipAddress: "192.168.1.1",
-    },
-    {
-      id: 2,
-      homestayId: 102,
-      homestayTitle: "市中心豪华套房",
-      reviewerId: 2,
-      reviewerName: "李管理员",
-      oldStatus: "PENDING",
-      newStatus: "REJECTED",
-      actionType: "REJECT",
-      reviewReason: "图片质量不佳，部分信息不完整",
-      reviewNotes: "建议房东重新上传高质量图片",
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-      ipAddress: "192.168.1.2",
-    },
-  ];
-  pagination.total = 2;
 };
 
 // 刷新数据

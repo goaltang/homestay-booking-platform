@@ -260,48 +260,10 @@ export const useUserStore = defineStore("user", () => {
         return true;
       }
 
-      // 如果后端API调用失败，回退到模拟注册
-      if (import.meta.env.DEV) {
-        warn("使用模拟注册数据（仅用于开发测试）");
-        setToken("mock-token-" + Date.now());
-
-        const mockUserData = {
-          id: Date.now(),
-          username: registerData.username,
-          email: registerData.email,
-          phone: registerData.phone || "",
-          role: registerData.role || "ROLE_USER",
-          avatar: "",
-        };
-
-        setUser(mockUserData);
-        log("模拟注册成功:", mockUserData);
-        return true;
-      }
-
       return false;
     } catch (error) {
       console.error("注册失败:", error);
       const apiError = error as ApiRequestError;
-
-      // 只有在开发环境才使用模拟数据
-      if (import.meta.env.DEV && !apiError.response) {
-        warn("API调用失败，使用模拟注册数据（仅用于开发测试）");
-        setToken("mock-token-" + Date.now());
-
-        const mockUserData = {
-          id: Date.now(),
-          username: registerData.username,
-          email: registerData.email,
-          phone: registerData.phone || "",
-          role: registerData.role || "ROLE_USER",
-          avatar: "",
-        };
-
-        setUser(mockUserData);
-        log("模拟注册成功:", mockUserData);
-        return true;
-      }
 
       // 确保错误中包含后端返回的消息
       if (apiError.response?.data) {

@@ -54,31 +54,15 @@
           />
         </div>
 
-        <!-- fallback 地图 -->
         <div v-else class="map-placeholder">
-          <div class="map-overlay">
-            <el-icon class="map-icon">
-              <Location />
-            </el-icon>
-            <div class="map-text">
-              <div class="map-title">查看地图</div>
-              <div class="map-subtitle">点击查看位置信息</div>
-            </div>
-          </div>
-          <img
-            v-if="forceMapUrl"
-            :src="forceMapUrl"
-            alt="位置地图"
-            class="map-image"
-            @error="$emit('map-error', $event)"
-            @load="onMapLoad"
-          />
-          <div v-else class="map-placeholder-content">
+          <div class="map-placeholder-content" role="status">
             <span class="placeholder-text">地图加载失败</span>
           </div>
         </div>
       </div>
     </div>
+
+    <p v-if="nearbyError" role="status">{{ nearbyError }}</p>
 
     <!-- 周边信息 -->
     <div class="nearby-info" v-if="nearbyPlaces.length > 0">
@@ -99,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { watch } from "vue";
 import { Location, House, Check } from "@element-plus/icons-vue";
 
 // Types
@@ -119,6 +103,7 @@ interface Props {
   hasLocation?: boolean;
   staticMapUrl?: string;
   nearbyPlaces: NearbyPlace[];
+  nearbyError?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -126,6 +111,7 @@ const props = withDefaults(defineProps<Props>(), {
   hasLocation: false,
   staticMapUrl: "",
   nearbyPlaces: () => [],
+  nearbyError: "",
 });
 
 // Emits
@@ -155,18 +141,6 @@ const formatDistance = (distance: number): string => {
     return `${(distance / 1000).toFixed(1)}公里`;
   }
 };
-
-const onMapLoad = () => {
-  console.log("地图图片加载成功");
-};
-
-// 地图URL：优先使用传入的静态地图URL，不再硬编码API Key
-const forceMapUrl = computed(() => {
-  if (props.staticMapUrl && props.staticMapUrl.length > 0) {
-    return props.staticMapUrl;
-  }
-  return "";
-});
 
 // 监视 staticMapUrl 变化
 watch(

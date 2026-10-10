@@ -134,6 +134,7 @@
         :has-location="mapComposable.mapData.value.hasLocation"
         :static-map-url="mapComposable.mapData.value.staticMapUrl"
         :nearby-places="mapComposable.nearbyPlaces.value"
+        :nearby-error="mapComposable.nearbyError.value"
         @open-map="mapComposable.openMapModal"
         @map-error="mapComposable.onMapImageError"
       />

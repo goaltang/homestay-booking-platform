@@ -6,10 +6,6 @@ import { codeToText } from "element-china-area-data";
 import { AMAP_CONFIG } from "@/utils/amapConfig";
 import request from "./request";
 
-// 共享高德地图API配置
-// 如果没有API Key，使用模拟模式
-const USE_MOCK_DATA = false; // 强制使用真实API，已有有效的API Key
-
 // 周边设施类型
 interface NearbyPlace {
   name: string;
@@ -42,35 +38,6 @@ export const searchAmapPoiSuggestions = async (
   const normalizedKeyword = keyword.trim();
   if (!normalizedKeyword) {
     return [];
-  }
-
-  if (USE_MOCK_DATA) {
-    const mockSuggestions: AmapPoiSuggestion[] = [
-      {
-        id: "mock-1",
-        name: "国贸中心",
-        address: "北京市朝阳区建国门外大街1号",
-        district: "朝阳区",
-        cityName: "北京市",
-        provinceName: "北京市",
-        latitude: 39.914492,
-        longitude: 116.459089,
-      },
-      {
-        id: "mock-2",
-        name: "前门大街",
-        address: "北京市东城区前门大街",
-        district: "东城区",
-        cityName: "北京市",
-        provinceName: "北京市",
-        latitude: 39.899359,
-        longitude: 116.404244,
-      },
-    ];
-
-    return mockSuggestions
-      .filter((item) => item.name.includes(normalizedKeyword))
-      .slice(0, options?.limit ?? 8);
   }
 
   try {
@@ -141,30 +108,6 @@ export const geocodeAddress = async (
     return null;
   }
 
-  // 模拟模式：返回一些预设坐标
-  if (USE_MOCK_DATA) {
-    console.log("使用模拟地理编码数据");
-
-    // 根据城市代码返回大概的坐标
-    const mockLocations: Record<string, { lat: number; lng: number; name: string }> = {
-      "1101": { lat: 39.9042, lng: 116.4074, name: "北京市" },
-      "3101": { lat: 31.2304, lng: 121.4737, name: "上海市" },
-      "4403": { lat: 22.5431, lng: 114.0579, name: "深圳市" },
-      "4401": { lat: 23.1291, lng: 113.2644, name: "广州市" },
-      "4602": { lat: 20.0444, lng: 110.1989, name: "三亚市" },
-      "5101": { lat: 30.5728, lng: 104.0668, name: "成都市" },
-      "3301": { lat: 30.2741, lng: 120.1551, name: "杭州市" },
-    };
-
-    const mockLocation = mockLocations[addressOrProvince] || mockLocations["1101"]; // 默认北京
-
-    return {
-      lat: mockLocation.lat + (Math.random() - 0.5) * 0.1, // 添加随机偏移
-      lng: mockLocation.lng + (Math.random() - 0.5) * 0.1,
-      formattedAddress: address,
-    };
-  }
-
   try {
     const response = await request.get("/api/map/geocode", {
       params: { address },
@@ -193,14 +136,6 @@ export const generateStaticMapUrl = (
   height: number = 400,
   zoom: number = 15
 ): string => {
-  // 模拟模式：返回占位图
-  if (USE_MOCK_DATA) {
-    console.log("使用模拟静态地图");
-    return `https://picsum.photos/${width}/${height}?random=map-${Math.floor(
-      Math.random() * 1000
-    )}`;
-  }
-
   // 高德地图静态图API
   // 文档: https://lbs.amap.com/api/webservice/guide/api/staticmaps
 
@@ -241,85 +176,41 @@ export const searchNearbyPlaces = async (
   lng: number,
   types: string[] = ["地铁站", "商场", "医院", "学校"]
 ): Promise<NearbyPlace[]> => {
-  // 模拟模式：返回模拟数据
-  if (USE_MOCK_DATA) {
-    console.log("使用模拟周边设施数据");
+  const places: NearbyPlace[] = [];
 
-    const mockPlaces: NearbyPlace[] = [
-      {
-        name: "地铁1号线某某站",
-        type: "地铁站",
-        distance: 450,
-        address: "步行约5分钟",
-      },
-      {
-        name: "某某购物中心",
-        type: "商场",
-        distance: 750,
-        address: "步行约8分钟",
-      },
-      {
-        name: "某某三甲医院",
-        type: "医院",
-        distance: 1200,
-        address: "步行约12分钟",
-      },
-      { name: "某某小学", type: "学校", distance: 600, address: "步行约6分钟" },
-    ];
+  for (const type of types) {
+    const response = await fetch(
+      `https://restapi.amap.com/v3/place/around?` +
+        `key=${AMAP_CONFIG.webServiceKey}&` +
+        `location=${lng},${lat}&` +
+        `keywords=${encodeURIComponent(type)}&` +
+        `radius=2000&` +
+        `types=&` +
+        `sortrule=distance&` +
+        `output=JSON`
+    );
 
-    // 根据传入的types过滤
-    return mockPlaces.filter((place) => types.includes(place.type)).slice(0, 3);
-  }
-
-  try {
-    const places: NearbyPlace[] = [];
-
-    for (const type of types) {
-      const response = await fetch(
-        `https://restapi.amap.com/v3/place/around?` +
-          `key=${AMAP_CONFIG.webServiceKey}&` +
-          `location=${lng},${lat}&` +
-          `keywords=${encodeURIComponent(type)}&` +
-          `radius=2000&` +
-          `types=&` +
-          `sortrule=distance&` +
-          `output=JSON`
-      );
-
-      const data = await response.json();
-
-      if (data.status === "1" && data.pois && data.pois.length > 0) {
-        // 取最近的一个
-        const poi = data.pois[0];
-        places.push({
-          name: poi.name,
-          type: type,
-          distance: parseInt(poi.distance),
-          address: poi.address,
-        });
-      }
+    if (!response.ok) {
+      throw new Error(`周边设施请求失败: HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.status !== "1") {
+      throw new Error("周边设施查询失败");
     }
 
-    return places;
-  } catch (error) {
-    console.error("搜索周边设施失败:", error);
-    // 返回备用模拟数据
-    return [
-      {
-        name: "附近地铁站",
-        type: "地铁站",
-        distance: 500,
-        address: "步行约5分钟",
-      },
-      { name: "附近商场", type: "商场", distance: 800, address: "步行约8分钟" },
-      {
-        name: "附近医院",
-        type: "医院",
-        distance: 1200,
-        address: "步行约12分钟",
-      },
-    ];
+    if (data.status === "1" && data.pois && data.pois.length > 0) {
+      // 取最近的一个
+      const poi = data.pois[0];
+      places.push({
+        name: poi.name,
+        type: type,
+        distance: parseInt(poi.distance),
+        address: poi.address,
+      });
+    }
   }
+
+  return places;
 };
 
 /**

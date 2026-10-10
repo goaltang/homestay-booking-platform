@@ -1,6 +1,5 @@
 import request from "@/utils/request";
 import { handleApiError } from "@/utils/errorHandler";
-import { OrderStatus } from "@/types/order";
 
 /**
  * 创建订单
@@ -31,80 +30,6 @@ export function createOrder(data: {
     .catch((error) => {
       console.error("订单创建失败:", error);
       handleApiError(error, "创建订单失败，请重试");
-      throw error;
-    });
-}
-
-/**
- * 获取用户的订单列表
- * @param params 查询参数
- */
-export function getUserOrders(params?: { page?: number; size?: number; status?: string }) {
-  console.log("获取用户订单列表，参数:", params);
-  return request({
-    url: "/api/orders",
-    method: "get",
-    params,
-  })
-    .then((response) => {
-      console.log("获取用户订单成功:", response.data);
-      return response;
-    })
-    .catch((error) => {
-      console.error("获取用户订单失败:", error);
-      handleApiError(error, "获取订单列表失败");
-
-      // 开发模式下提供模拟数据
-      if (process.env.NODE_ENV === "development") {
-        console.warn("开发模式：使用模拟订单数据");
-        const mockOrders = [
-          {
-            id: 1,
-            orderNumber: "ORD" + Date.now().toString().substring(5),
-            homestayId: 1,
-            homestayTitle: "湖景度假房",
-            imageUrl: "https://picsum.photos/400/300?random=1",
-            guestCount: 2,
-            checkInDate: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0],
-            checkOutDate: new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0],
-            nights: 3,
-            totalAmount: 1200,
-            status: OrderStatus.PENDING,
-            createTime: new Date().toISOString(),
-          },
-          {
-            id: 2,
-            orderNumber: "ORD" + (Date.now() - 1000000).toString().substring(5),
-            homestayId: 2,
-            homestayTitle: "山景小木屋",
-            imageUrl: "https://picsum.photos/400/300?random=2",
-            guestCount: 4,
-            checkInDate: new Date(Date.now() + 86400000 * 14).toISOString().split("T")[0],
-            checkOutDate: new Date(Date.now() + 86400000 * 17).toISOString().split("T")[0],
-            nights: 3,
-            totalAmount: 1800,
-            status: OrderStatus.CONFIRMED,
-            createTime: new Date(Date.now() - 86400000 * 2).toISOString(),
-          },
-        ];
-
-        // 根据传入的状态参数过滤订单
-        let filteredOrders = mockOrders;
-        if (params && params.status && params.status !== "all") {
-          filteredOrders = mockOrders.filter((order) => order.status === params.status);
-        }
-
-        return {
-          data: {
-            content: filteredOrders,
-            totalElements: filteredOrders.length,
-            totalPages: 1,
-            size: filteredOrders.length,
-            number: 0,
-          },
-        };
-      }
-
       throw error;
     });
 }
@@ -471,86 +396,6 @@ export function getMyOrders(params?: {
     .catch((error) => {
       console.error("获取我的订单失败:", error);
       handleApiError(error, "获取我的订单失败");
-
-      // 开发模式下提供模拟数据
-      if (process.env.NODE_ENV === "development") {
-        console.warn("开发模式：使用模拟订单数据");
-        const mockOrders = [
-          {
-            id: 1,
-            orderNumber: "ORD" + Date.now().toString().substring(5),
-            homestayId: 1,
-            homestayTitle: "湖景度假房",
-            imageUrl: "https://picsum.photos/400/300?random=1",
-            location: "杭州西湖区",
-            guestCount: 2,
-            checkInDate: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0],
-            checkOutDate: new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0],
-            nights: 3,
-            totalAmount: 1200,
-            price: 350,
-            cleaningFee: 100,
-            serviceFee: 50,
-            status: OrderStatus.PENDING,
-            createTime: new Date().toISOString(),
-          },
-          {
-            id: 2,
-            orderNumber: "ORD" + (Date.now() - 1000000).toString().substring(5),
-            homestayId: 2,
-            homestayTitle: "山景小木屋",
-            imageUrl: "https://picsum.photos/400/300?random=2",
-            location: "莫干山度假区",
-            guestCount: 4,
-            checkInDate: new Date(Date.now() + 86400000 * 14).toISOString().split("T")[0],
-            checkOutDate: new Date(Date.now() + 86400000 * 17).toISOString().split("T")[0],
-            nights: 3,
-            totalAmount: 1800,
-            price: 500,
-            cleaningFee: 150,
-            serviceFee: 150,
-            status: OrderStatus.CONFIRMED,
-            createTime: new Date(Date.now() - 86400000 * 2).toISOString(),
-          },
-          {
-            id: 3,
-            orderNumber: "ORD" + (Date.now() - 2000000).toString().substring(5),
-            homestayId: 3,
-            homestayTitle: "海滨别墅",
-            imageUrl: "https://picsum.photos/400/300?random=3",
-            location: "三亚亚龙湾",
-            guestCount: 6,
-            checkInDate: new Date(Date.now() - 86400000 * 10).toISOString().split("T")[0],
-            checkOutDate: new Date(Date.now() - 86400000 * 5).toISOString().split("T")[0],
-            nights: 5,
-            totalAmount: 3500,
-            price: 600,
-            cleaningFee: 200,
-            serviceFee: 200,
-            status: OrderStatus.COMPLETED,
-            createTime: new Date(Date.now() - 86400000 * 15).toISOString(),
-          },
-        ];
-
-        // 根据传入的状态参数过滤订单
-        let filteredOrders = mockOrders;
-        if (params && params.status && params.status !== "all") {
-          filteredOrders = mockOrders.filter((order) => order.status === params.status);
-        }
-
-        return {
-          data: {
-            data: {
-              content: filteredOrders,
-              totalElements: filteredOrders.length,
-              totalPages: 1,
-              size: filteredOrders.length,
-              number: 0,
-            },
-          },
-        };
-      }
-
       throw error;
     });
 }

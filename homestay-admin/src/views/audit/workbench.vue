@@ -2056,45 +2056,6 @@ const loadViolationList = async () => {
   } catch (error) {
     console.error("加载违规房源列表失败:", error);
     ElMessage.error("加载违规房源列表失败");
-
-    // 如果API失败，使用模拟数据作为备用
-    const mockViolationData = [
-      {
-        id: 1001,
-        title: "豪华海景房 - 限时特惠仅需1元！",
-        ownerName: "张三",
-        status: "ACTIVE",
-        violationType: "PRICE_FRAUD",
-        violationReason: "价格异常",
-        violationDetails: "房源价格设置为1元，明显低于市场价格，疑似价格欺诈",
-        reportCount: 3,
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: 1002,
-        title: "市中心精装公寓",
-        ownerName: "李四",
-        status: "ACTIVE",
-        violationType: "CONTENT_VIOLATION",
-        violationReason: "图片不实",
-        violationDetails: "用户举报房源图片与实际不符，存在虚假宣传",
-        reportCount: 2,
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: 1003,
-        title: "温馨家庭房",
-        ownerName: "王五",
-        status: "ACTIVE",
-        violationType: "DESCRIPTION_VIOLATION",
-        violationReason: "描述违规",
-        violationDetails: "房源描述中包含违规关键词",
-        reportCount: 1,
-        updatedAt: new Date().toISOString(),
-      },
-    ];
-    violationList.value = mockViolationData;
-    violationTotal.value = mockViolationData.length;
   } finally {
     loadingViolations.value = false;
   }
