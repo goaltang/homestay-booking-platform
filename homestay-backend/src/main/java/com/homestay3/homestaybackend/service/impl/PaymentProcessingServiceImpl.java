@@ -21,11 +21,9 @@ import com.homestay3.homestaybackend.service.OrderNotificationService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
 import com.homestay3.homestaybackend.service.PaymentService;
 import com.homestay3.homestaybackend.service.RefundPolicyCalculator;
-import com.homestay3.homestaybackend.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +50,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
     private final PromotionUsageRepository promotionUsageRepository;
     private final com.homestay3.homestaybackend.repository.UserCouponRepository userCouponRepository;
     private final com.homestay3.homestaybackend.service.CouponAnalyticsService couponAnalyticsService;
-    private final ObjectProvider<SystemConfigService> systemConfigServiceProvider;
+    private final OrderDtoAssembler orderDtoAssembler;
     private final OrderStatusUpdater orderStatusUpdater;
 
     @Override
@@ -108,7 +106,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
             // 统一支付成功后置处理
             handleOrderPaidSuccess(paidOrder.getId());
 
-            return convertToDTO(paidOrder);
+            return orderDtoAssembler.toPaymentResult(paidOrder);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("订单 {} 支付处理被中断", order.getOrderNumber(), e);
@@ -162,7 +160,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
         // 统一支付成功后置处理
         handleOrderPaidSuccess(updatedOrder.getId());
 
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toPaymentResult(updatedOrder);
     }
 
     @Override
@@ -267,7 +265,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
             log.error("发送退款通知失败: {}", e.getMessage(), e);
         }
 
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toPaymentResult(updatedOrder);
     }
 
     @Override
@@ -348,7 +346,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
             log.error("发送退款批准通知失败: {}", e.getMessage(), e);
         }
 
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toPaymentResult(updatedOrder);
     }
 
     @Override
@@ -388,7 +386,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
             log.error("发送退款拒绝通知失败: {}", e.getMessage(), e);
         }
 
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toPaymentResult(updatedOrder);
     }
 
     @Override
@@ -447,7 +445,7 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
         }
 
         log.info("用户退款申请已提交，订单号: {}", order.getOrderNumber());
-        return convertToDTO(updatedOrder);
+        return orderDtoAssembler.toPaymentResult(updatedOrder);
     }
 
     // 辅助方法：获取当前登录用户
@@ -530,73 +528,4 @@ public class PaymentProcessingServiceImpl implements PaymentProcessingService {
         return order.getGuest() != null && order.getGuest().getId().equals(user.getId());
     }
 
-    // 辅助方法：将 Order 实体转换为 OrderDTO
-    private OrderDTO convertToDTO(Order order) {
-        if (order == null) {
-            return null;
-        }
-
-        // 检查订单是否已被评价
-        boolean isReviewed = false; // 这里需要实际的reviewRepository，但为了简化先设为false
-        // In a real implementation, you would inject ReviewRepository and check:
-        // boolean isReviewed = reviewRepository.existsByOrder(order);
-
-        // 获取房东信息
-        User host = order.getHomestay() != null ? order.getHomestay().getOwner() : null;
-        String hostName = host != null ? (host.getNickname() != null ? host.getNickname() : host.getUsername()) : null;
-        Long hostId = host != null ? host.getId() : null;
-
-        // 获取房客信息
-        User guest = order.getGuest();
-        String guestName = guest != null ? (guest.getNickname() != null ? guest.getNickname() : guest.getUsername()) : null;
-        Long guestId = guest != null ? guest.getId() : null;
-
-        // 从系统配置动态读取费用配置
-        BigDecimal baseAmount = order.getPrice() != null ? order.getPrice().multiply(BigDecimal.valueOf(order.getNights())) : BigDecimal.ZERO;
-        // 清洁费：固定金额 = 单晚价格 × 配置比例
-        BigDecimal cleaningFeeAmount = getPricingConfig("pricing.cleaning_fee", "0.1");
-        BigDecimal serviceFeeRate = getPricingConfig("pricing.service_fee", "0.15");
-        BigDecimal cleaningFee = order.getPrice() != null ? order.getPrice().multiply(cleaningFeeAmount) : BigDecimal.ZERO;
-        BigDecimal serviceFee = baseAmount.multiply(serviceFeeRate);
-
-        // 构建 OrderDTO
-        return OrderDTO.builder()
-                .id(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .homestayId(order.getHomestay() != null ? order.getHomestay().getId() : null)
-                .homestayTitle(order.getHomestay() != null ? order.getHomestay().getTitle() : null)
-                .guestId(guestId)
-                .guestName(guestName)
-                .guestPhone(order.getGuestPhone())
-                .checkInDate(order.getCheckInDate())
-                .checkOutDate(order.getCheckOutDate())
-                .nights(order.getNights())
-                .guestCount(order.getGuestCount())
-                .price(order.getPrice())
-                .cleaningFee(cleaningFee)
-                .serviceFee(serviceFee)
-                .totalAmount(order.getTotalAmount())
-                .status(order.getStatus())
-                .paymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus().name() : null)
-                .paymentMethod(order.getPaymentMethod())
-                .remark(order.getRemark())
-                .hostId(hostId)
-                .hostName(hostName)
-                .createTime(order.getCreatedAt())
-                .updateTime(order.getUpdatedAt())
-                .isReviewed(isReviewed)
-                .build();
-    }
-
-    /**
-     * 获取定价配置
-     */
-    private BigDecimal getPricingConfig(String key, String defaultValue) {
-        String value = systemConfigServiceProvider.getObject().getConfigValue(key, defaultValue);
-        try {
-            return new BigDecimal(value);
-        } catch (NumberFormatException e) {
-            return new BigDecimal(defaultValue);
-        }
-    }
 }

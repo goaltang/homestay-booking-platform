@@ -312,19 +312,20 @@ class RefundPolicyConsistencyTest {
         when(config.getConfigValue(anyString(), anyString())).thenAnswer(call -> call.getArgument(1));
         when(orderRepository.save(any(Order.class))).thenAnswer(call -> call.getArgument(0));
         when(promotionUsages.findByOrderId(anyLong())).thenReturn(Collections.emptyList());
+        OrderDtoAssembler assembler = new OrderDtoAssembler(reviewRepository, userRepository, configProvider);
 
         paymentProcessingService = new PaymentProcessingServiceImpl(orderRepository, userRepository,
                 paymentRecordRepository, earningService, notifications, paymentService, calculator,
-                couponService, promotionUsages, userCoupons, couponAnalytics, configProvider, statusUpdater);
+                couponService, promotionUsages, userCoupons, couponAnalytics, assembler, statusUpdater);
         ObjectProvider<OrderTimeoutProducer> timeouts = mock(ObjectProvider.class);
         orderLifecycleService = new OrderLifecycleServiceImpl(orderRepository, userRepository,
-                homestayRepository, notifications, earningService, reviewRepository,
+                homestayRepository, notifications, earningService, assembler,
                 mock(BookingConflictService.class), pricingService, calculator, couponService,
                 mock(PromotionMatchService.class), promotionUsages, userCoupons,
-                mock(CouponTemplateRepository.class), couponAnalytics, configProvider,
+                mock(CouponTemplateRepository.class), couponAnalytics,
                 mock(UserBehaviorTrackingService.class), paymentProcessingService, statusUpdater, timeouts);
         orderService = new OrderServiceImpl(orderRepository, userRepository, homestayRepository,
-                reviewRepository, paymentProcessingService, orderLifecycleService, pricingService,
+                assembler, paymentProcessingService, orderLifecycleService, pricingService,
                 calculator, configProvider);
     }
 

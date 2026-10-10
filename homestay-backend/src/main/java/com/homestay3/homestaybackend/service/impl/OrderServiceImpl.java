@@ -3,19 +3,16 @@ package com.homestay3.homestaybackend.service.impl;
 import com.homestay3.homestaybackend.dto.OrderDTO;
 import com.homestay3.homestaybackend.dto.PriceCalculationRequest;
 import com.homestay3.homestaybackend.dto.PriceCalculationResponse;
-import com.homestay3.homestaybackend.dto.ReviewDTO;
 import com.homestay3.homestaybackend.exception.AccessDeniedException;
 import com.homestay3.homestaybackend.exception.ResourceNotFoundException;
 import com.homestay3.homestaybackend.entity.Homestay;
 import com.homestay3.homestaybackend.entity.Order;
-import com.homestay3.homestaybackend.entity.Review;
 import com.homestay3.homestaybackend.model.OrderStatus;
 import com.homestay3.homestaybackend.model.PaymentStatus;
 import com.homestay3.homestaybackend.entity.User;
 import com.homestay3.homestaybackend.repository.HomestayRepository;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.repository.UserRepository;
-import com.homestay3.homestaybackend.repository.ReviewRepository;
 import com.homestay3.homestaybackend.service.SystemConfigService;
 import com.homestay3.homestaybackend.service.OrderService;
 import com.homestay3.homestaybackend.service.PaymentProcessingService;
@@ -49,7 +46,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final HomestayRepository homestayRepository;
-    private final ReviewRepository reviewRepository;
+    private final OrderDtoAssembler orderDtoAssembler;
     private final PaymentProcessingService paymentProcessingService;
     private final OrderLifecycleService orderLifecycleService;
     private final PricingService pricingService;
@@ -59,7 +56,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(OrderRepository orderRepository,
                             UserRepository userRepository,
                             HomestayRepository homestayRepository,
-                            ReviewRepository reviewRepository,
+                            OrderDtoAssembler orderDtoAssembler,
                             PaymentProcessingService paymentProcessingService,
                             OrderLifecycleService orderLifecycleService,
                             PricingService pricingService,
@@ -68,7 +65,7 @@ public class OrderServiceImpl implements OrderService {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.homestayRepository = homestayRepository;
-        this.reviewRepository = reviewRepository;
+        this.orderDtoAssembler = orderDtoAssembler;
         this.paymentProcessingService = paymentProcessingService;
         this.orderLifecycleService = orderLifecycleService;
         this.pricingService = pricingService;
@@ -350,7 +347,7 @@ public class OrderServiceImpl implements OrderService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return orderRepository.findAll(spec, pageable).map(this::convertToDTO);
+        return orderRepository.findAll(spec, pageable).map(orderDtoAssembler::toAdminListItem);
     }
 
     @Override
@@ -572,141 +569,6 @@ public class OrderServiceImpl implements OrderService {
         return false;
     }
 
-    // 工具方法：将 Order 实体转换为 OrderDTO
-    private OrderDTO convertToDTO(Order order) {
-        if (order == null) {
-            return null;
-        }
-
-        // 检查订单是否已被评价
-        boolean isReviewed = reviewRepository.existsByOrder(order);
-        ReviewDTO reviewDTO = null;
-
-        // 如果订单已完成且已评价，则获取评价详情
-        if (OrderStatus.COMPLETED.name().equals(order.getStatus()) && isReviewed) {
-            Optional<Review> reviewOpt = reviewRepository.findByOrder(order);
-            if (reviewOpt.isPresent()) {
-                reviewDTO = convertReviewToDTO(reviewOpt.get()); // 调用辅助方法转换
-            }
-        }
-
-        // 获取房东信息，如果存在的话（处理homestay已被删除的边缘情况）
-        User host = null;
-        String hostName = null;
-        Long hostId = null;
-        try {
-            if (order.getHomestay() != null) {
-                host = order.getHomestay().getOwner();
-                if (host != null) {
-                    hostName = host.getNickname() != null ? host.getNickname() : host.getUsername();
-                    hostId = host.getId();
-                }
-            }
-        } catch (jakarta.persistence.EntityNotFoundException e) {
-            // homestay已被删除，忽略异常，保持hostName和hostId为null
-            log.warn("订单 {} 关联的homestay已被删除", order.getId());
-        }
-
-        // 获取房客信息，如果存在的话（处理用户已被删除的边缘情况）
-        String guestName = null;
-        Long guestId = null;
-        try {
-            User guest = order.getGuest();
-            if (guest != null) {
-                guestName = guest.getNickname() != null ? guest.getNickname() : guest.getUsername();
-                guestId = guest.getId();
-            }
-        } catch (jakarta.persistence.EntityNotFoundException e) {
-            // guest已被删除，忽略异常
-            log.warn("订单 {} 关联的guest用户已被删除", order.getId());
-        }
-
-        // 获取退款相关的用户名
-        String refundInitiatedByName = null;
-        String refundProcessedByName = null;
-
-        if (order.getRefundInitiatedBy() != null) {
-            Optional<User> initiatorOpt = userRepository.findById(order.getRefundInitiatedBy());
-            if (initiatorOpt.isPresent()) {
-                User initiator = initiatorOpt.get();
-                refundInitiatedByName = initiator.getNickname() != null ? initiator.getNickname()
-                        : initiator.getUsername();
-            }
-        }
-
-        if (order.getRefundProcessedBy() != null) {
-            Optional<User> processorOpt = userRepository.findById(order.getRefundProcessedBy());
-            if (processorOpt.isPresent()) {
-                User processor = processorOpt.get();
-                refundProcessedByName = processor.getNickname() != null ? processor.getNickname()
-                        : processor.getUsername();
-            }
-        }
-
-        // 从系统配置动态读取费用配置
-        BigDecimal baseAmount = order.getPrice() != null ? order.getPrice().multiply(BigDecimal.valueOf(order.getNights())) : BigDecimal.ZERO;
-        // 清洁费：固定金额 = 单晚价格 × 配置比例
-        BigDecimal cleaningFeeAmount = getPricingConfig("pricing.cleaning_fee", "0.1");
-        BigDecimal serviceFeeRate = getPricingConfig("pricing.service_fee", "0.15");
-        BigDecimal cleaningFee = order.getPrice() != null ? order.getPrice().multiply(cleaningFeeAmount) : BigDecimal.ZERO;
-        BigDecimal serviceFee = baseAmount.multiply(serviceFeeRate);
-
-        // 获取homestay信息（处理homestay已被删除的边缘情况）
-        Long homestayId = null;
-        String homestayTitle = null;
-        try {
-            if (order.getHomestay() != null) {
-                homestayId = order.getHomestay().getId();
-                homestayTitle = order.getHomestay().getTitle();
-            }
-        } catch (jakarta.persistence.EntityNotFoundException e) {
-            // homestay已被删除，忽略异常
-            log.warn("订单 {} 关联的homestay已被删除", order.getId());
-        }
-
-        // 构建 OrderDTO
-        return OrderDTO.builder()
-                .id(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .homestayId(homestayId)
-                .homestayTitle(homestayTitle)
-                .guestId(guestId)
-                .guestName(guestName)
-                .guestPhone(order.getGuestPhone())
-                .checkInDate(order.getCheckInDate())
-                .checkOutDate(order.getCheckOutDate())
-                .nights(order.getNights())
-                .guestCount(order.getGuestCount())
-                .price(order.getPrice())
-                .cleaningFee(cleaningFee)
-                .serviceFee(serviceFee)
-                .totalAmount(order.getTotalAmount())
-                .status(order.getStatus())
-                .paymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus().name() : null)
-                .paymentMethod(order.getPaymentMethod())
-                .remark(order.getRemark())
-                .hostId(hostId)
-                .hostName(hostName)
-                .createTime(order.getCreatedAt())
-                .updateTime(order.getUpdatedAt())
-                .completedAt(order.getCompletedAt())
-                .isReviewed(isReviewed)
-                .review(reviewDTO)
-                // 退款相关字段
-                .refundType(order.getRefundType() != null ? order.getRefundType().name() : null)
-                .refundReason(order.getRefundReason())
-                .refundAmount(order.getRefundAmount())
-                .refundInitiatedBy(order.getRefundInitiatedBy())
-                .refundInitiatedByName(refundInitiatedByName)
-                .refundInitiatedAt(order.getRefundInitiatedAt())
-                .refundProcessedBy(order.getRefundProcessedBy())
-                .refundProcessedByName(refundProcessedByName)
-                .refundProcessedAt(order.getRefundProcessedAt())
-                .refundTransactionId(order.getRefundTransactionId())
-                .refundRejectionReason(order.getRefundRejectionReason())
-                .build();
-    }
-
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getRefundPreview(Long orderId) {
@@ -740,36 +602,6 @@ public class OrderServiceImpl implements OrderService {
         preview.put("orderId", orderId);
         preview.put("orderNumber", order.getOrderNumber());
         return preview;
-    }
-
-    // --- 添加私有辅助方法：转换 Review 到 ReviewDTO ---
-    private ReviewDTO convertReviewToDTO(Review review) {
-        if (review == null) {
-            return null;
-        }
-        // (此逻辑复制自 ReviewServiceImpl 的 convertToDTO，注意字段是否匹配)
-        return ReviewDTO.builder()
-                .id(review.getId())
-                .userId(review.getUser() != null ? review.getUser().getId() : null)
-                .userName(review.getUser() != null ? review.getUser().getUsername() : null)
-                .userAvatar(review.getUser() != null ? review.getUser().getAvatar() : null)
-                .homestayId(review.getHomestay() != null ? review.getHomestay().getId() : null)
-                .homestayTitle(review.getHomestay() != null ? review.getHomestay().getTitle() : null)
-                .orderId(review.getOrder() != null ? review.getOrder().getId() : null)
-                .rating(review.getRating())
-                .content(review.getContent())
-                .cleanlinessRating(review.getCleanlinessRating())
-                .accuracyRating(review.getAccuracyRating())
-                .communicationRating(review.getCommunicationRating())
-                .locationRating(review.getLocationRating())
-                .checkInRating(review.getCheckInRating())
-                .valueRating(review.getValueRating())
-                .response(review.getResponse())
-                .responseTime(review.getResponseTime())
-                .createTime(review.getCreateTime())
-                .isPublic(review.getIsPublic())
-                // isOwnerResponse 在 OrderServiceImpl 中难以判断，可留空或移除
-                .build();
     }
 
     // ========== 价格计算 ==========

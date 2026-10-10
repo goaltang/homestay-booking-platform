@@ -92,7 +92,8 @@ class OrderServiceImplTest {
     @BeforeEach
     void setUp() {
         orderService = new OrderServiceImpl(orderRepository, userRepository, homestayRepository,
-                reviewRepository, paymentProcessingService, orderLifecycleService, pricingService,
+                new OrderDtoAssembler(reviewRepository, userRepository, systemConfigServiceProvider),
+                paymentProcessingService, orderLifecycleService, pricingService,
                 new RefundPolicyCalculator(pricingService, Clock.systemDefaultZone()), systemConfigServiceProvider);
 
         // 设置当前用户
