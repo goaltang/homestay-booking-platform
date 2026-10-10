@@ -1,6 +1,6 @@
 <template>
     <div class="review-container">
-        <TableSearch :query="query" :options="searchOptions" :search="handleSearch" />
+        <TableSearch :query="query" @update:query="Object.assign(query, $event)" :options="searchOptions" :search="handleSearch" />
 
         <!-- 批量操作栏 -->
         <div v-if="selectedIds.length > 0" class="batch-toolbar">

@@ -12,7 +12,8 @@
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "quality:changed": "node ../tools/check-frontend-changes.mjs"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",

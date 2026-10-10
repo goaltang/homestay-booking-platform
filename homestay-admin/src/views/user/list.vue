@@ -68,7 +68,7 @@
 
         <!-- 搜索筛选区域 -->
         <div class="search-box">
-            <table-search :query="searchForm" :options="searchOptions" :search="handleSearch">
+            <table-search :query="searchForm" @update:query="Object.assign(searchForm, $event)" :options="searchOptions" :search="handleSearch">
                 <template #actions>
                     <el-button type="success" @click="handleAdd" :icon="Plus">新增用户</el-button>
                     <el-button type="info" @click="handleExport" :loading="exportLoading" :icon="Download">导出</el-button>

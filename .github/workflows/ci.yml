@@ -26,7 +26,7 @@ jobs:
       - name: Build test ES image (with IK analyzer, needed by EsIntegrationTest)
         run: docker build -t homestay-es-ik:test -f src/test/resources/testcontainers/Dockerfile.es-ik .
 
-      - name: Run tests (H2 in-memory, no external services)
+      - name: Run tests (isolated H2 and containerized ES)
         run: mvn -B test
 
       - name: Upload surefire reports (on failure)
@@ -49,6 +49,8 @@ jobs:
         working-directory: ${{ matrix.app }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node 20
         uses: actions/setup-node@v4
@@ -59,6 +61,26 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Quality script regression tests
+        run: node --test ../tools/check-frontend-changes.test.mjs
+
+      - name: Full lint
+        run: npm run lint:check
+
+      - name: Check changed-file quality
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          base="${PR_BASE:-$PUSH_BASE}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base="$(git hash-object -t tree /dev/null)"
+          fi
+          npm run quality:changed -- "$base"
+
+      - name: Frontend tests
+        run: npm run test:run
 
       - name: Type-check & build
         run: npm run build

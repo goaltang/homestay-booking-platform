@@ -62,13 +62,9 @@ interface PageResponse<T> {
 // 获取管理员订单列表 (新)
 export function getAdminOrders(params: AdminOrderSearchParams) {
   // 参数处理: 移除空值或 undefined 值，后端 @RequestParam(required = false) 会处理
-  const filteredParams = Object.entries(params).reduce((acc, [key, value]) => {
-    if (value !== null && value !== undefined && value !== "") {
-      // @ts-ignore
-      acc[key] = value;
-    }
-    return acc;
-  }, {} as AdminOrderSearchParams);
+  const filteredParams = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== null && value !== undefined && value !== "")
+  );
 
   return request<PageResponse<AdminOrderListItem>>({
     url: "/api/admin/orders",

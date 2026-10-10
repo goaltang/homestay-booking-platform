@@ -1,7 +1,7 @@
 <template>
     <div class="homestay-list">
         <div class="search-box">
-            <table-search :query="searchForm" :options="searchOptions" :search="handleSearch">
+            <table-search :query="searchForm" @update:query="Object.assign(searchForm, $event)" :options="searchOptions" :search="handleSearch">
                 <template #actions>
                     <el-button type="success" @click="handleAdd" :icon="Plus">新增房源</el-button>
                     <el-button type="warning" @click="goToAuditWorkbench" v-if="hasPendingItems" :icon="Warning">去审核中心</el-button>
