@@ -1,77 +1,55 @@
-import axios from "axios";
-import { API_BASE_URL } from "@/config/constants";
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// 请求拦截器添加token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("homestay_admin_token") || localStorage.getItem("token");
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+import request from "@/utils/request";
 
 // 房源类型API
 export const getAllTypesApi = () => {
-  return api.get("/api/v1/homestay-types/all");
+  return request.get("/api/v1/homestay-types/all");
 };
 
 export const getTypeByIdApi = (id: number) => {
-  return api.get(`/api/v1/homestay-types/${id}`);
+  return request.get(`/api/v1/homestay-types/${id}`);
 };
 
 export const createTypeApi = (data: any) => {
-  return api.post("/api/v1/homestay-types", data);
+  return request.post("/api/v1/homestay-types", data);
 };
 
 export const updateTypeApi = (id: number, data: any) => {
-  return api.put(`/api/v1/homestay-types/${id}`, data);
+  return request.put(`/api/v1/homestay-types/${id}`, data);
 };
 
 export const deleteTypeApi = (id: number) => {
-  return api.delete(`/api/v1/homestay-types/${id}`);
+  return request.delete(`/api/v1/homestay-types/${id}`);
 };
 
 // 类型分类API
 export const getAllCategoriesApi = () => {
-  return api.get("/api/v1/homestay-types/categories");
+  return request.get("/api/v1/homestay-types/categories");
 };
 
 export const getCategoryByIdApi = (id: number) => {
-  return api.get(`/api/v1/homestay-types/categories/${id}`);
+  return request.get(`/api/v1/homestay-types/categories/${id}`);
 };
 
 export const createCategoryApi = (data: any) => {
-  return api.post("/api/v1/homestay-types/categories", data);
+  return request.post("/api/v1/homestay-types/categories", data);
 };
 
 export const updateCategoryApi = (id: number, data: any) => {
-  return api.put(`/api/v1/homestay-types/categories/${id}`, data);
+  return request.put(`/api/v1/homestay-types/categories/${id}`, data);
 };
 
 export const deleteCategoryApi = (id: number) => {
-  return api.delete(`/api/v1/homestay-types/categories/${id}`);
+  return request.delete(`/api/v1/homestay-types/categories/${id}`);
 };
 
 // 获取按分类分组的房源类型
 export const getTypesByCategoryApi = () => {
-  return api.get("/api/v1/homestay-types/by-category");
+  return request.get("/api/v1/homestay-types/by-category");
 };
 
 // 获取指定分类下的房源类型
 export const getTypesByCategoryIdApi = (categoryId: number) => {
-  return api.get(`/api/v1/homestay-types/category/${categoryId}`);
+  return request.get(`/api/v1/homestay-types/category/${categoryId}`);
 };
 
 export default {

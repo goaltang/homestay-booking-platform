@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
+import lombok.ToString;
 
 @Data
 @Builder
@@ -25,12 +27,14 @@ public class RegisterRequest {
     
     @NotBlank(message = "密码不能为空")
     @Size(min = 6, message = "密码长度不能少于6个字符")
+    @ToString.Exclude
     private String password;
     
     private String fullName;
     
     private String phone;
     
+    @Pattern(regexp = "(?i)\\s*(?:(?:ROLE_)?(?:USER|HOST))?\\s*", message = "公开注册仅支持普通用户或房东")
     private String role;
 
     private String referralCode;

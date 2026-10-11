@@ -52,8 +52,6 @@ export function createUser(data: any) {
     // DO NOT include status here if User type still has it
   };
 
-  console.log("Creating user with adapted data:", adaptedData);
-
   return request<any>({
     url: "/api/admin/users",
     method: "post",

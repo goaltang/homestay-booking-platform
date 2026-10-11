@@ -30,19 +30,14 @@ public class CustomUserDetailsService implements UserDetailsService {
                     return new UsernameNotFoundException("用户不存在: " + username);
                 });
 
-        String role = user.getRole();
-        if (!role.startsWith("ROLE_")) {
-            role = "ROLE_" + role;
+        String role;
+        try {
+            role = com.homestay3.homestaybackend.security.AccountRole.normalize(user.getRole());
+        } catch (IllegalArgumentException e) {
+            throw new UsernameNotFoundException("账号角色无效", e);
         }
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                user.isEnabled(),
-                true,
-                true,
-                true,
-                Collections.singletonList(new SimpleGrantedAuthority(role))
-        );
+        return new com.homestay3.homestaybackend.security.CustomUserDetails(
+                user.getId(), user.getUsername(), user.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority(role)), user.isEnabled());
     }
 }

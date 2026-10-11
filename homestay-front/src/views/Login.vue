@@ -227,7 +227,9 @@ const getAdminLoginUrl = () => {
   const defaultBaseUrl =
     window.location.port === "5173"
       ? `${window.location.protocol}//${window.location.hostname}:5174`
-      : "/admin";
+      : window.location.port === "8088"
+        ? `${window.location.protocol}//${window.location.hostname}:8089`
+        : "/admin";
   const baseUrl = configuredBaseUrl || defaultBaseUrl;
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
 
@@ -391,16 +393,13 @@ const handleLogin = async (event?: Event) => {
 
         // 导航逻辑
         await handleLoginSuccess();
-      } catch (fetchError: any) {
-        console.error("获取用户信息失败:", fetchError);
-        userStore.logout();
+      } catch (fetchError: unknown) {
+        ElMessage.error(extractLoginErrorMessage(fetchError as LoginError));
       }
     } else {
       ElMessage.error("登录失败，请检查用户名和密码");
     }
   } catch (error: unknown) {
-    console.error("登录过程中出错:", error);
-
     // 确保即使发生错误也阻止页面刷新
     if (event) {
       event.preventDefault();

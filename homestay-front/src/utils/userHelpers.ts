@@ -3,6 +3,19 @@
  * 用于统一处理登录/注册/获取用户信息中的重复逻辑
  */
 
+/** 单角色权限比较：兼容旧 LANDLORD 名称。 */
+export function normalizeRole(role: string): string {
+  const normalized = role
+    .trim()
+    .toUpperCase()
+    .replace(/^ROLE_/, "");
+  return normalized === "LANDLORD" ? "HOST" : normalized;
+}
+
+export function hasRole(role: string, requiredRoles: string[]): boolean {
+  return requiredRoles.some((required) => normalizeRole(required) === normalizeRole(role));
+}
+
 interface AuthorityLike {
   authority?: string;
 }

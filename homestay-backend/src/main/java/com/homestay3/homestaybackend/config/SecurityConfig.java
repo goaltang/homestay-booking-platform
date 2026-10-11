@@ -43,9 +43,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/auth/**", "/error", "/h2-console/**").permitAll()
+                        .requestMatchers("/api/admin/auth/login", "/error", "/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/prometheus", "/actuator/metrics/**").permitAll()
+                        .requestMatchers("/api/auth/profile", "/api/auth/change-password", "/api/auth/dashboard").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
@@ -83,14 +84,55 @@ public class SecurityConfig {
                         .requestMatchers("/api/host/**").hasAnyAuthority("ROLE_HOST", "ROLE_ADMIN")
                         .requestMatchers("/api/host/earnings/**").hasAnyAuthority("ROLE_HOST", "ROLE_ADMIN")
                         .anyRequest().authenticated())
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint((request, response, exception) -> response.sendError(401))
+                        .accessDeniedHandler((request, response, exception) -> response.sendError(403)))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(cookieOriginFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         log.info("安全过滤链配置完成");
         return http.build();
+    }
+
+    private org.springframework.web.filter.OncePerRequestFilter cookieOriginFilter() {
+        CorsConfiguration cors = corsConfiguration();
+        return new org.springframework.web.filter.OncePerRequestFilter() {
+            @Override
+            protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request,
+                                            jakarta.servlet.http.HttpServletResponse response,
+                                            jakarta.servlet.FilterChain chain)
+                    throws java.io.IOException, jakarta.servlet.ServletException {
+                boolean safeMethod = java.util.Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod());
+                boolean cookieRequest = com.homestay3.homestaybackend.security.AuthTokenResolver.cookie(request) != null;
+                if (!safeMethod && cookieRequest && !com.homestay3.homestaybackend.security.AuthTokenResolver.path(request).startsWith("/api/admin/")) {
+                    String origin = request.getHeader("Origin");
+                    if (origin == null) {
+                        String referer = request.getHeader("Referer");
+                        if (referer != null) {
+                            try {
+                                java.net.URI uri = java.net.URI.create(referer);
+                                origin = uri.getScheme() + "://" + uri.getRawAuthority();
+                            } catch (IllegalArgumentException ignored) {}
+                        }
+                    }
+                    String requestOrigin = request.getScheme() + "://" + request.getServerName();
+                    int port = request.getServerPort();
+                    if (!("http".equals(request.getScheme()) && port == 80)
+                            && !("https".equals(request.getScheme()) && port == 443)) {
+                        requestOrigin += ":" + port;
+                    }
+                    if (origin == null || (!requestOrigin.equals(origin) && cors.checkOrigin(origin) == null)) {
+                        response.sendError(403, "Cookie请求来源校验失败");
+                        return;
+                    }
+                }
+                chain.doFilter(request, response);
+            }
+        };
     }
 
     @Bean
@@ -117,6 +159,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         log.info("配置CORS...");
+        CorsConfiguration configuration = corsConfiguration();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    private CorsConfiguration corsConfiguration() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 设置允许的来源URL，支持前端开发环境的不同端口
@@ -156,10 +205,6 @@ public class SecurityConfig {
         // 预检请求的有效期，单位为秒
         configuration.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-
-        log.info("CORS配置完成，已添加 x-user-id 和 x-username 到 allowedHeaders");
-        return source;
+        return configuration;
     }
 }

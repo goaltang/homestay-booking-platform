@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { ElMessage } from "element-plus";
 import api from "@/utils/request";
 import type { Conversation, Message, ChatMessage } from "@/types/chat";
+import { useUserStore } from "@/stores/user";
 
 export const useChatStore = defineStore("chat", () => {
   const conversations = ref<Conversation[]>([]);
@@ -14,22 +15,18 @@ export const useChatStore = defineStore("chat", () => {
   const targetHostId = ref<number | null>(null);
   const targetHomestayId = ref<number | null>(null);
 
-  const isLoggedIn = computed(() => {
-    // token 已迁移 httpOnly cookie，登录态以 userInfo 为准
-    return !!(localStorage.getItem("homestay_user") || localStorage.getItem("userInfo"));
-  });
+  const isLoggedIn = computed(() => useUserStore().isAuthenticated);
+  const currentUserId = computed(() => useUserStore().userInfo?.id ?? null);
 
-  const currentUserId = computed(() => {
-    const userInfo = localStorage.getItem("homestay_user") || localStorage.getItem("userInfo");
-    if (userInfo) {
-      try {
-        return JSON.parse(userInfo).id;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
+  const clearSession = () => {
+    conversations.value = [];
+    currentConversation.value = null;
+    messages.value = [];
+    unreadCount.value = 0;
+    chatDialogVisible.value = false;
+    targetHostId.value = null;
+    targetHomestayId.value = null;
+  };
 
   const fetchConversations = async () => {
     loading.value = true;
@@ -154,6 +151,7 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   return {
+    clearSession,
     conversations,
     currentConversation,
     messages,

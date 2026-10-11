@@ -1,6 +1,6 @@
 # 开发检查与 AI 工具配置
 
-共享行为规范见 [AGENTS.md](../AGENTS.md)，安装步骤见 [INSTALL.md](INSTALL.md)。本文说明仓库中的检查入口。
+共享行为规范见 [AGENTS.md](../AGENTS.md)，安装步骤见 [INSTALL.md](INSTALL.md)，两端身份与会话合同见 [AUTHENTICATION.md](AUTHENTICATION.md)。本文说明仓库中的检查入口。
 
 ## 前端检查
 

@@ -2,9 +2,11 @@ package com.homestay3.homestaybackend.controller;
 
 import com.homestay3.homestaybackend.dto.AdminLoginRequest;
 import com.homestay3.homestaybackend.dto.AdminLoginResponse;
-import com.homestay3.homestaybackend.entity.Admin;
-import com.homestay3.homestaybackend.entity.User;
-import com.homestay3.homestaybackend.repository.UserRepository;
+import com.homestay3.homestaybackend.dto.AdminIdentityResponse;
+import com.homestay3.homestaybackend.security.AuthTokenResolver;
+import com.homestay3.homestaybackend.security.CustomUserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.homestay3.homestaybackend.service.AuthenticationService;
 import com.homestay3.homestaybackend.service.LoginLogService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 public class AdminAuthController {
 
     private final AuthenticationService authenticationService;
-    private final UserRepository userRepository;
     private final LoginLogService loginLogService;
 
     @PostMapping("/login")
@@ -40,24 +41,18 @@ public class AdminAuthController {
     }
 
     @PostMapping("/logout")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> logout(HttpServletRequest httpRequest) {
-        String ipAddress = getClientIpAddress(httpRequest);
-        String userAgent = httpRequest.getHeader("User-Agent");
-        // 从token中获取用户名（简化处理，实际可通过SecurityContext获取）
-        authenticationService.logout();
+        authenticationService.logout(AuthTokenResolver.resolve(httpRequest));
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/info")
-    public ResponseEntity<Admin> getAdminInfo(@RequestHeader("Authorization") String token) {
-        String username = authenticationService.getUsernameFromToken(token);
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("管理员不存在"));
-        Admin admin = new Admin();
-        admin.setId(user.getId());
-        admin.setUsername(user.getUsername());
-        admin.setRole(user.getRole());
-        return ResponseEntity.ok(admin);
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<AdminIdentityResponse> getAdminInfo(Authentication authentication) {
+        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+        return ResponseEntity.ok(new AdminIdentityResponse(
+                principal.getUserId(), principal.getUsername(), "ROLE_ADMIN"));
     }
 
     /**

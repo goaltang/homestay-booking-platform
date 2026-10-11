@@ -187,10 +187,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Search, Refresh, Plus } from "@element-plus/icons-vue";
 import { useCrud } from "@/composables/useCrud";
+import { useUserStore } from "@/stores/user";
 import {
   getAdminAnnouncementsApi,
   getAdminAnnouncementByIdApi,
@@ -202,12 +203,9 @@ import {
   type Announcement,
 } from "@/api/announcement";
 
-const currentUsername = ref(
-  localStorage.getItem("homestay_admin_username") || localStorage.getItem("username") || "admin"
-);
-const currentUserId = ref(
-  Number(localStorage.getItem("homestay_admin_userId") || localStorage.getItem("userId")) || 1
-);
+const userStore = useUserStore();
+const currentUsername = computed(() => userStore.userInfo!.username);
+const currentUserId = computed(() => userStore.userInfo!.id);
 
 // 日期范围辅助字段
 const dateRange = ref<string[]>([]);

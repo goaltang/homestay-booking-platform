@@ -52,8 +52,8 @@ public class EmailServiceImpl implements EmailService {
             mailSender.send(message);
             log.info("密码重置邮件已发送至: {}", toEmail);
         } catch (Exception e) {
-            log.error("发送密码重置邮件失败: {}", e.getMessage());
-            throw new RuntimeException("发送密码重置邮件失败: " + e.getMessage());
+            log.warn("发送密码重置邮件失败");
+            throw new RuntimeException("发送密码重置邮件失败，请稍后重试");
         }
     }
 

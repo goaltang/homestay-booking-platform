@@ -9,7 +9,6 @@ public interface AuthService {
     void resetPassword(PasswordResetRequest request);
     // 头像上传功能已迁移到FileController统一处理
     AuthResponse getUserInfo(String username);
-    void sendPasswordResetEmail(String email);
     void updateUserAvatar(String username, String avatarUrl);
     
     /**

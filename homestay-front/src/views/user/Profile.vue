@@ -428,8 +428,9 @@ const submitPasswordChange = async () => {
     await userStore.changePassword({
       oldPassword: passwordForm.value.oldPassword,
       newPassword: passwordForm.value.newPassword,
+      confirmPassword: passwordForm.value.confirmPassword,
     });
-    ElMessage.success("密码修改成功");
+    ElMessage.success("密码修改成功，请重新登录");
     passwordDialogVisible.value = false;
     passwordForm.value = {
       oldPassword: "",

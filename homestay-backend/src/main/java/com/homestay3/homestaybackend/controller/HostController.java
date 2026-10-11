@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 
 import java.util.Map;
 import java.util.List;
@@ -28,6 +26,7 @@ public class HostController {
 
     private static final Logger logger = LoggerFactory.getLogger(HostController.class);
     private final HostService hostService;
+    private final com.homestay3.homestaybackend.security.AuthCookieService authCookieService;
 
     /**
      * 获取房东信息
@@ -165,15 +164,8 @@ public class HostController {
         }
     }
 
-    /** 设置 httpOnly 认证 Cookie（与登录一致） */
     private void setAuthCookie(HttpServletResponse response, String token) {
-        ResponseCookie cookie = ResponseCookie.from("homestay_token", token)
-                .httpOnly(true)
-                .path("/")
-                .maxAge(86400)
-                .sameSite("Lax")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        authCookieService.set(response, token);
     }
 
     /**

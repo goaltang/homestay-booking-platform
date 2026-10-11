@@ -114,7 +114,7 @@ function Start-Backend {
     Start-Sleep -Seconds 2
   }
   if (-not $ready) {
-    Write-Warn "健康检查超时，但继续尝试（请查看 backend.log）"
+    throw "健康检查超时，停止导入和压测；请查看 backend.log"
   } else {
     Write-Ok "后端健康检查通过"
   }
@@ -146,17 +146,16 @@ try {
 
   Start-PerfEnv
 
-  if (-not $SkipData) {
-    Init-PerfData
-  } else {
-    Write-Warn "跳过数据初始化（-SkipData）"
-  }
-
   if (-not $OnlyUp) {
     Start-Backend
+    if (-not $SkipData) {
+      Init-PerfData
+    } else {
+      Write-Warn "跳过数据初始化（-SkipData）"
+    }
     Run-LoadTest
   } else {
-    Write-Ok "环境已就绪（-OnlyUp），请手动启动后端跑压测"
+    Write-Ok "环境已就绪（-OnlyUp）；启动后端完成 Flyway 迁移后再导入压测数据"
   }
 
   Write-Host ""

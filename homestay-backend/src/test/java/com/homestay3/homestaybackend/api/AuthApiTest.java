@@ -21,7 +21,7 @@ class AuthApiTest extends ApiTestBase {
     @Test
     @DisplayName("注册新用户应返回 token")
     void register_shouldReturnToken() throws Exception {
-        String username = "auth_reg_" + System.currentTimeMillis();
+        String username = "authreg_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         Map<String, Object> body = new HashMap<>();
         body.put("username", username);
         body.put("email", username + "@test.com");
@@ -71,5 +71,45 @@ class AuthApiTest extends ApiTestBase {
     void protectedEndpoint_withoutToken_shouldBeRejected() {
         ResponseEntity<String> resp = restTemplate.getForEntity(baseUrl() + "/api/orders", String.class);
         assertThat(resp.getStatusCodeValue()).as("未携带 token 访问 /api/orders 应被拒绝").isIn(401, 403);
+    }
+    @Test
+    void publicRegistrationCannotCreateAdministrator() throws Exception {
+        for (String role : new String[] {"ADMIN", "ROLE_ADMIN", " role_admin "}) {
+            String username = "role_" + java.util.UUID.randomUUID().toString().substring(0, 8);
+            ResponseEntity<String> resp = postJson("/api/auth/register", Map.of("username", username,
+                    "email", username + "@test.com", "password", "test123456", "role", role), jsonHeaders());
+            assertThat(resp.getStatusCodeValue()).isEqualTo(400);
+            assertThat(userRepository.findByUsername(username)).isEmpty();
+        }
+    }
+
+    @Test
+    void ordinaryLoginTokenCannotResetPassword() throws Exception {
+        JsonNode reg = registerUser("jwtreset");
+        String username = reg.path("user").path("username").asText();
+        assertThat(reg.path("user").has("password")).isFalse();
+        assertThat(reg.path("user").has("resetToken")).isFalse();
+        assertThat(reg.path("user").has("resetTokenExpiry")).isFalse();
+        ResponseEntity<String> resp = postJson("/api/auth/reset-password",
+                Map.of("token", extractToken(reg), "newPassword", "malicious-password"), jsonHeaders());
+        assertThat(resp.getStatusCodeValue()).isEqualTo(400);
+        assertThat(passwordEncoder.matches("test123456", userRepository.findByUsername(username).orElseThrow().getPassword())).isTrue();
+    }
+
+    @Test
+    void storedShortAdministratorRoleCannotLoginToUserFrontend() {
+        com.homestay3.homestaybackend.entity.User admin = new com.homestay3.homestaybackend.entity.User();
+        admin.setUsername("short_" + java.util.UUID.randomUUID().toString().substring(0, 8));
+        admin.setEmail(admin.getUsername() + "@test.com");
+        admin.setPassword(passwordEncoder.encode("test123456"));
+        admin.setRole("ADMIN");
+        admin = userRepository.saveAndFlush(admin);
+        try {
+            ResponseEntity<String> resp = postJson("/api/auth/login",
+                    Map.of("username", admin.getUsername(), "password", "test123456"), jsonHeaders());
+            assertThat(resp.getStatusCodeValue()).isEqualTo(401);
+        } finally {
+            userRepository.deleteById(admin.getId());
+        }
     }
 }

@@ -1,0 +1,26 @@
+# 共享默认配置；本地 application.properties 可覆盖。
+# 一个开关同时控制搜索/索引服务和 Repository 初始化。
+elasticsearch:
+  enabled: ${ELASTICSEARCH_ENABLED:false}
+management:
+  health:
+    elasticsearch:
+      enabled: ${elasticsearch.enabled}
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    baseline-version: 49
+    validate-on-migrate: true
+    clean-disabled: true
+  sql:
+    init:
+      mode: never
+  jpa:
+    hibernate:
+      ddl-auto: none
+  data:
+    elasticsearch:
+      repositories:
+        enabled: ${elasticsearch.enabled}

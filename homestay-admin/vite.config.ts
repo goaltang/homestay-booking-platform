@@ -26,10 +26,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          "element-plus": ["element-plus", "@element-plus/icons-vue"],
+          // Vue 与 Element Plus 共用依赖，放在同一块避免循环导入时提前访问 Vue。
+          "ui-vendor": ["element-plus", "@element-plus/icons-vue", "vue", "vue-router", "pinia"],
           echarts: ["echarts", "zrender"],
           "china-area-data": ["element-china-area-data"],
-          "vue-core": ["vue", "vue-router", "pinia"],
         },
       },
     },

@@ -179,7 +179,7 @@ import {
 } from "@/api/earnings";
 import echarts, { type EChartsType } from "@/utils/echarts";
 import { getOwnerHomestays } from "@/api/homestay";
-import request from "@/utils/request";
+import { useUserStore } from "@/stores/user";
 
 const router = useRouter();
 
@@ -690,78 +690,14 @@ const handleResize = () => {
 // 检查和测试API连接
 const testApiConnection = async () => {
   try {
-    // 测试API连接
-    const response = await request.get("/api/auth/current");
-
-    // 确保响应有数据
-    if (!response || !response.data) {
-      console.error("API响应没有数据");
-      ElMessage.warning("无法获取用户信息");
+    const store = useUserStore();
+    const user = await store.fetchUserInfo();
+    if (!user || !store.isLandlord) {
+      ElMessage.warning("系统未识别出您的房东身份");
       return false;
     }
-
-    // 检查用户角色
-    let userRole = "";
-    let roleFound = false;
-
-    // 检查各种可能的角色字段格式
-    const userData = response.data;
-
-    if (typeof userData.role === "string") userRole = userData.role;
-    else if (userData.user && typeof userData.user.role === "string") userRole = userData.user.role;
-    else if (typeof userData.roles === "string") userRole = userData.roles;
-    else if (Array.isArray(userData.roles)) {
-      userRole = userData.roles
-        .map((r: any) => (typeof r === "string" ? r : r.authority || r.role || JSON.stringify(r)))
-        .join(",");
-    } else if (Array.isArray(userData.authorities)) {
-      userRole = userData.authorities
-        .map((a: any) => (typeof a === "string" ? a : a.authority || a.role || JSON.stringify(a)))
-        .join(",");
-    }
-
-    // 定义允许的角色关键字
-    const allowedRoleKeywords = ["host", "admin", "root", "landlord"];
-
-    // 检查用户角色是否包含允许的关键字(不区分大小写)
-    const userRoleLower = userRole.toLowerCase();
-    roleFound = allowedRoleKeywords.some((role) => userRoleLower.includes(role));
-
-    // 还要检查数组形式的角色
-    if (!roleFound && Array.isArray(userData.roles)) {
-      roleFound = userData.roles.some((r: any) => {
-        if (typeof r === "string") {
-          return allowedRoleKeywords.some((role) => r.toLowerCase().includes(role));
-        } else if (r && typeof r === "object") {
-          const roleStr = (r.authority || r.role || "").toLowerCase();
-          return allowedRoleKeywords.some((role) => roleStr.includes(role));
-        }
-        return false;
-      });
-    }
-
-    // 检查authorities数组
-    if (!roleFound && Array.isArray(userData.authorities)) {
-      roleFound = userData.authorities.some((a: any) => {
-        if (typeof a === "string") {
-          return allowedRoleKeywords.some((role) => a.toLowerCase().includes(role));
-        } else if (a && typeof a === "object") {
-          const authStr = (a.authority || a.role || "").toLowerCase();
-          return allowedRoleKeywords.some((role) => authStr.includes(role));
-        }
-        return false;
-      });
-    }
-
-    if (!roleFound) {
-      ElMessage.warning(`系统未识别出您的房东身份`);
-      return false;
-    } else {
-      ElMessage.success(`欢迎房东用户 ${userData.username || ""}！`);
-      return true;
-    }
-  } catch (error) {
-    console.error("API连接测试失败:", error);
+    return true;
+  } catch {
     return false;
   }
 };

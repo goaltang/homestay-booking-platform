@@ -76,6 +76,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<?>> handleConstraintViolationException(jakarta.validation.ConstraintViolationException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error(400, "参数校验失败"));
+    }
+
+    @ExceptionHandler(CredentialValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handleCredentialValidationException(CredentialValidationException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error(400, ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();

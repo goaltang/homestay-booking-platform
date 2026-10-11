@@ -1,25 +1,35 @@
 package com.homestay3.homestaybackend.security;
 
+import com.homestay3.homestaybackend.entity.AuthSession;
+import com.homestay3.homestaybackend.entity.User;
+import com.homestay3.homestaybackend.repository.AuthSessionRepository;
+import com.homestay3.homestaybackend.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.Date;
-import java.util.stream.Collectors;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
-
-    private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
+    private final UserRepository userRepository;
+    private final AuthSessionRepository sessionRepository;
 
     @Value("${jwt.secret:}")
     private String jwtSecret;
@@ -29,139 +39,146 @@ public class JwtTokenProvider {
 
     private Key getSigningKey() {
         if (jwtSecret == null || jwtSecret.isBlank() || jwtSecret.length() < 32) {
-            throw new IllegalStateException(
-                    "JWT 密钥未配置或长度不足（HS256 要求至少 32 字符）。请通过环境变量 JWT_SECRET 注入，"
-                    + "或在 application-prod.properties 中配置 jwt.secret=${JWT_SECRET}");
+            throw new IllegalStateException("JWT 密钥未配置或长度不足（至少32字符）");
         }
-        byte[] keyBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
+    @Transactional
     public String generateToken(Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        
-        // 获取用户的所有角色，以逗号分隔
-        String authorities = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
-        
-        log.info("为用户 {} 生成token, 权限: {}", userDetails.getUsername(), authorities);
-        
-        // 直接调用另一个generateToken方法，传入所有权限
-        return generateToken(userDetails.getUsername(), authorities);
+        UserDetails principal = (UserDetails) authentication.getPrincipal();
+        User user = userRepository.findByUsername(principal.getUsername())
+                .orElseThrow(() -> new BadCredentialsException("用户不存在"));
+        String role = AccountRole.normalize(user.getRole());
+        boolean sameRole = principal.getAuthorities().size() == 1
+                && principal.getAuthorities().iterator().next().getAuthority().equals(role);
+        if (principal.getPassword() == null || !principal.getPassword().equals(user.getPassword()) || !sameRole) {
+            throw new BadCredentialsException("认证期间凭证已变更，请重新登录");
+        }
+        return issueToken(user);
     }
 
+    @Transactional
     public String generateToken(String username, String authorities) {
         return generateToken(username, null, authorities);
     }
 
+    @Transactional
     public String generateToken(String username, Long userId, String authorities) {
-        log.debug("生成JWT Token: 用户={}, userId={}", username, userId);
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadCredentialsException("用户不存在"));
+        if (!user.isEnabled() || (userId != null && !userId.equals(user.getId()))) {
+            throw new BadCredentialsException("账号不可用");
+        }
+        return issueToken(user);
+    }
 
-        String token = Jwts.builder()
-                .setSubject(username)
-                .claim("authorities", authorities)
-                .claim("userId", userId)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
+    private String issueToken(User user) {
+        if (!user.isEnabled()) {
+            throw new BadCredentialsException("账号不可用");
+        }
+        String role = AccountRole.normalize(user.getRole());
+        Instant now = Instant.now();
+        Instant expiry = now.plusMillis(jwtExpirationInMs);
+        String sessionId = UUID.randomUUID().toString();
+        sessionRepository.deleteByExpiresAtBefore(now);
+        sessionRepository.save(new AuthSession(sessionId, user.getId(), credentialDigest(user.getPassword()), expiry));
+        return Jwts.builder()
+                .setId(sessionId)
+                .setSubject(user.getUsername())
+                .claim("userId", user.getId())
+                .claim("authorities", role)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(expiry))
                 .signWith(getSigningKey())
                 .compact();
-        
-        log.debug("JWT Token生成成功, 长度: {}", token.length());
-        return token;
     }
 
-    public String getUsernameFromToken(String token) {
+    /** HTTP 和 WebSocket 共同校验持久会话与当前账号，权限只取当前数据库。 */
+    public CustomUserDetails authenticateToken(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-
-            String username = claims.getSubject();
-
-            return username;
-        } catch (Exception e) {
-            log.error("从Token解析用户名失败: {}", e.getMessage());
-            throw e;
+            Claims claims = parse(token);
+            if (claims.getId() == null) {
+                throw new BadCredentialsException("缺少登录会话");
+            }
+            AuthSession session = sessionRepository.findById(claims.getId())
+                    .orElseThrow(() -> new BadCredentialsException("登录会话已失效"));
+            User user = userRepository.findById(session.getUserId())
+                    .orElseThrow(() -> new BadCredentialsException("账号不存在"));
+            Object claimUserId = claims.get("userId");
+            if (!user.isEnabled() || !session.getExpiresAt().isAfter(Instant.now())
+                    || !(claimUserId instanceof Number number) || number.longValue() != user.getId()
+                    || !user.getUsername().equals(claims.getSubject())
+                    || !AccountRole.normalize(user.getRole()).equals(claims.get("authorities", String.class))
+                    || !MessageDigest.isEqual(session.getCredentialDigest().getBytes(StandardCharsets.UTF_8),
+                            credentialDigest(user.getPassword()).getBytes(StandardCharsets.UTF_8))) {
+                throw new BadCredentialsException("登录会话已失效");
+            }
+            return new CustomUserDetails(user.getId(), user.getUsername(), null,
+                    List.of(new SimpleGrantedAuthority(AccountRole.normalize(user.getRole()))), user.isEnabled());
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new BadCredentialsException("无效的登录凭证", e);
         }
     }
 
-    public String getAuthoritiesFromToken(String token) {
-        try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-
-            String authorities = claims.get("authorities", String.class);
-            return authorities;
-        } catch (Exception e) {
-            log.error("从Token解析权限失败: {}", e.getMessage());
-            return null;
+    @Transactional
+    public void revokeToken(String token) {
+        if (token == null || token.isBlank()) {
+            return;
         }
-    }
-
-    public Long getUserIdFromToken(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-            Object userId = claims.get("userId");
-            if (userId instanceof Number number) {
-                return number.longValue();
+            Claims claims = parse(token);
+            if (claims.getId() != null) {
+                sessionRepository.deleteById(claims.getId());
             }
-            if (userId instanceof String value && !value.isBlank()) {
-                return Long.parseLong(value);
-            }
-            return null;
-        } catch (Exception e) {
-            log.error("从Token解析userId失败: {}", e.getMessage());
-            return null;
+        } catch (JwtException | IllegalArgumentException ignored) {
+            // 过期或格式错误的凭证已不可用于认证，退出仍可清理客户端。
         }
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
-            log.debug("JWT Token验证成功");
+            authenticateToken(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            log.error("无效的JWT Token: {}", e.getMessage());
+        } catch (BadCredentialsException e) {
             return false;
         }
     }
 
-    /**
-     * 验证token是否有效（与UserDetails一起验证）
-     * @param token JWT token
-     * @param userDetails 用户信息
-     * @return 是否有效
-     */
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        try {
+            return authenticateToken(token).getUsername().equals(userDetails.getUsername());
+        } catch (BadCredentialsException e) {
+            return false;
+        }
     }
 
-    private boolean isTokenExpired(String token) {
+    public String getUsernameFromToken(String token) {
+        return authenticateToken(token).getUsername();
+    }
+
+    public Long getUserIdFromToken(String token) {
+        return authenticateToken(token).getUserId();
+    }
+
+    public String getAuthoritiesFromToken(String token) {
+        return authenticateToken(token).getAuthorities().iterator().next().getAuthority();
+    }
+
+    public long getExpirationSeconds() {
+        return jwtExpirationInMs / 1000;
+    }
+
+    private Claims parse(String token) {
+        return Jwts.parser().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+    }
+
+    private String credentialDigest(String password) {
         try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-            return claims.getExpiration().before(new Date());
-        } catch (Exception e) {
-            return true;
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                    .digest(password.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
         }
     }
 }

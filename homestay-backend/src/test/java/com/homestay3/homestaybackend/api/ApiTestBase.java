@@ -96,7 +96,8 @@ public abstract class ApiTestBase {
      * 注册一个新用户（唯一用户名），返回注册响应。
      */
     protected JsonNode registerUser(String prefix) throws Exception {
-        String username = prefix + "_" + System.currentTimeMillis();
+        String username = prefix.substring(0, Math.min(prefix.length(), 7)) + "_"
+                + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         Map<String, Object> body = new HashMap<>();
         body.put("username", username);
         body.put("email", username + "@test.com");

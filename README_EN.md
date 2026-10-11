@@ -12,7 +12,9 @@ A homestay booking system for guests, hosts, and administrators, covering listin
 
 This solo full-stack project serves as a learning and interview portfolio, with development starting in February 2025. AI coding tools assist implementation; the author owns architecture, product decisions, code review, critical modules, and quality control.
 
-[Installation guide](docs/INSTALL.md#english-version) · [Architecture gallery](docs/diagrams/README.md) · [Feature documentation](obsidian-vault/02-功能模块/) · [Documentation home](obsidian-vault/00-首页.md)
+**Project statement**: Flyway owns the database schema. At first startup, Flyway creates the schema and required reference data; the application retains amenity dictionary initialization. It creates no default administrator, demo accounts, or listings. Development data requires an explicit import. These learning and demo settings do not provide production security or data guarantees.
+
+[Installation guide](docs/INSTALL.md#english-version) · [Database setup and upgrades](docs/DATABASE.md) · [Architecture gallery](docs/diagrams/README.md) · [Feature documentation](obsidian-vault/02-功能模块/) · [Documentation home](obsidian-vault/00-首页.md)
 
 ## Contents
 
@@ -96,7 +98,7 @@ See the [structure guide](docs/项目结构总览.md) for directory responsibili
 
 For local development, prepare Java 17, Maven, Node.js 20, MySQL 8, Redis, and Elasticsearch with the IK plugin. Start RabbitMQ to demonstrate the three messaging scenarios. See the [installation guide](docs/INSTALL.md#english-version) for infrastructure setup and configuration.
 
-> Elasticsearch must be online at backend startup. `elasticsearch.enabled=false` disables index synchronization and enables search fallback; it does not remove this startup dependency. Docker entry ports are shown in the [deployment diagram](docs/diagrams/deployment-apps.png).
+> Elasticsearch is disabled by default; the backend starts with JPA search. To enable ES, start ES with IK, set `ELASTICSEARCH_ENABLED=true`, and restart the backend, then rebuild the index via the admin-only `POST /api/admin/search/index/rebuild` endpoint. Compose profiles `search` and `monitoring` control optional ES and monitoring services. Docker entry ports are shown in the [deployment diagram](docs/diagrams/deployment-apps.png).
 
 ### 1. Clone and Configure
 
@@ -108,6 +110,8 @@ cp src/main/resources/application.example.properties src/main/resources/applicat
 
 Edit `application-local.properties`: set `server.port=8081`, your MySQL and Redis settings, and a random JWT secret. Configure payment, maps, email, and the LLM as needed; AI support is disabled by default.
 
+For existing Git-ignored `application.properties` or `application-local.properties`, explicitly check these values: `spring.flyway.baseline-on-migrate=false`, `spring.flyway.validate-on-migrate=true`, `spring.flyway.clean-disabled=true`, `spring.sql.init.mode=never`, and `spring.jpa.hibernate.ddl-auto=none`. A `.properties` file takes precedence over `.yml` at the same location. Updating shared YAML does not replace old local values.
+
 ### 2. Start the Backend
 
 In the backend directory from step 1, explicitly activate local configuration:
@@ -116,7 +120,7 @@ In the backend directory from step 1, explicitly activate local configuration:
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-Backend: `http://localhost:8081`. Flyway runs database migrations at startup. API docs: `http://localhost:8081/swagger-ui.html`.
+Backend: `http://localhost:8081`. Flyway 9.22.3 runs migrations at startup. An empty database starts from `B49__initial_schema.sql`, creating 52 application tables and 2 views. Databases with Flyway history skip B49 and continue through V migrations. A nonempty database without history is rejected; follow the [database guide](docs/DATABASE.md) for backup, comparison, and an explicit baseline. API docs: `http://localhost:8081/swagger-ui.html`.
 
 ### 3. Start Both Frontends
 
@@ -138,7 +142,7 @@ npm run dev
 
 Customer app: `http://localhost:5173`. Admin app: `http://localhost:5174`. Both proxy `/api` requests to the backend.
 
-Guests and hosts register in the customer app. The backend creates a development administrator, `admin / admin888`, when the `admin` user does not exist.
+Guests and hosts register in the customer app. Before admin login, explicitly import a development administrator using `tools/database/`. Demo accounts and listings require a separate import. See [step 9 in the installation guide](docs/INSTALL.md#step-9-explicitly-import-a-development-administrator) for commands.
 
 ## Testing and Building
 
@@ -177,6 +181,7 @@ The following design and engineering documents are in Chinese; the installation 
 | Topic | Documents |
 |---|---|
 | Installation and configuration | [Installation guide, including agent instructions](docs/INSTALL.md#english-version) |
+| Database setup and upgrades | [Empty databases, migration history, legacy baselines, and development data](docs/DATABASE.md) |
 | Architecture and workflows | [Full gallery and implementation boundaries](docs/diagrams/README.md) |
 | Documentation routes | [Documentation home](obsidian-vault/00-首页.md) · [Full catalog](<obsidian-vault/00-索引/Homestay 项目索引.md>) |
 | Modules and directories | [Project structure](docs/项目结构总览.md) · [Feature documentation](obsidian-vault/02-功能模块/) |
@@ -189,7 +194,7 @@ The following design and engineering documents are in Chinese; the installation 
 
 Local `application.properties` and `application-local.properties` files are Git-ignored. Use the [configuration template](homestay-backend/src/main/resources/application.example.properties); keep database passwords, JWT secrets, payment keys, and LLM API keys in local configuration. Do not commit real credentials.
 
-The default administrator and Compose accounts are for development demos; change them before exposing a deployment.
+Imported development administrators, demo accounts, and default Compose accounts are for local demos. Use separate credentials and change or remove development accounts before exposing a deployment.
 
 ## License
 

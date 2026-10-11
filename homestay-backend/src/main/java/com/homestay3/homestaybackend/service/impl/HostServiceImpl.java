@@ -616,6 +616,7 @@ public class HostServiceImpl implements HostService {
     }
 
     @Override
+    @Transactional
     public String uploadHostDocument(String username, MultipartFile file, String type) throws IOException {
         logger.info("上传房东证件照片: username={}, type={}", username, type);
         

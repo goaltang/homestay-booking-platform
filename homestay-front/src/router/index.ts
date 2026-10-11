@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Home from "../views/Home.vue";
 import { useUserStore } from "../stores/user";
+import { hasRole } from "@/utils/userHelpers";
 import OrderSubmitSuccess from "../views/order/OrderSubmitSuccess.vue";
 import MyOrders from "../views/order/MyOrders.vue";
 
@@ -324,28 +325,9 @@ const router = createRouter({
   ],
 });
 
-/** 检查用户角色是否匹配路由要求的角色 */
-function checkRoleMatch(userRole: string, requiredRole: string): boolean {
-  const user = userRole.toUpperCase();
-  const req = requiredRole.toUpperCase();
-
-  if (user === req) return true;
-  if (user === req.replace("ROLE_", "")) return true;
-  if (`ROLE_${user}` === req) return true;
-
-  // ROLE_LANDLORD 和 ROLE_HOST 互相兼容
-  if (
-    (user === "ROLE_LANDLORD" && req === "ROLE_HOST") ||
-    (user === "ROLE_HOST" && req === "ROLE_LANDLORD")
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
+  await userStore.initializeSession();
 
   const isAuthenticated = userStore.isAuthenticated;
   const userRole = userStore.normalizedRole;
@@ -367,7 +349,7 @@ router.beforeEach(async (to, from, next) => {
   // 登录状态存在但缺少角色信息（数据异常）
   if (requiredRoles && isAuthenticated && !userRole) {
     warn("登录状态缺少角色信息");
-    userStore.logout();
+    userStore.clearSession();
     next({
       name: "login",
       query: {
@@ -380,8 +362,8 @@ router.beforeEach(async (to, from, next) => {
 
   // 角色权限检查
   if (requiredRoles && isAuthenticated) {
-    const hasRole = requiredRoles.some((role) => checkRoleMatch(userRole, role));
-    if (!hasRole) {
+    const allowed = hasRole(userRole, requiredRoles);
+    if (!allowed) {
       warn("用户角色不符合要求:", { userRole, requiredRoles });
       next({ name: "home", query: { error: "您没有权限访问此页面" } });
       return;

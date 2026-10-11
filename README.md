@@ -12,7 +12,9 @@
 
 这是一个用于学习与面试展示的单人全栈项目，自 2025 年 2 月开始迭代。开发中使用 AI 编码工具辅助实现，项目作者负责架构设计、需求决策、代码审查、关键模块攻关与质量把控。
 
-[安装教程](docs/INSTALL.md) · [完整架构图集](docs/diagrams/README.md) · [功能模块文档](obsidian-vault/02-功能模块/) · [文档首页](obsidian-vault/00-首页.md)
+**项目声明**：数据库结构由 Flyway 统一维护。首次启动由 Flyway 建立结构和必要基础数据，设施字典保留业务初始化，不创建默认管理员、演示账号或房源。开发数据必须主动导入；这套学习与演示配置不能作为生产部署的安全与数据保障。
+
+[安装教程](docs/INSTALL.md) · [数据库初始化与升级](docs/DATABASE.md) · [完整架构图集](docs/diagrams/README.md) · [功能模块文档](obsidian-vault/02-功能模块/) · [文档首页](obsidian-vault/00-首页.md)
 
 ## 目录
 
@@ -96,7 +98,7 @@ homestay3/
 
 以下为本地开发方式。先准备 Java 17、Maven、Node.js 20、MySQL 8、Redis，以及安装 IK 插件的 Elasticsearch；演示三个 MQ 场景时同时启动 RabbitMQ。基础设施准备和完整配置见[安装教程](docs/INSTALL.md)。
 
-> 当前后端启动需要 Elasticsearch 在线。`elasticsearch.enabled=false` 只关闭索引同步并使搜索降级，不能跳过 ES 启动。Docker 部署端口另见[应用部署图](docs/diagrams/deployment-apps.png)。
+> ES 默认关闭，后端可直接启动并使用 JPA 搜索。需要 ES 时，先启动带 IK 的 ES，再设置 `ELASTICSEARCH_ENABLED=true` 并重启后端；重新开启后由管理员调用 `POST /api/admin/search/index/rebuild` 重建索引。Compose 的 `search` / `monitoring` profiles 分别控制 ES / 监控按需启动。Docker 部署端口另见[应用部署图](docs/diagrams/deployment-apps.png)。
 
 ### 1. 克隆与配置
 
@@ -108,6 +110,8 @@ cp src/main/resources/application.example.properties src/main/resources/applicat
 
 编辑 `application-local.properties`：将 `server.port` 改为 `8081`，填写实际 MySQL、Redis 配置和随机 JWT 密钥。支付、地图、邮件与 LLM 的配置按需要填写；AI 客服默认关闭。
 
+已有被 Git 忽略的 `application.properties` 或 `application-local.properties` 时，必须显式检查旧配置：`spring.flyway.baseline-on-migrate=false`、`spring.flyway.validate-on-migrate=true`、`spring.flyway.clean-disabled=true`、`spring.sql.init.mode=never`、`spring.jpa.hibernate.ddl-auto=none`。同位置 `.properties` 的优先级高于 `.yml`，更新共享 YAML 不会覆盖其中的旧值。
+
 ### 2. 启动后端
 
 在上一步的后端目录运行，显式加载本地配置：
@@ -116,7 +120,7 @@ cp src/main/resources/application.example.properties src/main/resources/applicat
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-后端地址：`http://localhost:8081`；启动时 Flyway 执行数据库迁移。接口文档：`http://localhost:8081/swagger-ui.html`。
+后端地址：`http://localhost:8081`；启动时 Flyway 9.22.3 执行数据库迁移。空库从 `B49__initial_schema.sql` 创建 52 张业务表和 2 个视图；已有 Flyway 历史的库跳过 B49，继续 V 迁移链。无历史的非空库会被拒绝，须按[数据库说明](docs/DATABASE.md)备份、核对并显式建基线。接口文档：`http://localhost:8081/swagger-ui.html`。
 
 ### 3. 启动两个前端
 
@@ -138,7 +142,7 @@ npm run dev
 
 用户端：`http://localhost:5173`；管理端：`http://localhost:5174`。两个前端已配置 `/api` 代理到后端。
 
-房客与房东在用户端注册。后端在 `admin` 用户不存在时创建开发管理员 `admin / admin888`，可用于本地演示。
+房客与房东在用户端注册。管理端登录前，必须主动使用 `tools/database/` 的管理员导入工具；演示房源与账号也需另行导入。具体命令见[安装教程](docs/INSTALL.md#步骤-9主动导入开发管理员)。
 
 ## 测试与构建
 
@@ -175,6 +179,7 @@ CI 配置见 [ci.yml](.github/workflows/ci.yml)；测试与性能结果见下方
 | 想了解什么 | 文档 |
 |---|---|
 | 安装与配置 | [安装教程（含 AI Agent 指引）](docs/INSTALL.md) |
+| 数据库初始化与升级 | [新库、历史迁移、旧库基线与开发数据](docs/DATABASE.md) |
 | 架构与业务流程 | [完整架构图集及实现限制](docs/diagrams/README.md) |
 | 文档阅读入口 | [文档首页](obsidian-vault/00-首页.md) · [完整目录](<obsidian-vault/00-索引/Homestay 项目索引.md>) |
 | 模块职责与目录 | [项目结构总览](docs/项目结构总览.md) · [功能模块文档](obsidian-vault/02-功能模块/) |
@@ -187,7 +192,7 @@ CI 配置见 [ci.yml](.github/workflows/ci.yml)；测试与性能结果见下方
 
 本地 `application.properties` 与 `application-local.properties` 已被 Git 忽略。仓库提供 [application.example.properties](homestay-backend/src/main/resources/application.example.properties) 配置模板；数据库密码、JWT 密钥、支付密钥与 LLM API Key 应填入本地配置，勿提交真实凭证。
 
-默认管理员与 Compose 中的默认账号仅用于开发演示，对外部署前应修改。
+主动导入的开发管理员、演示账号与 Compose 默认账号仅用于本地演示。对外部署前应使用独立凭据，并修改或移除开发账号。
 
 ## 许可证
 

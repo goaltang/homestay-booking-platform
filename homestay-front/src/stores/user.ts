@@ -1,12 +1,14 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import api from "@/api";
+import router from "@/router";
 import { RegisterRequest } from "@/types/auth";
 import { ElMessage } from "element-plus";
 import { initWebSocket, disconnectWebSocket, setAuthToken } from "@/services/websocketService";
 import { useNotificationStore } from "@/stores/notification";
 import { extractErrorMessage, ApiRequestError } from "@/types/error";
-import { extractRole, normalizeAvatarUrl } from "@/utils/userHelpers";
+import { extractRole, normalizeAvatarUrl, normalizeRole } from "@/utils/userHelpers";
+import { useChatStore } from "@/stores/chat";
 
 export interface UserInfo {
   id: number;
@@ -48,61 +50,36 @@ interface ProfileUpdateRequest {
 interface PasswordChangeRequest {
   oldPassword: string;
   newPassword: string;
+  confirmPassword: string;
 }
 
 const USER_KEY = "homestay_user";
 
-function migrateOldKeys() {
-  const oldUserInfo = localStorage.getItem("userInfo");
-  if (oldUserInfo && !localStorage.getItem(USER_KEY)) {
-    localStorage.setItem(USER_KEY, oldUserInfo);
-  }
-}
-
-migrateOldKeys();
-
 const log = (...args: unknown[]) => {
   if (import.meta.env.DEV) console.log(...args);
-};
-const warn = (...args: unknown[]) => {
-  if (import.meta.env.DEV) console.warn(...args);
 };
 
 export const useUserStore = defineStore("user", () => {
   // token 迁移后，JWT 存 httpOnly cookie + 内存（供 WebSocket），不落 localStorage
   const token = ref<string | null>(null);
-  const userInfo = ref<UserInfo | null>(JSON.parse(localStorage.getItem(USER_KEY) || "null"));
+  const userInfo = ref<UserInfo | null>(null);
+  const initialized = ref(false);
+  let initialization: Promise<void> | null = null;
+  let sessionVersion = 0;
 
   // 登录态以 userInfo 为准（token 在 httpOnly cookie，JS 不可读）
   const isAuthenticated = computed(() => !!userInfo.value);
-  const normalizedRole = computed(() => userInfo.value?.role?.toUpperCase() || "");
+  const normalizedRole = computed(() => {
+    const role = normalizeRole(userInfo.value?.role || "");
+    return role ? `ROLE_${role}` : "";
+  });
 
   /** @deprecated 请直接使用 userInfo */
   const user = computed(() => userInfo.value);
   /** @deprecated 请直接使用 normalizedRole */
   const userRole = computed(() => normalizedRole.value);
-  const isAdmin = computed(
-    () => normalizedRole.value === "ROLE_ADMIN" || normalizedRole.value === "ADMIN"
-  );
-  const isLandlord = computed(() => {
-    if (!normalizedRole.value) return false;
-
-    // 支持多种可能的房东角色名称
-    const role = normalizedRole.value;
-    const isLandlordResult =
-      role === "ROLE_HOST" ||
-      role === "ROLE_LANDLORD" || // 保留兼容旧数据
-      role === "LANDLORD" ||
-      role === "HOST";
-
-    log("isLandlord计算:", {
-      role: userInfo.value?.role,
-      normalized: role,
-      result: isLandlordResult,
-    });
-
-    return isLandlordResult;
-  });
+  const isAdmin = computed(() => normalizedRole.value === "ROLE_ADMIN");
+  const isLandlord = computed(() => normalizedRole.value === "ROLE_HOST");
 
   const unreadNotificationCount = ref<number>(0);
 
@@ -113,7 +90,6 @@ export const useUserStore = defineStore("user", () => {
   };
 
   const setUser = (user: UserInfo) => {
-    log("设置用户信息:", user);
     userInfo.value = user;
     // 保存用户信息到 localStorage
     localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -133,8 +109,6 @@ export const useUserStore = defineStore("user", () => {
         username,
         password,
       });
-
-      log("登录响应:", response.data);
 
       if (response.data) {
         // token 由后端写入 httpOnly cookie；这里仅记录到内存供 WebSocket 使用
@@ -160,13 +134,9 @@ export const useUserStore = defineStore("user", () => {
           verificationStatus: userObj?.verificationStatus || response.data.verificationStatus || "",
         };
 
-        log("准备保存的用户数据:", userData);
+        sessionVersion += 1;
+        initialized.value = true;
         setUser(userData);
-
-        // 确保localStorage保存了用户信息
-        localStorage.setItem(USER_KEY, JSON.stringify(userData));
-        log("用户信息已保存到localStorage", userData);
-        log("检查isLandlord:", isLandlord.value);
 
         await fetchUnreadCount();
 
@@ -174,41 +144,9 @@ export const useUserStore = defineStore("user", () => {
       }
       return false;
     } catch (error) {
-      console.error("登录失败:", error);
+      console.error("登录失败:", extractErrorMessage(error));
 
-      const apiError = error as ApiRequestError;
-
-      // 优先使用API拦截器中提取的错误信息
-      if (apiError.displayMessage) {
-        throw new Error(apiError.displayMessage);
-      }
-
-      // 检查是否是 Axios 错误并且有响应
-      if (apiError.response) {
-        console.error("错误响应:", apiError.response.data);
-
-        // 提取后端返回的具体错误信息
-        let errorMessage = "登录失败，请重试";
-        const data = apiError.response.data;
-
-        if (data) {
-          if (typeof data === "string") {
-            errorMessage = data;
-          } else if (typeof data === "object") {
-            if ("message" in data && typeof data.message === "string") {
-              errorMessage = data.message;
-            } else if ("error" in data && typeof data.error === "string") {
-              errorMessage = data.error;
-            }
-          }
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      // 对于网络错误等其他情况
-      const msg = extractErrorMessage(error);
-      throw new Error(msg);
+      throw error;
     }
   };
 
@@ -219,11 +157,8 @@ export const useUserStore = defineStore("user", () => {
         registerData.role = `ROLE_${registerData.role.toUpperCase()}`;
       }
 
-      log("尝试注册新用户，发送数据:", JSON.stringify(registerData));
       // 添加后端API调用
       const response = await api.post("/api/auth/register", registerData);
-
-      log("注册响应:", response.data);
 
       if (response.data) {
         // token 由后端写入 httpOnly cookie；这里仅记录到内存供 WebSocket 使用
@@ -234,23 +169,16 @@ export const useUserStore = defineStore("user", () => {
         // 统一提取角色（顶层 role > authorities，回退到注册时选择的角色）
         const role = extractRole(response.data, registerData.role || "ROLE_USER");
 
-        // 设置用户信息
+        const registeredUser = response.data.user;
         const userData = {
-          id: response.data.id,
-          username: response.data.username,
-          email: response.data.email,
-          phone: response.data.phone || registerData.phone,
-          role: role,
-          avatar: normalizeAvatarUrl(response.data.avatar),
-          verificationStatus: response.data.verificationStatus,
-          authorities: response.data.authorities, // 确保authorities也被保存
+          ...registeredUser,
+          role,
+          avatar: normalizeAvatarUrl(registeredUser.avatar),
         };
 
+        sessionVersion += 1;
+        initialized.value = true;
         setUser(userData);
-
-        // 确保localStorage保存了用户信息
-        localStorage.setItem(USER_KEY, JSON.stringify(userData));
-        log("用户信息已保存到localStorage", userData);
 
         // 不再强制刷新页面，让调用方处理导航
         // window.location.reload();
@@ -262,7 +190,7 @@ export const useUserStore = defineStore("user", () => {
 
       return false;
     } catch (error) {
-      console.error("注册失败:", error);
+      console.error("注册失败:", extractErrorMessage(error));
       const apiError = error as ApiRequestError;
 
       // 确保错误中包含后端返回的消息
@@ -280,40 +208,59 @@ export const useUserStore = defineStore("user", () => {
     }
   };
 
-  const logout = async () => {
+  // 无网络清理：401、启动失败和主动退出共用，避免再次请求 logout。
+  const clearSession = () => {
+    sessionVersion += 1;
     disconnectWebSocket();
-    // 清除内存 token 和用户信息
     setToken(null);
     userInfo.value = null;
+    for (const key of [USER_KEY, "token", "userInfo", "user", "homestay_token", "favorites"]) {
+      localStorage.removeItem(key);
+    }
+    for (const key of ["token", "homestay_token", "redirectAfterLogin"]) {
+      sessionStorage.removeItem(key);
+    }
+    unreadNotificationCount.value = 0;
+    const notificationStore = useNotificationStore();
+    notificationStore.setUnreadCount(0);
+    notificationStore.clearNotifications();
+    notificationStore.preferences = {};
+    useChatStore().clearSession();
+  };
 
-    // 清除 localStorage 中的用户数据（含迁移前的旧 token）
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem("token");
-    localStorage.removeItem("userInfo");
-    localStorage.removeItem("user");
-    localStorage.removeItem("homestay_token");
-    localStorage.removeItem("favorites");
+  const initializeSession = (): Promise<void> => {
+    if (initialized.value) return Promise.resolve();
+    if (!initialization) {
+      const version = sessionVersion;
+      initialization = fetchUserInfo()
+        .then(() => undefined)
+        .catch(() => {
+          if (version === sessionVersion) clearSession();
+        })
+        .finally(() => {
+          initialized.value = true;
+          initialization = null;
+        });
+    }
+    return initialization;
+  };
 
-    // 调用后端清 httpOnly cookie（不阻塞跳转）
+  const logout = async () => {
+    clearSession();
     try {
       await api.post("/api/auth/logout");
     } catch (error) {
-      // 即使后端失败也继续本地登出
-      console.warn("调用登出接口失败:", error);
+      console.warn("调用登出接口失败:", extractErrorMessage(error));
+    } finally {
+      window.location.href = "/login";
     }
-
-    unreadNotificationCount.value = 0;
-    useNotificationStore().setUnreadCount(0);
-
-    // 导航到登录页
-    window.location.href = "/login";
   };
 
   const updateProfile = async (data: ProfileUpdateRequest) => {
     try {
-      const response = await api.put<UserInfo>("/api/users/profile", data);
-      userInfo.value = response.data;
-      return response.data;
+      const response = await api.put<{ user: UserInfo }>("/api/auth/profile", data);
+      setUser(response.data.user);
+      return response.data.user;
     } catch (error) {
       const apiError = error as ApiRequestError;
       throw new Error(
@@ -326,125 +273,40 @@ export const useUserStore = defineStore("user", () => {
 
   const changePassword = async (data: PasswordChangeRequest) => {
     try {
-      await api.post("/api/users/change-password", data);
-      ElMessage.success("密码修改成功");
+      await api.post("/api/auth/change-password", data);
+      clearSession();
+      await router.push("/login");
       return true;
     } catch (error) {
       console.error("修改密码失败:", extractErrorMessage(error));
       ElMessage.error("修改密码失败，请检查原密码是否正确");
-      return false;
+      throw error;
     }
   };
 
   const fetchUserInfo = async () => {
-    try {
-      log("开始获取用户信息");
-
-      // 如果没有用户信息（登录态），不执行请求
-      if (!userInfo.value) {
-        warn("没有用户信息，无法获取用户信息");
-        return null;
-      }
-
-      // 尝试从API获取用户信息
-      const response = await api.get("/api/auth/current");
-      log("获取用户信息响应:", response.data);
-
-      // 处理可能的不同响应格式
-      let userData: UserInfo | null = null;
-
-      if (response.data) {
-        // 处理响应中直接包含用户数据的情况
-        if (response.data.username || response.data.id) {
-          log("用户信息直接在响应中");
-          userData = {
-            id: response.data.id || 0,
-            username: response.data.username || "",
-            email: response.data.email || "",
-            phone: response.data.phone || "",
-            realName: response.data.realName || "",
-            idCard: response.data.idCard || "",
-            role: extractRole(response.data),
-            avatar: normalizeAvatarUrl(response.data.avatar),
-            verificationStatus: response.data.verificationStatus || "",
-          };
-        }
-        // 处理响应中嵌套在data或user中的情况
-        else if (response.data.data || response.data.user) {
-          const userDataObj = response.data.data || response.data.user;
-          log("用户信息嵌套在data或user字段中:", userDataObj);
-
-          if (userDataObj) {
-            userData = {
-              id: userDataObj.id || 0,
-              username: userDataObj.username || "",
-              email: userDataObj.email || "",
-              phone: userDataObj.phone || "",
-              realName: userDataObj.realName || "",
-              idCard: userDataObj.idCard || "",
-              role: extractRole(userDataObj),
-              avatar: normalizeAvatarUrl(userDataObj.avatar),
-              verificationStatus: userDataObj.verificationStatus || "",
-            };
-          }
-        }
-      }
-
-      if (userData) {
-        log("解析到的用户数据:", userData);
-
-        // 统一格式化头像 URL
-        userData.avatar = normalizeAvatarUrl(userData.avatar);
-
-        setUser(userData);
-        await fetchUnreadCount();
-        return userData;
-      } else {
-        warn("未能从响应中解析出用户数据");
-        return null;
-      }
-    } catch (error) {
-      console.error("获取用户信息失败:", extractErrorMessage(error));
-      const apiError = error as ApiRequestError;
-
-      if (apiError.response) {
-        console.error("API响应错误:", {
-          status: apiError.response.status,
-          data: apiError.response.data,
-        });
-      }
-
-      // 401 时直接抛出异常，让调用方处理（避免内部 logout 导致状态混乱）
-      if (apiError.response?.status === 401) {
-        throw new Error("登录状态已过期，请重新登录");
-      }
-
-      // 尝试备用接口（仅非401错误时）
-      try {
-        log("尝试备用API获取用户信息");
-        const backupResponse = await api.get("/api/auth/current");
-        if (backupResponse.data && (backupResponse.data.username || backupResponse.data.id)) {
-          const userData = {
-            id: backupResponse.data.id || 0,
-            username: backupResponse.data.username || "",
-            email: backupResponse.data.email || "",
-            phone: backupResponse.data.phone || "",
-            realName: backupResponse.data.realName || "",
-            idCard: backupResponse.data.idCard || "",
-            role: backupResponse.data.role || "ROLE_USER",
-            avatar: backupResponse.data.avatar || "",
-            verificationStatus: backupResponse.data.verificationStatus || "",
-          };
-          setUser(userData);
-          await fetchUnreadCount();
-          return userData;
-        }
-      } catch (backupError) {
-        console.error("备用API也失败:", extractErrorMessage(backupError));
-      }
-
-      throw new Error(apiError.displayMessage || "获取用户信息失败");
+    const version = sessionVersion;
+    // Cookie 是身份来源，即使没有本地资料也必须查询。
+    const response = await api.get("/api/auth/current");
+    const data = response.data?.user || response.data?.data || response.data;
+    if (!data?.id || !data?.username || !extractRole(data, "")) {
+      throw new Error("当前用户响应缺少身份信息");
     }
+    if (version !== sessionVersion) return null;
+    const userData: UserInfo = {
+      id: data.id,
+      username: data.username,
+      email: data.email || "",
+      phone: data.phone,
+      realName: data.realName,
+      idCard: data.idCard,
+      verificationStatus: data.verificationStatus,
+      role: extractRole(data, ""),
+      avatar: normalizeAvatarUrl(data.avatar),
+    };
+    setUser(userData);
+    await fetchUnreadCount();
+    return userInfo.value;
   };
 
   /**
@@ -543,7 +405,7 @@ export const useUserStore = defineStore("user", () => {
       log("密码重置成功:", response.data);
       return response.data;
     } catch (error) {
-      console.error("密码重置失败:", error);
+      console.error("密码重置失败:", extractErrorMessage(error));
       throw error;
     }
   };
@@ -557,7 +419,7 @@ export const useUserStore = defineStore("user", () => {
       log("密码重置邮件已发送:", response.data);
       return true;
     } catch (error) {
-      console.error("发送重置密码邮件失败:", error);
+      console.error("发送重置密码邮件失败:", extractErrorMessage(error));
       throw error;
     }
   };
@@ -588,11 +450,6 @@ export const useUserStore = defineStore("user", () => {
     return false;
   };
 
-  // 初始化时检查并同步用户角色
-  if (userInfo.value) {
-    syncUserRole();
-  }
-
   const fetchUnreadCount = async () => {
     if (!isAuthenticated.value) {
       unreadNotificationCount.value = 0;
@@ -611,6 +468,7 @@ export const useUserStore = defineStore("user", () => {
 
   return {
     token,
+    setToken,
     userInfo,
     user,
     userRole,
@@ -621,6 +479,9 @@ export const useUserStore = defineStore("user", () => {
     login,
     register,
     logout,
+    clearSession,
+    initializeSession,
+    initialized,
     updateProfile,
     changePassword,
     fetchUserInfo,

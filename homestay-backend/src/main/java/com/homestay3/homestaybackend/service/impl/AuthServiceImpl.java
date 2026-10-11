@@ -3,6 +3,7 @@ package com.homestay3.homestaybackend.service.impl;
 import com.homestay3.homestaybackend.dto.*;
 import com.homestay3.homestaybackend.entity.User;
 import com.homestay3.homestaybackend.exception.LoginException;
+import com.homestay3.homestaybackend.exception.CredentialValidationException;
 import com.homestay3.homestaybackend.mapper.UserMapper;
 import com.homestay3.homestaybackend.model.VerificationStatus;
 import com.homestay3.homestaybackend.model.UserRole;
@@ -10,8 +11,8 @@ import com.homestay3.homestaybackend.repository.UserRepository;
 import com.homestay3.homestaybackend.repository.CouponTemplateRepository;
 import com.homestay3.homestaybackend.service.CouponService;
 import com.homestay3.homestaybackend.security.JwtTokenProvider;
+import com.homestay3.homestaybackend.security.AccountRole;
 import com.homestay3.homestaybackend.service.AuthService;
-import com.homestay3.homestaybackend.service.CustomUserDetailsService;
 import com.homestay3.homestaybackend.service.EmailService;
 import com.homestay3.homestaybackend.service.NotificationService;
 import com.homestay3.homestaybackend.model.enums.NotificationType;
@@ -22,19 +23,20 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.HexFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +54,7 @@ public class AuthServiceImpl implements AuthService {
     private final CouponService couponService;
     private final com.homestay3.homestaybackend.service.ReferralService referralService;
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
+    private static final SecureRandom RESET_TOKEN_RANDOM = new SecureRandom();
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -59,6 +62,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        String role = publicRegistrationRole(request.getRole());
         log.info("开始注册用户: {}", request.getUsername());
         
         try {
@@ -70,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("用户名 {} 是否存在: {}", request.getUsername(), usernameExists);
             if (usernameExists) {
                 log.warn("用户名已存在: {}", request.getUsername());
-                throw new RuntimeException("用户名已存在");
+                throw new CredentialValidationException("用户名已存在");
             }
 
             // 检查邮箱是否存在
@@ -78,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("邮箱 {} 是否存在: {}", request.getEmail(), emailExists);
             if (emailExists) {
                 log.warn("邮箱已存在: {}", request.getEmail());
-                throw new RuntimeException("邮箱已存在");
+                throw new CredentialValidationException("邮箱已存在");
             }
 
             // 创建新用户
@@ -87,22 +91,6 @@ public class AuthServiceImpl implements AuthService {
             user.setEmail(request.getEmail());
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             user.setPhone(request.getPhone());
-            
-            // 确保角色值有效
-            String role = request.getRole();
-            if (role == null || role.isEmpty()) {
-                role = UserRole.ROLE_USER.name();
-            } else if (!role.startsWith("ROLE_")) {
-                role = "ROLE_" + role;
-            }
-            
-            // 验证角色是否为有效的枚举值
-            try {
-                UserRole.valueOf(role);
-            } catch (IllegalArgumentException e) {
-                log.warn("无效的角色值: {}，使用默认角色ROLE_USER", role);
-                role = UserRole.ROLE_USER.name();
-            }
             
             user.setRole(role);
             user.setEnabled(true);
@@ -191,8 +179,14 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new LoginException("用户不存在，请检查用户名或先注册账号"));
 
+        String role;
+        try {
+            role = AccountRole.normalize(user.getRole());
+        } catch (IllegalArgumentException e) {
+            throw new LoginException("账号角色无效，请联系管理员");
+        }
         // 拒绝管理员从前端登录
-        if ("ROLE_ADMIN".equals(user.getRole())) {
+        if (UserRole.ROLE_ADMIN.name().equals(role)) {
             log.warn("管理员尝试从前端登录: {}", request.getUsername());
             throw new LoginException("管理员请使用管理后台登录");
         }
@@ -207,15 +201,15 @@ public class AuthServiceImpl implements AuthService {
             log.info("用户信息: id={}, username={}, realName={}",
                 user.getId(), user.getUsername(), user.getRealName());
 
-            user.setLastLogin(LocalDateTime.now());
-            userRepository.save(user);
+            // 仅更新登录时间，不能用旧实体快照覆盖并发提交的新密码和重置令牌。
+            userRepository.updateLastLogin(user.getId(), LocalDateTime.now());
 
-            String token = jwtTokenProvider.generateToken(user.getUsername(), user.getId(), user.getRole());
+            String token = jwtTokenProvider.generateToken(authentication);
 
             AuthResponse response = new AuthResponse();
             response.setToken(token);
             response.setUser(convertToDTO(user));
-            log.info("登录响应: {}", response);
+            log.info("用户登录成功: userId={}", user.getId());
             return response;
 
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
@@ -223,10 +217,10 @@ public class AuthServiceImpl implements AuthService {
             throw new LoginException("密码错误，请重新输入");
         } catch (org.springframework.security.authentication.DisabledException e) {
             log.warn("账号已被禁用: {}", request.getUsername());
-            throw new RuntimeException("账号已被禁用，请联系管理员");
+            throw new LoginException("账号已被禁用，请联系管理员");
         } catch (org.springframework.security.authentication.LockedException e) {
             log.warn("账号已被锁定: {}", request.getUsername());
-            throw new RuntimeException("账号已被锁定，请联系管理员");
+            throw new LoginException("账号已被锁定，请联系管理员");
         } catch (LoginException e) {
             throw e;
         } catch (Exception e) {
@@ -238,54 +232,77 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void forgotPassword(String email) {
-        log.info("处理忘记密码请求: {}", email);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("该邮箱未注册"));
-        
-        // 生成重置令牌
-        String resetToken = generateResetToken(user);
-        
-        // 保存重置令牌到用户记录
-        user.setResetToken(resetToken);
+        User user = userRepository.findByEmailForUpdate(email).orElse(null);
+        if (user == null) {
+            return;
+        }
+
+        byte[] bytes = new byte[32];
+        RESET_TOKEN_RANDOM.nextBytes(bytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        user.setResetToken(resetTokenDigest(token));
         user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
-        userRepository.save(user);
-        
-        // 发送重置邮件
-        sendPasswordResetEmail(email);
-        log.info("密码重置邮件已发送: {}", email);
+        userRepository.saveAndFlush(user);
+
+        String resetLink = frontendUrl + "/reset-password?token=" + token;
+        try {
+            emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
+        } catch (Exception e) {
+            // 邮件异常可能包含发送内容，不能将重置链接写入日志或响应。
+            log.warn("密码重置邮件发送失败: userId={}", user.getId());
+            throw new RuntimeException("发送重置密码邮件失败，请稍后重试");
+        }
     }
 
     @Override
     @Transactional
     public void resetPassword(PasswordResetRequest request) {
-        log.info("处理密码重置请求，验证token");
-        
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()
+                || request.getNewPassword().length() < 6) {
+            throw new CredentialValidationException("新密码长度不能少于6个字符");
+        }
+        String token = request.getToken();
+        if (token == null || !token.matches("[A-Za-z0-9_-]{43}")) {
+            throw new CredentialValidationException("重置链接无效或已过期，请重新申请");
+        }
+        String digest = resetTokenDigest(token);
+        User user = userRepository.findByResetToken(digest)
+                .orElseThrow(() -> new CredentialValidationException("重置链接无效或已过期，请重新申请"));
+        if (!digest.equals(user.getResetToken()) || user.getResetTokenExpiry() == null
+                || !user.getResetTokenExpiry().isAfter(LocalDateTime.now())) {
+            throw new CredentialValidationException("重置链接无效或已过期，请重新申请");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+        userRepository.saveAndFlush(user);
+        log.info("密码重置成功: userId={}", user.getId());
+    }
+
+    private static String resetTokenDigest(String token) {
         try {
-            // 验证JWT token并获取用户名
-            String username = jwtTokenProvider.getUsernameFromToken(request.getToken());
-            if (username == null) {
-                throw new RuntimeException("无效的重置令牌");
-            }
-            
-            // 查找用户
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("用户不存在"));
-            
-            log.info("找到用户: {}", username);
-            
-            // 更新密码
-            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-            userRepository.save(user);
-            
-            log.info("密码重置成功: {}", username);
-        } catch (Exception e) {
-            log.error("密码重置失败: {}", e.getMessage());
-            throw new RuntimeException("密码重置失败: " + e.getMessage());
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                    .digest(token.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("无法生成密码重置令牌");
         }
     }
 
-    private String generateResetToken(User user) {
-        return UUID.randomUUID().toString();
+    private static String publicRegistrationRole(String role) {
+        if (role != null && !role.matches("(?i)\\s*(?:(?:ROLE_)?(?:USER|HOST))?\\s*")) {
+            throw new CredentialValidationException("公开注册仅支持普通用户或房东");
+        }
+        String normalized;
+        try {
+            normalized = AccountRole.normalize(role == null || role.isBlank() ? UserRole.ROLE_USER.name() : role);
+        } catch (IllegalArgumentException e) {
+            throw new CredentialValidationException("公开注册仅支持普通用户或房东");
+        }
+        if (!UserRole.ROLE_USER.name().equals(normalized) && !UserRole.ROLE_HOST.name().equals(normalized)) {
+            throw new CredentialValidationException("公开注册仅支持普通用户或房东");
+        }
+        return normalized;
     }
 
     // 头像上传功能已迁移到FileController统一处理
@@ -317,21 +334,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void sendPasswordResetEmail(String email) {
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
-
-        String token = jwtTokenProvider.generateToken(user.getUsername(), user.getId(), user.getRole());
-        String resetLink = frontendUrl + "/reset-password?token=" + token;
-
-        try {
-            emailService.sendPasswordResetEmail(email, resetLink);
-        } catch (Exception e) {
-            throw new RuntimeException("发送重置密码邮件失败: " + e.getMessage());
-        }
-    }
-
-    @Override
+    @Transactional
     public void updateUserAvatar(String username, String avatarUrl) {
         log.info("更新用户头像: username={}, avatarUrl={}", username, avatarUrl);
         
