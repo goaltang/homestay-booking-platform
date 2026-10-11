@@ -15,8 +15,7 @@ let listenersRegistered = false;
 
 const isConnected = shallowRef(false);
 
-const getApiBaseUrl = () =>
-  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+const getApiBaseUrl = () => import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
 // token 迁移后，JWT 只存内存（供 WebSocket 握手用），httpOnly cookie 用于 HTTP API
 let memoryToken: string | null = null;
@@ -30,18 +29,7 @@ const getStoredToken = () => {
     return memoryToken.startsWith("Bearer ") ? memoryToken.slice(7) : memoryToken;
   }
 
-  // 兼容旧会话（迁移前的 localStorage token）
-  const token =
-    localStorage.getItem("homestay_token") ||
-    sessionStorage.getItem("homestay_token") ||
-    localStorage.getItem("token") ||
-    sessionStorage.getItem("token");
-
-  if (!token) {
-    return null;
-  }
-
-  return token.startsWith("Bearer ") ? token.slice(7) : token;
+  return null;
 };
 
 const clearReconnectTimer = () => {

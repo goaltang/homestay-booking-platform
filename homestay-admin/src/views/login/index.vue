@@ -59,7 +59,6 @@ import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
-import { login } from "@/api/auth";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -90,17 +89,9 @@ const handleLogin = async () => {
     await loginFormRef.value.validate();
     loading.value = true;
 
-    // 调用登录API
-    const result = await login({
+    await userStore.login({
       username: loginForm.username,
       password: loginForm.password,
-    });
-
-    // 使用 Pinia store 保存用户信息和 token
-    userStore.setToken(result.token);
-    userStore.setUserInfo({
-      username: result.admin.username,
-      role: result.admin.role,
     });
 
     // 如果选择了记住我，可以在本地存储中保存用户名
@@ -113,8 +104,6 @@ const handleLogin = async () => {
     ElMessage.success("登录成功");
     router.push("/");
   } catch (error: any) {
-    console.error("登录出错:", error);
-
     // 增强错误处理，尝试获取详细错误信息
     let errorMessage = "登录失败，请重试";
 

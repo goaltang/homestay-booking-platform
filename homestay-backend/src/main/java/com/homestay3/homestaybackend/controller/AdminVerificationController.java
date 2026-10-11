@@ -128,6 +128,7 @@ public class AdminVerificationController {
      */
     @OperationLog(operationType = "CREATE", resource = "VERIFICATION")
     @PostMapping("/{id}/approve")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> approveVerification(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> body) {
@@ -172,6 +173,7 @@ public class AdminVerificationController {
      */
     @OperationLog(operationType = "CREATE", resource = "VERIFICATION")
     @PostMapping("/{id}/reject")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> rejectVerification(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {

@@ -2,18 +2,6 @@
   <router-view />
 </template>
 
-<script setup lang="ts">
-import { onMounted } from "vue";
-import { useUserStore } from "@/stores/user";
-
-const userStore = useUserStore();
-
-onMounted(() => {
-  // 应用加载时，从localStorage恢复用户信息
-  userStore.loadUserInfo();
-});
-</script>
-
 <style>
 html,
 body {

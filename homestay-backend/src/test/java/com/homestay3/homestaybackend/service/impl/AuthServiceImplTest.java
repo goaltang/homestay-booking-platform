@@ -124,6 +124,7 @@ class AuthServiceImplTest {
 
         // 通用 mock
         when(jwtTokenProvider.generateToken(any(String.class), any(Long.class), any(String.class))).thenReturn("test-jwt-token");
+        when(jwtTokenProvider.generateToken(any(Authentication.class))).thenReturn("test-jwt-token");
     }
 
     @Test
@@ -199,7 +200,9 @@ class AuthServiceImplTest {
         assertNotNull(response.getUser());
         assertEquals("testuser", response.getUser().getUsername());
         
-        verify(userRepository, times(1)).save(any(User.class)); // 更新最后登录时间
+        verify(jwtTokenProvider).generateToken(authentication);
+        verify(userRepository, times(1)).updateLastLogin(eq(testUser.getId()), any(java.time.LocalDateTime.class));
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -337,5 +340,179 @@ class AuthServiceImplTest {
         
         // 验证
         verify(userRepository, times(1)).save(any(User.class));
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"ADMIN", "ROLE_ADMIN", " admin ", "role_admin", "UNKNOWN", "ROLE_ROLE_ADMIN", "LANDLORD", "ROLE_LANDLORD"})
+    void register_RejectsNonPublicRolesBeforeWriting(String role) {
+        registerRequest.setRole(role);
+        assertThrows(com.homestay3.homestaybackend.exception.CredentialValidationException.class,
+                () -> authService.register(registerRequest));
+        verify(userRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(passwordEncoder, authenticationManager);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"USER", "ROLE_USER", " user ", "HOST", "role_host", ""})
+    @org.junit.jupiter.params.provider.NullSource
+    void register_NormalizesPublicRoles(String role) {
+        registerRequest.setRole(role);
+        when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User user = inv.getArgument(0);
+            user.setId(2L);
+            return user;
+        });
+        AuthResponse response = authService.register(registerRequest);
+        assertEquals(role != null && role.toUpperCase(java.util.Locale.ROOT).contains("HOST")
+                ? "ROLE_HOST" : "ROLE_USER", response.getUser().getRole());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"ADMIN", "ROLE_ADMIN", " admin ", "role_admin"})
+    void login_RejectsAdministratorAliases(String role) {
+        testUser.setRole(role);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        assertThrows(com.homestay3.homestaybackend.exception.LoginException.class,
+                () -> authService.login(authRequest));
+        verifyNoInteractions(authenticationManager);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void forgotPassword_SendsIndependentTokenAndStoresOnlyDigest() {
+        when(userRepository.findByEmailForUpdate("test@example.com")).thenReturn(Optional.of(testUser));
+        org.springframework.test.util.ReflectionTestUtils.setField(authService, "frontendUrl", "http://localhost:5173");
+        authService.forgotPassword("test@example.com");
+        var link = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(emailService).sendPasswordResetEmail(eq("test@example.com"), link.capture());
+        String token = link.getValue().substring(link.getValue().indexOf("token=") + 6);
+        assertTrue(token.matches("[A-Za-z0-9_-]{43}"));
+        assertEquals(digest(token), testUser.getResetToken());
+        assertNotEquals(token, testUser.getResetToken());
+        assertTrue(testUser.getResetTokenExpiry().isAfter(java.time.LocalDateTime.now().plusHours(23)));
+        verifyNoInteractions(jwtTokenProvider);
+    }
+
+    @Test
+    void forgotPassword_UnknownEmailDoesNotRevealAccountExistence() {
+        assertDoesNotThrow(() -> authService.forgotPassword("missing@example.com"));
+        verifyNoInteractions(emailService, jwtTokenProvider);
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void resetPassword_ConsumesTokenAndClearsExpiry() {
+        String token = "a".repeat(43);
+        testUser.setResetToken(digest(token));
+        testUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(5));
+        when(userRepository.findByResetToken(digest(token))).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.encode("new-password")).thenReturn("new-hash");
+        authService.resetPassword(resetRequest(token));
+        assertEquals("new-hash", testUser.getPassword());
+        assertNull(testUser.getResetToken());
+        assertNull(testUser.getResetTokenExpiry());
+        assertThrows(com.homestay3.homestaybackend.exception.CredentialValidationException.class,
+                () -> authService.resetPassword(resetRequest(token)));
+        verify(userRepository, times(1)).saveAndFlush(testUser);
+        verifyNoInteractions(jwtTokenProvider);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {-1, 0})
+    void resetPassword_RejectsExpiredToken(int minutes) {
+        String token = "a".repeat(43);
+        testUser.setResetToken(digest(token));
+        testUser.setResetTokenExpiry(java.time.LocalDateTime.now().plusMinutes(minutes));
+        when(userRepository.findByResetToken(digest(token))).thenReturn(Optional.of(testUser));
+        assertThrows(com.homestay3.homestaybackend.exception.CredentialValidationException.class,
+                () -> authService.resetPassword(resetRequest(token)));
+        verifyNoInteractions(passwordEncoder, jwtTokenProvider);
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void resetPassword_RejectsMissingExpiryAndUnknownToken() {
+        String token = "a".repeat(43);
+        when(userRepository.findByResetToken(digest(token))).thenReturn(Optional.of(testUser));
+        assertThrows(com.homestay3.homestaybackend.exception.CredentialValidationException.class,
+                () -> authService.resetPassword(resetRequest(token)));
+        when(userRepository.findByResetToken(digest(token))).thenReturn(Optional.empty());
+        assertThrows(com.homestay3.homestaybackend.exception.CredentialValidationException.class,
+                () -> authService.resetPassword(resetRequest(token)));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void resetPassword_RejectsOrdinaryJwtWithoutParsingIt() {
+        assertThrows(com.homestay3.homestaybackend.exception.CredentialValidationException.class,
+                () -> authService.resetPassword(resetRequest("eyJhbGciOiJIUzI1NiJ9.payload.signature")));
+        verifyNoInteractions(jwtTokenProvider, passwordEncoder, userRepository);
+    }
+
+    @Test
+    void resetPassword_RejectsWeakPasswordBeforeConsumingToken() {
+        var request = resetRequest("a".repeat(43));
+        request.setNewPassword("123");
+        assertThrows(com.homestay3.homestaybackend.exception.CredentialValidationException.class,
+                () -> authService.resetPassword(request));
+        verifyNoInteractions(jwtTokenProvider, passwordEncoder, userRepository);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"LANDLORD", "ROLE_LANDLORD"})
+    void login_AllowsLegacyHostAliasWithAuthenticatedSnapshot(String role) {
+        testUser.setRole(role);
+        Authentication authentication = mock(Authentication.class);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        authService.login(authRequest);
+        verify(jwtTokenProvider).generateToken(authentication);
+    }
+
+    @Test
+    void credentialRequestsDoNotExposePasswordsOrResetTokenInToString() {
+        assertFalse(registerRequest.toString().contains(registerRequest.getPassword()));
+        var reset = resetRequest("a".repeat(43));
+        assertFalse(reset.toString().contains(reset.getToken()));
+        assertFalse(reset.toString().contains(reset.getNewPassword()));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"UNKNOWN", ""})
+    @org.junit.jupiter.params.provider.NullSource
+    void login_RejectsInvalidStoredRoles(String role) {
+        testUser.setRole(role);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        assertThrows(com.homestay3.homestaybackend.exception.LoginException.class,
+                () -> authService.login(authRequest));
+        verifyNoInteractions(authenticationManager);
+    }
+
+    @Test
+    void login_DisabledAndLockedAreAuthenticationFailures() {
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new org.springframework.security.authentication.DisabledException("disabled"));
+        assertThrows(com.homestay3.homestaybackend.exception.LoginException.class,
+                () -> authService.login(authRequest));
+        doThrow(new org.springframework.security.authentication.LockedException("locked"))
+                .when(authenticationManager).authenticate(any());
+        assertThrows(com.homestay3.homestaybackend.exception.LoginException.class,
+                () -> authService.login(authRequest));
+        verify(userRepository, never()).save(any());
+    }
+
+    private static com.homestay3.homestaybackend.dto.PasswordResetRequest resetRequest(String token) {
+        return com.homestay3.homestaybackend.dto.PasswordResetRequest.builder()
+                .token(token).newPassword("new-password").build();
+    }
+
+    private static String digest(String token) {
+        try {
+            return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new AssertionError(e);
+        }
     }
 }

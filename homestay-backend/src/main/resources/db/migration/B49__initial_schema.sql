@@ -1,10 +1,9 @@
--- 全量表结构快照（从本地开发库导出，2026-08）
--- 用途：空库部署时在建表阶段生成完整结构，配合 Flyway baseline-on-migrate
---       （空库有表无 history → baseline 到 V49，跳过迁移执行；本地/增量环境不受影响）
--- 注意：1) 外键/CHECK 约束已剥离（完整性由 JPA 关系维护，业务层有归属校验）
---       2) 幂等：全部 IF NOT EXISTS，任何环境执行都安全
---       3) 视图不在此文件（由迁移/代码创建）
-CREATE TABLE IF NOT EXISTS `ab_assignment` (
+-- Flyway baseline migration for new, empty MySQL databases.
+-- Existing histories continue through V migrations; do not edit an applied migration.
+-- Uses the existing snapshot constraint policy: indexes, no foreign keys/CHECK constraints.
+-- Demo users, properties, orders and administrator credentials are deliberately excluded.
+
+CREATE TABLE `ab_assignment` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `experiment_id` bigint NOT NULL COMMENT '实验ID',
   `variant_id` bigint NOT NULL COMMENT '实验组ID',
@@ -15,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `ab_assignment` (
   UNIQUE KEY `UKjhu4mf3oedam7om3anajxw8xv` (`experiment_id`,`user_id`),
   KEY `idx_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AB实验用户分流记录表';
-CREATE TABLE IF NOT EXISTS `ab_event` (
+CREATE TABLE `ab_event` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `experiment_id` bigint NOT NULL COMMENT '实验ID',
   `variant_id` bigint NOT NULL COMMENT '实验组ID',
@@ -27,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `ab_event` (
   KEY `idx_experiment_variant_event` (`experiment_id`,`variant_id`,`event_type`,`created_at`),
   KEY `idx_user_event` (`user_id`,`event_type`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AB实验事件表';
-CREATE TABLE IF NOT EXISTS `ab_experiment` (
+CREATE TABLE `ab_experiment` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `name` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '实验名称',
   `description` text COLLATE utf8mb4_unicode_ci COMMENT '实验描述',
@@ -44,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `ab_experiment` (
   KEY `idx_target_type` (`target_id`,`experiment_type`),
   KEY `idx_status` (`status`,`start_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AB实验表';
-CREATE TABLE IF NOT EXISTS `ab_variant` (
+CREATE TABLE `ab_variant` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `experiment_id` bigint NOT NULL COMMENT '实验ID',
   `variant_key` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '组标识: control/variant_a/variant_b',
@@ -55,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `ab_variant` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_experiment_variant` (`experiment_id`,`variant_key`),
   KEY `idx_experiment` (`experiment_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AB实验组表';
-CREATE TABLE IF NOT EXISTS `admin` (
+CREATE TABLE `admin` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
@@ -63,8 +62,8 @@ CREATE TABLE IF NOT EXISTS `admin` (
   `username` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_gfn44sntic2k93auag97juyij` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=912 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `amenities` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `amenities` (
   `value` varchar(50) NOT NULL,
   `label` varchar(100) NOT NULL,
   `active` bit(1) NOT NULL,
@@ -78,14 +77,14 @@ CREATE TABLE IF NOT EXISTS `amenities` (
   `category_code` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`value`),
   KEY `FKb48d658cj1lf0j9jvatps3y6r` (`category_code`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `amenity_categories` (
+CREATE TABLE `amenity_categories` (
   `code` varchar(50) NOT NULL,
   `icon` varchar(100) DEFAULT NULL,
   `name` varchar(100) NOT NULL,
   `sort_order` int DEFAULT NULL,
   PRIMARY KEY (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `announcement` (
+CREATE TABLE `announcement` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `category` varchar(50) NOT NULL,
   `content` text NOT NULL,
@@ -105,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `announcement` (
   KEY `idx_category` (`category`),
   KEY `idx_published_at` (`published_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `banners` (
+CREATE TABLE `banners` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Banner标题',
   `subtitle` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '副标题/描述',
@@ -117,8 +116,8 @@ CREATE TABLE IF NOT EXISTS `banners` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页运营Banner表';
-CREATE TABLE IF NOT EXISTS `check_in_records` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='首页运营Banner表';
+CREATE TABLE `check_in_records` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_id` bigint NOT NULL,
   `check_in_method` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -138,8 +137,8 @@ CREATE TABLE IF NOT EXISTS `check_in_records` (
   PRIMARY KEY (`id`),
   KEY `idx_check_in_order_id` (`order_id`),
   KEY `idx_check_in_code` (`check_in_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=15641 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-CREATE TABLE IF NOT EXISTS `check_out_records` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `check_out_records` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_id` bigint NOT NULL,
   `check_out_method` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -158,8 +157,8 @@ CREATE TABLE IF NOT EXISTS `check_out_records` (
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_check_out_order_id` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13746 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-CREATE TABLE IF NOT EXISTS `conversations` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `conversations` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) NOT NULL,
   `last_message_at` datetime(6) DEFAULT NULL,
@@ -175,8 +174,8 @@ CREATE TABLE IF NOT EXISTS `conversations` (
   KEY `idx_conversation_host` (`host_id`),
   KEY `idx_conversation_guest` (`guest_id`),
   KEY `idx_conversation_homestay` (`homestay_id`),
-  KEY `idx_conversation_updated` (`updated_at` DESC)) ENGINE=InnoDB AUTO_INCREMENT=5981 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `coupon_analytics` (
+  KEY `idx_conversation_updated` (`updated_at` DESC)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `coupon_analytics` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `template_id` bigint DEFAULT NULL COMMENT '优惠券模板ID（活动相关则为NULL）',
   `campaign_id` bigint DEFAULT NULL COMMENT '活动ID（券相关则为NULL）',
@@ -193,7 +192,7 @@ CREATE TABLE IF NOT EXISTS `coupon_analytics` (
   KEY `idx_user_event` (`user_id`,`event_type`,`created_at`),
   KEY `idx_event_created` (`event_type`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='优惠券分析事件表';
-CREATE TABLE IF NOT EXISTS `coupon_batch_issue_item` (
+CREATE TABLE `coupon_batch_issue_item` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `task_id` bigint NOT NULL COMMENT '任务ID',
   `user_id` bigint NOT NULL COMMENT '用户ID',
@@ -202,8 +201,8 @@ CREATE TABLE IF NOT EXISTS `coupon_batch_issue_item` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_task_user` (`task_id`,`user_id`),
-  KEY `idx_task_status` (`task_id`,`status`)) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='批量发券任务明细表';
-CREATE TABLE IF NOT EXISTS `coupon_batch_issue_task` (
+  KEY `idx_task_status` (`task_id`,`status`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='批量发券任务明细表';
+CREATE TABLE `coupon_batch_issue_task` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `template_id` bigint NOT NULL COMMENT '优惠券模板ID',
   `name` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '任务名称',
@@ -220,8 +219,8 @@ CREATE TABLE IF NOT EXISTS `coupon_batch_issue_task` (
   PRIMARY KEY (`id`),
   KEY `idx_status_created` (`status`,`created_at`),
   KEY `idx_template` (`template_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='批量发券任务表';
-CREATE TABLE IF NOT EXISTS `coupon_template` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='批量发券任务表';
+CREATE TABLE `coupon_template` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `name` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '券名称',
   `coupon_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '券类型: CASH(现金券), DISCOUNT(折扣券), FULL_REDUCTION(满减券)',
@@ -251,8 +250,8 @@ CREATE TABLE IF NOT EXISTS `coupon_template` (
   KEY `idx_host_coupon_template` (`host_id`,`status`),
   KEY `idx_stack_group` (`stack_group`,`status`),
   KEY `idx_auto_issue_trigger` (`auto_issue_trigger`,`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='优惠券模板表';
-CREATE TABLE IF NOT EXISTS `dispute_record` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='优惠券模板表';
+CREATE TABLE `dispute_record` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_id` bigint NOT NULL,
   `dispute_reason` text COLLATE utf8mb4_unicode_ci COMMENT '争议原因',
@@ -269,7 +268,7 @@ CREATE TABLE IF NOT EXISTS `dispute_record` (
   KEY `idx_raised_by` (`raised_by`),
   KEY `idx_resolved_by` (`resolved_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-CREATE TABLE IF NOT EXISTS `earnings` (
+CREATE TABLE `earnings` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `amount` decimal(10,2) NOT NULL,
   `checkin_date` date NOT NULL,
@@ -285,8 +284,8 @@ CREATE TABLE IF NOT EXISTS `earnings` (
   PRIMARY KEY (`id`),
   KEY `FKj5r6pxyd8vqglykedwg78ivk2` (`homestay_id`),
   KEY `FKmk2cff6mwxijc8ttu1ykbhhk8` (`host_id`),
-  KEY `FKfv0fw87jpvlaka59ef3hiebef` (`order_id`)) ENGINE=InnoDB AUTO_INCREMENT=6960 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `holiday_calendar` (
+  KEY `FKfv0fw87jpvlaka59ef3hiebef` (`order_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `holiday_calendar` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `date` date NOT NULL,
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -300,13 +299,13 @@ CREATE TABLE IF NOT EXISTS `holiday_calendar` (
   UNIQUE KEY `uk_date_region` (`date`,`region_code`),
   KEY `idx_date` (`date`),
   KEY `idx_region_date` (`region_code`,`date`)
-) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='节假日日历表';
-CREATE TABLE IF NOT EXISTS `homestay_amenity` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='节假日日历表';
+CREATE TABLE `homestay_amenity` (
   `homestay_id` bigint NOT NULL,
   `amenity_id` varchar(50) NOT NULL,
   PRIMARY KEY (`homestay_id`,`amenity_id`),
   KEY `FK51mhfxcl1u9mic6phbse9eb9` (`amenity_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `homestay_audit_logs` (
+CREATE TABLE `homestay_audit_logs` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `homestay_id` bigint NOT NULL,
   `reviewer_id` bigint NOT NULL,
@@ -323,8 +322,8 @@ CREATE TABLE IF NOT EXISTS `homestay_audit_logs` (
   KEY `idx_homestay_audit_reviewer_id` (`reviewer_id`),
   KEY `idx_homestay_audit_created_at` (`created_at`),
   KEY `idx_homestay_audit_status` (`new_status`),
-  KEY `idx_homestay_audit_action_type` (`action_type`)) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `homestay_availability` (
+  KEY `idx_homestay_audit_action_type` (`action_type`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `homestay_availability` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `homestay_id` bigint NOT NULL,
   `date` date NOT NULL,
@@ -344,8 +343,8 @@ CREATE TABLE IF NOT EXISTS `homestay_availability` (
   KEY `idx_homestay_date` (`homestay_id`,`date`),
   KEY `idx_date_status` (`date`,`status`),
   KEY `idx_availability_source` (`source`)
-) ENGINE=InnoDB AUTO_INCREMENT=48901 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='房源可用性日历表，用于记录每个房源每天的预订状态';
-CREATE TABLE IF NOT EXISTS `homestay_groups` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='房源可用性日历表，用于记录每个房源每天的预订状态';
+CREATE TABLE `homestay_groups` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '分组名称',
   `code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '分组编码',
@@ -361,14 +360,14 @@ CREATE TABLE IF NOT EXISTS `homestay_groups` (
   PRIMARY KEY (`id`),
   KEY `idx_group_owner` (`owner_id`),
   KEY `idx_group_code` (`code`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='房源分组表';
-CREATE TABLE IF NOT EXISTS `homestay_images` (
+CREATE TABLE `homestay_images` (
   `homestay_id` bigint NOT NULL,
   `image` varchar(255) DEFAULT NULL,
   `image_url` varchar(255) DEFAULT NULL,
   `id` bigint NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`),
-  KEY `FKrh41oto9d1d8q5k2bmnj3xv8x` (`homestay_id`)) ENGINE=InnoDB AUTO_INCREMENT=25010 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `homestay_types` (
+  KEY `FKrh41oto9d1d8q5k2bmnj3xv8x` (`homestay_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `homestay_types` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `active` bit(1) NOT NULL,
   `code` varchar(255) NOT NULL,
@@ -381,8 +380,8 @@ CREATE TABLE IF NOT EXISTS `homestay_types` (
   `category_id` bigint DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_1l6du2ayrvxvevif6j79l9i9c` (`code`),
-  KEY `FKxuuhe1dywasqopy8wr9r4wkm` (`category_id`)) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `homestays` (
+  KEY `FKxuuhe1dywasqopy8wr9r4wkm` (`category_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `homestays` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `cover_image` varchar(255) DEFAULT NULL,
   `created_at` datetime(6) DEFAULT NULL,
@@ -417,8 +416,8 @@ CREATE TABLE IF NOT EXISTS `homestays` (
   KEY `idx_homestays_auto_confirm` (`auto_confirm`),
   KEY `idx_homestay_group` (`group_id`),
   KEY `idx_homestays_coordinates` (`latitude`,`longitude`),
-  KEY `idx_homestays_status_created_at` (`status`,`created_at` DESC)) ENGINE=InnoDB AUTO_INCREMENT=5423 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `login_log` (
+  KEY `idx_homestays_status_created_at` (`status`,`created_at` DESC)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `login_log` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `ip_address` varchar(50) DEFAULT NULL,
   `login_status` varchar(20) NOT NULL,
@@ -430,8 +429,8 @@ CREATE TABLE IF NOT EXISTS `login_log` (
   PRIMARY KEY (`id`),
   KEY `idx_username` (`username`),
   KEY `idx_login_time` (`login_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `messages` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `messages` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `content` text NOT NULL,
   `created_at` datetime(6) NOT NULL,
@@ -442,8 +441,8 @@ CREATE TABLE IF NOT EXISTS `messages` (
   PRIMARY KEY (`id`),
   KEY `idx_message_conversation` (`conversation_id`),
   KEY `idx_message_conversation_created` (`conversation_id`,`created_at` DESC),
-  KEY `idx_message_sender` (`sender_id`)) ENGINE=InnoDB AUTO_INCREMENT=17142 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `notification_broadcast_jobs` (
+  KEY `idx_message_sender` (`sender_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `notification_broadcast_jobs` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `status` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Broadcast job status',
   `initiated_by` bigint DEFAULT NULL COMMENT 'Admin user id when available',
@@ -461,7 +460,7 @@ CREATE TABLE IF NOT EXISTS `notification_broadcast_jobs` (
   PRIMARY KEY (`id`),
   KEY `idx_notification_broadcast_status_submitted` (`status`,`submitted_at`),
   KEY `idx_notification_broadcast_initiator_submitted` (`initiated_by`,`submitted_at`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Notification broadcast jobs';
-CREATE TABLE IF NOT EXISTS `notification_preferences` (
+CREATE TABLE `notification_preferences` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `user_id` bigint NOT NULL COMMENT '用户ID',
   `domain` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '通知业务域',
@@ -471,7 +470,7 @@ CREATE TABLE IF NOT EXISTS `notification_preferences` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_domain` (`user_id`,`domain`),
   KEY `idx_notification_prefs_user_id` (`user_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户通知偏好';
-CREATE TABLE IF NOT EXISTS `notifications` (
+CREATE TABLE `notifications` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '通知唯一ID',
   `user_id` bigint NOT NULL COMMENT '接收通知的用户ID (关联 users 表)',
   `actor_id` bigint DEFAULT NULL COMMENT '触发通知的用户ID (可选, 关联 users 表)',
@@ -489,8 +488,8 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   KEY `idx_notification_type` (`type`),
   KEY `idx_notification_user_read` (`user_id`,`is_read`),
   KEY `idx_notification_read_at` (`is_read`,`read_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=64842 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户通知表';
-CREATE TABLE IF NOT EXISTS `operation_log` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户通知表';
+CREATE TABLE `operation_log` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `detail` text,
   `ip_address` varchar(50) DEFAULT NULL,
@@ -505,8 +504,8 @@ CREATE TABLE IF NOT EXISTS `operation_log` (
   KEY `idx_operate_time` (`operate_time`),
   KEY `idx_operator` (`operator`),
   KEY `idx_resource` (`resource`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `order_price_snapshot` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `order_price_snapshot` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_id` bigint NOT NULL COMMENT '订单ID',
   `quote_token` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '报价令牌',
@@ -526,8 +525,8 @@ CREATE TABLE IF NOT EXISTS `order_price_snapshot` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `order_id` (`order_id`),
   KEY `idx_order` (`order_id`),
-  KEY `idx_payable_amount` (`order_id`,`payable_amount`)) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单价格快照表';
-CREATE TABLE IF NOT EXISTS `orders` (
+  KEY `idx_payable_amount` (`order_id`,`payable_amount`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单价格快照表';
+CREATE TABLE `orders` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `check_in_date` date NOT NULL,
   `check_out_date` date NOT NULL,
@@ -585,8 +584,8 @@ CREATE TABLE IF NOT EXISTS `orders` (
   KEY `idx_orders_homestay_checkin` (`homestay_id`,`check_in_date`),
   KEY `idx_orders_status_check` (`status`,`check_in_date`,`check_out_date`),
   KEY `idx_orders_guest_idempotency` (`guest_id`,`idempotency_key`),
-  KEY `idx_orders_homestay_created_at` (`homestay_id`,`created_at`)) ENGINE=InnoDB AUTO_INCREMENT=8316 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `payment_records` (
+  KEY `idx_orders_homestay_created_at` (`homestay_id`,`created_at`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `payment_records` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_id` bigint NOT NULL COMMENT '订单ID',
   `payment_method` varchar(20) NOT NULL COMMENT '支付方式 (ALIPAY, WECHAT)',
@@ -608,8 +607,8 @@ CREATE TABLE IF NOT EXISTS `payment_records` (
   KEY `idx_transaction_id` (`transaction_id`),
   KEY `idx_payment_method` (`payment_method`),
   KEY `idx_status` (`status`),
-  KEY `idx_created_at` (`created_at`)) ENGINE=InnoDB AUTO_INCREMENT=11859 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='支付记录表';
-CREATE TABLE IF NOT EXISTS `pricing_rule` (
+  KEY `idx_created_at` (`created_at`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='支付记录表';
+CREATE TABLE `pricing_rule` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `name` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '规则名称',
   `scope_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '作用域: GLOBAL/CITY/HOST/GROUP/HOMESTAY/TYPE',
@@ -633,8 +632,8 @@ CREATE TABLE IF NOT EXISTS `pricing_rule` (
   KEY `idx_scope` (`scope_type`,`enabled`),
   KEY `idx_rule_type` (`rule_type`,`enabled`),
   KEY `idx_date_range` (`start_date`,`end_date`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='价格规则表';
-CREATE TABLE IF NOT EXISTS `promotion_campaign` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='价格规则表';
+CREATE TABLE `promotion_campaign` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `name` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '活动名称',
   `campaign_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '活动类型: FLASH_SALE(限时折扣), FULL_REDUCTION(满减), HOMESTAY_DISCOUNT(房源折扣)',
@@ -657,7 +656,7 @@ CREATE TABLE IF NOT EXISTS `promotion_campaign` (
   KEY `idx_priority` (`priority`),
   KEY `idx_host_campaign` (`host_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='营销活动表';
-CREATE TABLE IF NOT EXISTS `promotion_rule` (
+CREATE TABLE `promotion_rule` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `campaign_id` bigint NOT NULL COMMENT '活动ID',
   `rule_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '规则类型: AMOUNT_OFF(固定金额减免), PERCENT_OFF(百分比折扣), FULL_REDUCTION(满减), PER_NIGHT_OFF(每晚减免)',
@@ -675,7 +674,7 @@ CREATE TABLE IF NOT EXISTS `promotion_rule` (
   `tier_config_json` text COLLATE utf8mb4_unicode_ci COMMENT '阶梯配置JSON，如 [{"threshold":300,"discount":30},{"threshold":500,"discount":60}]',
   PRIMARY KEY (`id`),
   KEY `idx_campaign` (`campaign_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='活动规则表';
-CREATE TABLE IF NOT EXISTS `promotion_usage` (
+CREATE TABLE `promotion_usage` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_id` bigint NOT NULL COMMENT '订单ID',
   `user_id` bigint NOT NULL COMMENT '用户ID',
@@ -692,7 +691,7 @@ CREATE TABLE IF NOT EXISTS `promotion_usage` (
   KEY `idx_bearer_status` (`bearer`,`status`),
   KEY `idx_created_at` (`created_at`),
   KEY `idx_campaign_bearer` (`campaign_id`,`bearer`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='优惠使用流水表';
-CREATE TABLE IF NOT EXISTS `referral_record` (
+CREATE TABLE `referral_record` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `referral_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邀请码',
   `inviter_id` bigint NOT NULL COMMENT '邀请人用户ID',
@@ -708,7 +707,7 @@ CREATE TABLE IF NOT EXISTS `referral_record` (
   KEY `idx_code` (`referral_code`),
   KEY `idx_inviter` (`inviter_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邀请裂变记录表';
-CREATE TABLE IF NOT EXISTS `refund_records` (
+CREATE TABLE `refund_records` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_id` bigint NOT NULL,
   `payment_method` varchar(20) NOT NULL,
@@ -728,8 +727,8 @@ CREATE TABLE IF NOT EXISTS `refund_records` (
   PRIMARY KEY (`id`),
   KEY `idx_refund_records_order_id` (`order_id`),
   KEY `idx_refund_records_status` (`refund_status`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `review_images` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `review_images` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `review_id` bigint NOT NULL,
   `image_url` varchar(500) NOT NULL,
@@ -738,7 +737,7 @@ CREATE TABLE IF NOT EXISTS `review_images` (
   PRIMARY KEY (`id`),
   KEY `idx_review_images_review_id` (`review_id`),
   KEY `idx_review_images_sort_order` (`sort_order`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `reviews` (
+CREATE TABLE `reviews` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `content` text NOT NULL,
   `created_at` datetime(6) DEFAULT NULL,
@@ -765,8 +764,8 @@ CREATE TABLE IF NOT EXISTS `reviews` (
   KEY `FKqwgq1lxgahsxdspnwqfac6sv6` (`order_id`),
   KEY `FKcgy7qjc1r99dp117y9en6lxye` (`user_id`),
   KEY `idx_reviews_deleted` (`deleted`),
-  KEY `idx_reviews_homestay_public_deleted` (`homestay_id`,`is_public`,`deleted`)) ENGINE=InnoDB AUTO_INCREMENT=3047 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `system_config` (
+  KEY `idx_reviews_homestay_public_deleted` (`homestay_id`,`is_public`,`deleted`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `system_config` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `category` varchar(50) DEFAULT NULL,
   `config_key` varchar(100) NOT NULL,
@@ -778,8 +777,8 @@ CREATE TABLE IF NOT EXISTS `system_config` (
   `updated_by` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_npsxm1erd0lbetjn5d3ayrsof` (`config_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `type_categories` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `type_categories` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) DEFAULT NULL,
   `description` text,
@@ -787,8 +786,8 @@ CREATE TABLE IF NOT EXISTS `type_categories` (
   `sort_order` int NOT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `user_behavior_event` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `user_behavior_event` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `user_id` bigint DEFAULT NULL COMMENT '用户ID（未登录为NULL）',
   `session_id` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '会话ID',
@@ -806,8 +805,8 @@ CREATE TABLE IF NOT EXISTS `user_behavior_event` (
   KEY `idx_homestay_event` (`homestay_id`,`event_type`,`created_at`),
   KEY `idx_event_type_created` (`event_type`,`created_at`),
   KEY `idx_city_event` (`city_code`,`event_type`,`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=112 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户行为事件表';
-CREATE TABLE IF NOT EXISTS `user_coupon` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户行为事件表';
+CREATE TABLE `user_coupon` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `template_id` bigint NOT NULL COMMENT '券模板ID',
   `user_id` bigint NOT NULL COMMENT '用户ID',
@@ -831,16 +830,16 @@ CREATE TABLE IF NOT EXISTS `user_coupon` (
   KEY `template_id` (`template_id`),
   KEY `idx_user_status` (`user_id`,`status`,`expire_at`),
   KEY `idx_locked_order` (`locked_order_id`),
-  KEY `idx_used_order` (`used_order_id`)) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户优惠券表';
-CREATE TABLE IF NOT EXISTS `user_favorites` (
+  KEY `idx_used_order` (`used_order_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户优惠券表';
+CREATE TABLE `user_favorites` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) NOT NULL,
   `homestay_id` bigint NOT NULL,
   `user_id` bigint NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK1y2tk66350efwgr790r2xcykj` (`user_id`,`homestay_id`),
-  KEY `FK2a2e6sq7ve5sh4exxuqmllnn6` (`homestay_id`)) ENGINE=InnoDB AUTO_INCREMENT=16046 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `user_preference_profile` (
+  KEY `FK2a2e6sq7ve5sh4exxuqmllnn6` (`homestay_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `user_preference_profile` (
   `user_id` bigint NOT NULL COMMENT '用户ID',
   `preferred_city_json` json DEFAULT NULL COMMENT '偏好城市及权重',
   `preferred_type_json` json DEFAULT NULL COMMENT '偏好房型及权重',
@@ -854,7 +853,7 @@ CREATE TABLE IF NOT EXISTS `user_preference_profile` (
   KEY `idx_last_active` (`last_active_at`),
   KEY `idx_price_range` (`min_price`,`max_price`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户偏好画像表';
-CREATE TABLE IF NOT EXISTS `users` (
+CREATE TABLE `users` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `create_time` datetime(6) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
@@ -893,8 +892,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_6dotkott2kjsp8vw4d0m25fb7` (`email`),
   UNIQUE KEY `UK_r43af9ap4edm43mmtq01oddj6` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=4904 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `violation_actions` (
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `violation_actions` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `action_type` varchar(255) NOT NULL,
   `created_at` datetime(6) DEFAULT NULL,
@@ -910,7 +909,7 @@ CREATE TABLE IF NOT EXISTS `violation_actions` (
   KEY `FK8cmvredgicl28pqx36eh9wf65` (`homestay_id`),
   KEY `FKtj87b1le45dandqr42nidk35n` (`processor_id`),
   KEY `FKgmmxbwcnrapaora6ywkebeajr` (`violation_report_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE IF NOT EXISTS `violation_reports` (
+CREATE TABLE `violation_reports` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) DEFAULT NULL,
   `details` text,
@@ -928,3 +927,71 @@ CREATE TABLE IF NOT EXISTS `violation_reports` (
   KEY `FK5stg9i97qdxr2m7nhykwafeax` (`homestay_id`),
   KEY `FK984acygdsndp49cnj3lkf5i1n` (`processor_id`),
   KEY `FKljcw7ineko5kdooui3qg1uvlv` (`reporter_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE VIEW v_homestay_audit_stats AS
+SELECT
+    DATE(created_at) as audit_date,
+    action_type,
+    new_status,
+    COUNT(*) as operation_count,
+    COUNT(DISTINCT homestay_id) as unique_homestays,
+    COUNT(DISTINCT reviewer_id) as unique_reviewers
+FROM homestay_audit_logs
+GROUP BY DATE(created_at), action_type, new_status
+ORDER BY audit_date DESC, action_type;
+
+-- 创建审核员工作量统计视图
+CREATE VIEW v_reviewer_workload AS
+SELECT
+    u.id as reviewer_id,
+    u.username as reviewer_name,
+    DATE(al.created_at) as work_date,
+    COUNT(*) as total_reviews,
+    COUNT(CASE WHEN al.action_type = 'APPROVE' THEN 1 END) as approvals,
+    COUNT(CASE WHEN al.action_type = 'REJECT' THEN 1 END) as rejections,
+    ROUND(
+        COUNT(CASE WHEN al.action_type = 'APPROVE' THEN 1 END) * 100.0 /
+        COUNT(CASE WHEN al.action_type IN ('APPROVE', 'REJECT') THEN 1 END), 2
+    ) as approval_rate
+FROM homestay_audit_logs al
+JOIN users u ON al.reviewer_id = u.id
+WHERE al.action_type IN ('APPROVE', 'REJECT')
+GROUP BY u.id, u.username, DATE(al.created_at)
+ORDER BY work_date DESC, total_reviews DESC;
+-- Required reference data (not demo data).
+INSERT INTO homestay_types (code, name, icon, description, active, sort_order, created_at, updated_at)
+SELECT 'ENTIRE', '整套公寓', NULL, '整套房源，独立私密空间', true, 1, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM homestay_types WHERE code = 'ENTIRE');
+
+INSERT INTO homestay_types (code, name, icon, description, active, sort_order, created_at, updated_at)
+SELECT 'PRIVATE', '独立房间', NULL, '独立房间，与房东共享房源', true, 2, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM homestay_types WHERE code = 'PRIVATE');
+
+INSERT INTO homestay_types (code, name, icon, description, active, sort_order, created_at, updated_at)
+SELECT 'LOFT', '复式住宅', NULL, '复式/跃层结构，宽敞明亮', true, 3, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM homestay_types WHERE code = 'LOFT');
+
+INSERT INTO homestay_types (code, name, icon, description, active, sort_order, created_at, updated_at)
+SELECT 'VILLA', '别墅', NULL, '独栋别墅，设施齐全', true, 4, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM homestay_types WHERE code = 'VILLA');
+
+INSERT INTO homestay_types (code, name, icon, description, active, sort_order, created_at, updated_at)
+SELECT 'STUDIO', '开间/单间', NULL, '单间公寓，适合单人或双人', true, 5, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM homestay_types WHERE code = 'STUDIO');
+
+INSERT INTO homestay_types (code, name, icon, description, active, sort_order, created_at, updated_at)
+SELECT 'TOWNHOUSE', '联排别墅', NULL, '联排别墅，共享社区', true, 6, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM homestay_types WHERE code = 'TOWNHOUSE');
+
+INSERT INTO homestay_types (code, name, icon, description, active, sort_order, created_at, updated_at)
+SELECT 'COURTYARD', '四合院/院子', NULL, '传统四合院，老北京风格', true, 7, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM homestay_types WHERE code = 'COURTYARD');
+
+INSERT INTO homestay_types (code, name, icon, description, active, sort_order, created_at, updated_at)
+SELECT 'HOTEL', '酒店公寓', NULL, '酒店式公寓，商务风格', true, 8, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM homestay_types WHERE code = 'HOTEL');
+
+
+INSERT INTO system_config (config_key, config_value, config_name, category) VALUES
+('AUTO_CHECKIN_TIME', '18:00', '自动入住时间', 'checkin'),
+('AUTO_CHECKOUT_TIME', '12:00', '自动退房时间', 'checkout')
+ON DUPLICATE KEY UPDATE config_value = VALUES(config_value);

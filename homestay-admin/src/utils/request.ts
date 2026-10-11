@@ -21,52 +21,17 @@ interface UnwrappedRequest extends Omit<
 
 // 创建一个带类型的request实例
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8081",
+  baseURL: import.meta.env.VITE_API_URL || window.location.origin,
   timeout: 10000,
 }) as UnwrappedRequest;
 
-// 日志级别
-const logLevels = {
-  none: 0,
-  error: 1,
-  warn: 2,
-  info: 3,
-  debug: 4,
-};
-
-// 当前日志级别
-const currentLogLevel = import.meta.env.VITE_LOG_LEVEL
-  ? logLevels[import.meta.env.VITE_LOG_LEVEL as keyof typeof logLevels]
-  : import.meta.env.DEV
-    ? logLevels.debug
-    : logLevels.error;
-
-// 请求拦截器
-request.interceptors.request.use(
-  (config) => {
-    const userStore = useUserStore();
-    const token = userStore.token;
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    // 开发环境下记录请求日志
-    if (currentLogLevel >= logLevels.debug) {
-      console.log(
-        "Request:",
-        config.method?.toUpperCase(),
-        config.url,
-        config.params || config.data
-      );
-    }
-
-    return config;
-  },
-  (error) => {
-    console.error("请求错误:", error);
-    return Promise.reject(error);
+request.interceptors.request.use((config) => {
+  const token = useUserStore().token;
+  if (token && config.url !== "/api/admin/auth/login") {
+    config.headers["Authorization"] = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
 // 错误信息映射
 const errorMessages: Record<number, string> = {
@@ -110,49 +75,12 @@ request.interceptors.response.use(
   (response) => {
     // response interceptor handles successful HTTP statuses (2xx)
     const res = response.data;
-    const httpStatus = response.status; // Get HTTP status code
-
-    if (currentLogLevel >= logLevels.debug) {
-      console.log("Response:", response.config.url, "HTTP Status:", httpStatus, "Data:", res);
-    }
-
-    // 1. Check for the specific {status: 'success', data: ...} structure first
     if (res && res.status === "success" && res.data !== undefined) {
-      if (currentLogLevel >= logLevels.debug) {
-        console.log("Extracting response.data based on {status: 'success'}:", res.data);
-      }
-      return res.data; // Return extracted data
+      return res.data;
     }
-    // 2. If the structure doesn't match, but HTTP status is OK (implicitly 2xx here),
-    //    return the raw data. This handles APIs returning data directly or different structures.
-    else {
-      // Log a warning if the structure is unexpected but potentially okay
-      if (
-        currentLogLevel >= logLevels.warn &&
-        res &&
-        res.status !== undefined &&
-        res.status !== "success"
-      ) {
-        console.warn(
-          `Response status is '${res.status}' (not 'success') for ${response.config.url}. Returning raw data.`,
-          res
-        );
-      } else if (currentLogLevel >= logLevels.warn && (!res || res.status === undefined)) {
-        console.warn(
-          `Response data structure does not match {status, data} for ${response.config.url}. Returning raw data.`,
-          res
-        );
-      }
-      return res; // Return raw data for other successful responses (like list API)
-    }
+    return res;
   },
   (error) => {
-    // Error interceptor handles non-2xx HTTP statuses or network errors
-    // 记录错误日志
-    if (currentLogLevel >= logLevels.error) {
-      console.error("响应错误:", error);
-    }
-
     if (!error.response) {
       // 网络错误或请求被取消
       ElMessage.error("网络连接失败，请检查您的网络连接");
@@ -164,13 +92,19 @@ request.interceptors.response.use(
 
     // 处理不同的HTTP状态码
     switch (status) {
-      case 401:
-        // 未授权，清除用户状态并重定向到登录页
-        const userStore = useUserStore();
-        userStore.logout();
-        window.location.href = "/login";
+      case 401: {
+        const url = error.config?.url;
+        if (url === "/api/admin/auth/login") {
+          ElMessage.error(errorMsg);
+          break;
+        }
+        useUserStore().clearSession();
+        if (url !== "/api/admin/auth/info" && url !== "/api/admin/auth/logout") {
+          window.location.href = "/login";
+        }
         ElMessage.error("登录已过期，请重新登录");
         break;
+      }
       case 403:
         ElMessage.error("没有权限执行此操作");
         break;
@@ -197,10 +131,6 @@ request.interceptors.response.use(
         break;
       case 500:
         ElMessage.error(errorMsg);
-        // 记录严重错误到日志系统
-        if (currentLogLevel >= logLevels.error) {
-          console.error("服务器错误:", error.response?.data);
-        }
         break;
       default:
         ElMessage.error(errorMsg);

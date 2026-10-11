@@ -25,7 +25,8 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.security.SecureRandom;
+import com.homestay3.homestaybackend.security.AccountRole;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.criteria.Predicate;
@@ -100,7 +101,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
-        user.setRole(role);
+        user.setRole(AccountRole.normalize(role));
         user.setUpdatedAt(LocalDateTime.now());
 
         User updatedUser = userRepository.save(user);
@@ -149,9 +150,9 @@ public class UserServiceImpl implements UserService {
 
         // 设置角色
         if (userDTO.getRole() != null && !userDTO.getRole().isEmpty()) {
-            user.setRole(userDTO.getRole());
+            user.setRole(AccountRole.normalize(userDTO.getRole()));
         } else {
-            user.setRole("USER"); // 默认角色
+            user.setRole("ROLE_USER"); // 默认角色
         }
 
         // 生成随机密码
@@ -208,7 +209,7 @@ public class UserServiceImpl implements UserService {
     private String generateRandomPassword(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder();
-        Random random = new Random();
+        SecureRandom random = new SecureRandom();
         for (int i = 0; i < length; i++) {
             int index = random.nextInt(chars.length());
             sb.append(chars.charAt(index));
@@ -271,7 +272,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void changePassword(PasswordChangeRequest request, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameForUpdate(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {

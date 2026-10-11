@@ -7,6 +7,19 @@ management:
     elasticsearch:
       enabled: ${elasticsearch.enabled}
 spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    baseline-version: 49
+    validate-on-migrate: true
+    clean-disabled: true
+  sql:
+    init:
+      mode: never
+  jpa:
+    hibernate:
+      ddl-auto: none
   data:
     elasticsearch:
       repositories:

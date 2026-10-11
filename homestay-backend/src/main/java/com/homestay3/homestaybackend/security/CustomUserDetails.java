@@ -15,13 +15,20 @@ public class CustomUserDetails implements UserDetails {
     private final String username;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
+    private final boolean enabled;
 
     public CustomUserDetails(Long userId, String username, String password,
                              Collection<? extends GrantedAuthority> authorities) {
+        this(userId, username, password, authorities, true);
+    }
+
+    public CustomUserDetails(Long userId, String username, String password,
+                             Collection<? extends GrantedAuthority> authorities, boolean enabled) {
         this.userId = userId;
         this.username = username;
         this.password = password;
         this.authorities = authorities;
+        this.enabled = enabled;
     }
 
     public Long getUserId() {
@@ -60,6 +67,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

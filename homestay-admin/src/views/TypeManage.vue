@@ -380,12 +380,12 @@ const submitTypeForm = async () => {
         response = await createTypeApi(typeForm);
       }
 
-      if (response.data.success) {
+      if (response.success) {
         ElMessage.success(typeForm.id ? "更新成功" : "创建成功");
         typeDialogVisible.value = false;
         fetchTypes();
       } else {
-        ElMessage.error(response.data.message || "操作失败");
+        ElMessage.error(response.message || "操作失败");
       }
     } catch (error: any) {
       console.error("提交表单失败:", error);
@@ -414,12 +414,12 @@ const submitCategoryForm = async () => {
         response = await createCategoryApi(categoryForm);
       }
 
-      if (response.data.success) {
+      if (response.success) {
         ElMessage.success(categoryForm.id ? "更新成功" : "创建成功");
         categoryDialogVisible.value = false;
         fetchCategories();
       } else {
-        ElMessage.error(response.data.message || "操作失败");
+        ElMessage.error(response.message || "操作失败");
       }
     } catch (error: any) {
       console.error("提交表单失败:", error);
@@ -438,11 +438,11 @@ const updateTypeStatus = async (row: any) => {
       active: row.active,
     });
 
-    if (response.data.success) {
+    if (response.success) {
       ElMessage.success(`已${row.active ? "激活" : "停用"}该房源类型`);
     } else {
       row.active = !row.active; // 恢复状态
-      ElMessage.error(response.data.message || "操作失败");
+      ElMessage.error(response.message || "操作失败");
     }
   } catch (error: any) {
     row.active = !row.active; // 恢复状态
@@ -462,11 +462,11 @@ const deleteType = (row: any) => {
       try {
         const response = await deleteTypeApi(row.id);
 
-        if (response.data.success) {
+        if (response.success) {
           ElMessage.success("删除成功");
           fetchTypes();
         } else {
-          ElMessage.error(response.data.message || "删除失败");
+          ElMessage.error(response.message || "删除失败");
         }
       } catch (error: any) {
         console.error("删除失败:", error);
@@ -497,11 +497,11 @@ const deleteCategory = (row: any) => {
       try {
         const response = await deleteCategoryApi(row.id);
 
-        if (response.data.success) {
+        if (response.success) {
           ElMessage.success("删除成功");
           fetchCategories();
         } else {
-          ElMessage.error(response.data.message || "删除失败");
+          ElMessage.error(response.message || "删除失败");
         }
       } catch (error: any) {
         console.error("删除失败:", error);
@@ -518,10 +518,10 @@ const fetchTypes = async () => {
   try {
     const response = await getAllTypesApi();
 
-    if (response.data.success) {
-      types.value = response.data.data;
+    if (response.success) {
+      types.value = response.data;
     } else {
-      ElMessage.error(response.data.message || "获取房源类型失败");
+      ElMessage.error(response.message || "获取房源类型失败");
     }
   } catch (error: any) {
     console.error("获取房源类型失败:", error);
@@ -538,10 +538,10 @@ const fetchCategories = async () => {
   try {
     const response = await getAllCategoriesApi();
 
-    if (response.data.success) {
-      categories.value = response.data.data;
+    if (response.success) {
+      categories.value = response.data;
     } else {
-      ElMessage.error(response.data.message || "获取分类失败");
+      ElMessage.error(response.message || "获取分类失败");
     }
   } catch (error: any) {
     console.error("获取分类失败:", error);
@@ -582,8 +582,8 @@ const batchAddTestData = async () => {
 
       // 不存在则创建新分类
       const response = await createCategoryApi(category);
-      if (response.data.success) {
-        return response.data.data;
+      if (response.success) {
+        return response.data;
       }
       return null;
     });
@@ -667,8 +667,8 @@ const batchAddTestData = async () => {
       if (type.categoryId) {
         // 确保分类ID存在
         const response = await createTypeApi(type);
-        if (response.data.success) {
-          return response.data.data;
+        if (response.success) {
+          return response.data;
         }
       }
       return null;

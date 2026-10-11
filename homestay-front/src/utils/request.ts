@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 import router from "../router";
+import { useUserStore } from "@/stores/user";
 import { ElMessage } from "element-plus";
 import { formatApiErrorMessage } from "./errorHandler";
 
@@ -97,7 +98,7 @@ request.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error("Request interceptor error:", error);
+    console.error("Request interceptor error");
     return Promise.reject(error);
   }
 );
@@ -123,20 +124,19 @@ request.interceptors.response.use(
         hasAuthHeader: Boolean(config?.headers?.Authorization),
       });
 
-      if (status === 401 && !url.includes("/api/auth/login")) {
-        // 会话失效：全局清理并跳转登录
-        ElMessage.error("登录状态无效或已过期，请重新登录");
-        localStorage.removeItem("homestay_token");
-        localStorage.removeItem("homestay_user");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("userInfo");
-        delete axios.defaults.headers.common["Authorization"];
-        setTimeout(() => {
+      if (status === 401 && !publicPaths.slice(0, 4).some((path) => url.startsWith(path))) {
+        const store = useUserStore();
+        store.clearSession();
+        // 启动 current 的匿名 401 由初始化和守卫处理，不抢占初始路由。
+        if ((url !== "/api/auth/current" || store.initialized) && url !== "/api/auth/logout") {
+          ElMessage.error("登录状态无效或已过期，请重新登录");
           if (router.currentRoute.value.path !== "/login") {
-            router.push("/login");
+            void router.push({
+              path: "/login",
+              query: { redirect: router.currentRoute.value.fullPath },
+            });
           }
-        }, 1500);
+        }
       } else if (status === 401) {
         // 登录接口的 401 交给登录页处理，避免弹出"已过期"误导用户
         requestWarn("Login API returned 401.");
@@ -145,7 +145,7 @@ request.interceptors.response.use(
         ElMessage.error(formatApiErrorMessage(error));
       }
     } else if (error.request) {
-      console.error("Network error:", error.request);
+      console.error("Network error");
       ElMessage.error("网络错误，请检查您的网络连接");
     } else {
       console.error("Request config error:", error.message);

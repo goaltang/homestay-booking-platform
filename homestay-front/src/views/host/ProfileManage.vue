@@ -935,8 +935,9 @@ const handleChangePassword = async () => {
         await userStore.changePassword({
           oldPassword: passwordForm.oldPassword,
           newPassword: passwordForm.newPassword,
+          confirmPassword: passwordForm.confirmPassword,
         });
-        ElMessage.success("密码修改成功");
+        ElMessage.success("密码修改成功，请重新登录");
         // 清空密码表单
         passwordForm.oldPassword = "";
         passwordForm.newPassword = "";

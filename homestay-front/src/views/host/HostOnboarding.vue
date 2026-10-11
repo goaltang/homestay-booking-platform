@@ -264,9 +264,9 @@ const validateAndNext = async (step: number) => {
       if (valid) {
         try {
           // 先调用 becomeHost 将用户角色转换为房东（此时用户已填写完个人介绍）
-          await becomeHost();
-
-          // 新 token 已由后端写入 httpOnly cookie，无需前端存储
+          const response = await becomeHost();
+          // Cookie 由后端更新；内存 token 同步到下一次 WebSocket 握手。
+          userStore.setToken(response.data.token || null);
 
           // 刷新用户信息以同步角色变更
           await userStore.fetchUserInfo();

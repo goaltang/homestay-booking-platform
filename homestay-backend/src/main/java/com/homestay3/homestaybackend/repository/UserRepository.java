@@ -7,6 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
@@ -22,6 +25,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return 用户
      */
     Optional<User> findByUsername(String username);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.username = :username")
+    Optional<User> findByUsernameForUpdate(@Param("username") String username);
+
+    @Modifying
+    @Query("update User u set u.lastLogin = :lastLogin, u.updatedAt = :lastLogin where u.id = :id")
+    int updateLastLogin(@Param("id") Long id, @Param("lastLogin") LocalDateTime lastLogin);
     
     /**
      * 根据邮箱查找用户
@@ -29,6 +40,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return 用户
      */
     Optional<User> findByEmail(String email);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.email = :email")
+    Optional<User> findByEmailForUpdate(@Param("email") String email);
     
     /**
      * 检查用户名是否存在
@@ -49,6 +64,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param resetToken 重置令牌
      * @return 用户
      */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<User> findByResetToken(String resetToken);
     
     // 根据角色查询用户

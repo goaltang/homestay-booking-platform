@@ -70,6 +70,8 @@ cd homestay3
 
 ### 步骤 2：创建 MySQL 数据库
 
+以下适用于新建空库。已有数据库先按[数据库初始化与升级说明](DATABASE.md)判断是否存在 Flyway 历史。无历史的非空库禁止直接启动或自动建基线。
+
 ```bash
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS homestay_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
@@ -144,6 +146,21 @@ spring.elasticsearch.uris=http://localhost:9200
 
 本地配置不提交到 Git。启动时必须显式激活 `local` profile，才能读取 `application-local.properties`。支付宝、邮件、地图与 AI 客服配置按需要填写；AI 客服默认关闭。
 
+**已有本地配置必须主动修改**：被 Git 忽略的 `application.properties` / `application-local.properties` 不会随仓库更新。相同位置的 `.properties` 优先于 `.yml`，共享 YAML 无法覆盖旧值。逐项核对以下配置，移除旧的 SQL 初始化路径与自动修复配置：
+
+```properties
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+spring.flyway.baseline-on-migrate=false
+spring.flyway.baseline-version=49
+spring.flyway.validate-on-migrate=true
+spring.flyway.clean-disabled=true
+spring.sql.init.mode=never
+spring.jpa.hibernate.ddl-auto=none
+```
+
+`baseline-version=49` 只规定显式基线的版本，`baseline-on-migrate=false` 不会自动标记已有库。不要通过开启自动基线或关闭校验绕过启动失败。
+
 ### 步骤 6：启动后端
 
 ```bash
@@ -160,7 +177,9 @@ curl -s "http://localhost:8081/api/homestays?page=0&size=1"
 # 预期: 返回 JSON 响应（可能为空列表）
 ```
 
-后端启动时 Flyway 自动执行仓库内的数据库迁移，无需手动建表。
+后端使用社区版 Flyway 9.22.3（`flyway-core` + `flyway-mysql`）统一管理结构。空库原生执行 `B49__initial_schema.sql`，创建 52 张业务表、2 个视图，以及房型字典和入住退房默认配置；不创建演示账号或房源。已有迁移历史的库跳过 B49，继续 V 迁移链。
+
+SQL init、Hibernate 自动建表、Docker schema 挂载、`DatabaseInitializer` 和 dev 自动 repair 已移除或关闭。无历史非空库会被拒绝。升级和显式基线流程见[数据库说明](DATABASE.md)。
 
 ### 步骤 7：启动用户端（房客 + 房东）
 
@@ -195,11 +214,26 @@ npm run dev
 
 > Vite 代理配置：`/api` → `http://localhost:8081`
 
-### 步骤 9：管理员登录
+### 步骤 9：主动导入开发管理员
 
-后端首次启动时会自动创建默认管理员 **admin / admin888**（`ROLE_ADMIN`，仅当 `admin` 用户不存在时创建）。
+后端启动不会自动创建 `admin`、`host`、`user`，也不会根据 `ADMIN_INIT_PASSWORD` 自动建管理员。房客与房东可自行注册；管理端登录前，须主动运行 `tools/database/` 中的管理员导入工具。演示账号和房源使用单独的演示数据入口。
 
-直接用默认账号登录管理端 (`localhost:5174`)。默认账号仅用于开发演示，对外部署前应修改。
+先停止后端及其他业务写入，再在项目根目录运行（完整参数见 [tools/database/README.md](../tools/database/README.md)）：
+
+```bash
+python3 -m venv tools/database/.venv
+tools/database/.venv/bin/python -m pip install -r tools/database/requirements.txt
+export MYSQL_DATABASE=homestay_db
+export MYSQL_USER=root
+# MYSQL_HOST / MYSQL_PORT 默认 127.0.0.1 / 3306；未设置 MYSQL_PASSWORD 时交互输入
+tools/database/.venv/bin/python tools/database/import_data.py admin --username admin --email admin@homestay.local
+```
+
+按提示输入两次自己选择的管理员密码，脚本生成 bcrypt 哈希。没有默认管理员密码；用自己设置的密码登录 `http://localhost:5174`。用户名或邮箱已存在时导入失败，不覆盖已有账号。也可通过 `ADMIN_PASSWORD_HASH` 提供完整 bcrypt 哈希。
+
+若需要演示数据，先停止后端及业务写入，在干净的开发库执行 `python3 tools/database/import_data.py demo`。此入口保留管理员，导入 3 个演示账号和 5 个房源；演示账号密码为 `123456`。
+
+完整导入条件、命令和重复执行行为见[数据库开发数据说明](DATABASE.md#开发数据按需导入)。导入的账号仅用于本地学习与演示，对外部署前应修改或移除。
 
 ### 全套容器与可选组件
 
@@ -225,6 +259,8 @@ ELASTICSEARCH_ENABLED=false docker compose up -d backend
 docker compose stop elasticsearch
 ```
 
+MySQL 容器只创建数据库并保留数据卷，不挂载 `schema.sql` 或演示 SQL。容器部署与本地启动使用相同 Flyway 流程；已有数据卷先按[数据库说明](DATABASE.md)检查迁移历史。
+
 `search` 与 `monitoring` profile 只控制容器是否启动；`ELASTICSEARCH_ENABLED` 控制后端 ES 功能。Compose 不再等待 ES 健康，启用前需自行确认 ES 已就绪。监控地址为 Prometheus `http://localhost:9090` 和 Grafana `http://localhost:3000`。已运行的可选容器不会因省略 profile 而自动停止。当前 Prometheus 抓取 `host.docker.internal:8081`，依赖 Docker Desktop 的宿主访问能力；本地后端需让容器能访问该端口。
 
 本地 Maven 后端需停止后重新启动才能切换开关。在 `homestay-backend` 目录执行 `ELASTICSEARCH_ENABLED=true mvn spring-boot:run -Dspring-boot.run.profiles=local` 启用 ES；将值改为 `false` 则关闭。若已使用本地默认配置，可在项目根目录执行 `ELASTICSEARCH_ENABLED=true npm run dev:backend`。
@@ -235,6 +271,8 @@ docker compose stop elasticsearch
 
 | 问题 | 原因 | 解决方案 |
 |---|---|---|
+| 后端启动报无历史非空 schema | 已有表但没有 `flyway_schema_history` | 停止启动，按[旧库接管流程](DATABASE.md#无历史的非空旧库)备份、还原验证、对比 B49；不要自动 baseline |
+| Flyway 校验失败 | 迁移校验和或历史状态不一致 | 核对已应用迁移与历史；不要在 dev 启动时自动 repair |
 | 后端启动报 `Communications link failure` | MySQL 未启动或密码错误 | 检查 MySQL 状态和 `spring.datasource.*` 配置 |
 | 后端启动报 `Unable to connect to Redis` | Redis 未启动 | `redis-server --daemonize yes` |
 | 后端启动报 ES 连接失败 | 已启用 ES，但服务未启动或地址不对 | 启动带 IK 插件的 ES 并检查 `spring.elasticsearch.uris`；不需要 ES 时移除本地配置中的显式启用值，并设 `ELASTICSEARCH_ENABLED=false` |
@@ -295,6 +333,13 @@ STEP 5: 配置后端
     - jwt.secret → 随机长字符串（≥50 字符）
     - server.port → 8081（模板为 8080）
     - spring.elasticsearch.uris → http://localhost:9200
+    - spring.flyway.baseline-on-migrate → false
+    - spring.flyway.validate-on-migrate → true
+    - spring.flyway.clean-disabled → true
+    - spring.sql.init.mode → never
+    - spring.jpa.hibernate.ddl-auto → none
+  NOTE: 检查已有 ignored application.properties / application-local.properties；同位置 properties 优先于 yml，共享 yml 不能覆盖旧值
+  NOTE: 无 history 非空库按 DATABASE.md 处理，不自动 baseline 或 repair
   NOTE: ES 默认关闭，无需单独配置 Repository 开关；需要 ES 时在后端启动命令前加 ELASTICSEARCH_ENABLED=true
   NOTE: 本地配置必须通过 local profile 显式加载；不得依赖未提交的 application.properties
 
@@ -316,14 +361,15 @@ STEP 8: 启动管理员端
   WAIT: 直到日志出现 "Local: http://localhost:5174"
   VERIFY: curl -s http://localhost:5174 | grep -q '<title>' && echo OK
 
-STEP 9: 管理员登录
-  NOTE: 后端在 admin 不存在时创建开发账号 admin / admin888，角色为 ROLE_ADMIN
-  VERIFY: 用默认开发账号登录 http://localhost:5174
+STEP 9: 主动导入开发管理员
+  NOTE: 后端不自动创建管理员或演示账号；使用 tools/database/ 导入入口，具体命令见 DATABASE.md
+  NOTE: 演示账号和房源须另行显式导入
+  VERIFY: 用已导入的开发管理员登录 http://localhost:5174
 ```
 
 ### Agent 注意事项
 
-1. **数据库迁移自动执行**：后端启动时 Flyway 运行仓库内迁移，不需要手动建表或导入 SQL。
+1. **结构只有 Flyway 一个入口**：空库从 B49 初始化；已有历史继续 V 链；无历史非空库先按 [DATABASE.md](DATABASE.md) 备份与核对。无需手动建表，开发账号与房源需主动导入。
 2. **ES 按需开启**：默认关闭且不初始化 ES Repository，搜索走 JPA；需要 ES 时先启动带 IK 插件的容器，再设 `ELASTICSEARCH_ENABLED=true` 启动后端。
 3. **前端代理**：两个前端项目的 Vite 配置已内置 `/api` 代理到 `localhost:8081`，不需要额外配置 CORS。
 4. **端口冲突**：如果 8081/5173/5174 被占用，修改对应配置文件中的端口。
@@ -339,7 +385,7 @@ STEP 9: 管理员登录
 - [ ] `curl -s http://localhost:5173` 返回 HTML
 - [ ] `curl -s http://localhost:5174` 返回 HTML
 - [ ] 用户端注册 → 登录 → 浏览房源 流程正常
-- [ ] 管理员端登录正常（默认开发账号 `admin / admin888`）
+- [ ] 管理员端登录正常（已主动导入开发管理员）
 
 ---
 
@@ -385,6 +431,8 @@ cd homestay3
 ```
 
 ### Step 2: Create MySQL Database
+
+This command is for a new empty database. For an existing database, check its Flyway history using the [database guide](DATABASE.md). A nonempty database without history must not be baselined automatically.
 
 ```bash
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS homestay_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
@@ -438,6 +486,21 @@ spring.elasticsearch.uris=http://localhost:9200
 
 > Activate the `local` profile explicitly to load this file. Do not rely on an untracked `application.properties`. Configure payment, email, maps, and AI support as needed; AI support is disabled by default.
 
+**Update existing local configuration explicitly.** Git-ignored `application.properties` and `application-local.properties` are not updated by a pull. At the same location, `.properties` takes precedence over `.yml`; shared YAML cannot replace old values. Check these settings and remove old SQL initialization paths and automatic repair settings:
+
+```properties
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+spring.flyway.baseline-on-migrate=false
+spring.flyway.baseline-version=49
+spring.flyway.validate-on-migrate=true
+spring.flyway.clean-disabled=true
+spring.sql.init.mode=never
+spring.jpa.hibernate.ddl-auto=none
+```
+
+`baseline-version=49` sets the version for an explicit baseline. With `baseline-on-migrate=false`, startup never marks an existing schema automatically. Do not disable validation to bypass an error.
+
 ### Step 6: Start Backend
 
 ```bash
@@ -448,7 +511,9 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 
 Verify: `curl -s "http://localhost:8081/api/homestays?page=0&size=1"` returns JSON.
 
-Flyway automatically runs the repository migrations on startup; no manual table creation is needed.
+Community Flyway 9.22.3 (`flyway-core` and `flyway-mysql`) owns the schema. An empty database natively executes `B49__initial_schema.sql`: 52 application tables, 2 views, the property-type dictionary, and default check-in/out settings. It creates no demo accounts or listings. Existing Flyway histories skip B49 and continue through V migrations.
+
+SQL init, Hibernate DDL, Docker schema mounting, `DatabaseInitializer`, and automatic dev repair are removed or disabled. A nonempty database without history is rejected. See the [database guide](DATABASE.md) before upgrading or setting an explicit baseline.
 
 ### Step 7: Start Guest App
 
@@ -475,11 +540,26 @@ npm run dev
 
 Open `http://localhost:5174`.
 
-### Step 9: Admin Login
+### Step 9: Explicitly Import a Development Administrator
 
-On first startup, the backend auto-creates the default admin **admin / admin888** (`ROLE_ADMIN`, only if the `admin` user doesn't exist).
+Startup does not create `admin`, `host`, or `user`, and `ADMIN_INIT_PASSWORD` no longer creates an administrator. Guests and hosts can register. Before admin login, explicitly run the administrator import tool in `tools/database/`. Demo accounts and listings use a separate import entry.
 
-Log in at `http://localhost:5174` with the default development account. Change it before exposing a deployment.
+Stop the backend and other writers, then run at the project root. See [tools/database/README.md](../tools/database/README.md) for all parameters:
+
+```bash
+python3 -m venv tools/database/.venv
+tools/database/.venv/bin/python -m pip install -r tools/database/requirements.txt
+export MYSQL_DATABASE=homestay_db
+export MYSQL_USER=root
+# MYSQL_HOST / MYSQL_PORT default to 127.0.0.1 / 3306; omitted MYSQL_PASSWORD prompts
+tools/database/.venv/bin/python tools/database/import_data.py admin --username admin --email admin@homestay.local
+```
+
+Enter your chosen administrator password twice when prompted; the script generates its bcrypt hash. There is no default password. Log in at `http://localhost:5174` using the password you set. An existing username or email causes failure without overwriting accounts. You can also supply a complete bcrypt hash through `ADMIN_PASSWORD_HASH`.
+
+For demo data, stop the backend and other writers, then run `python3 tools/database/import_data.py demo` against a clean development database. This preserves administrators and imports 3 demo accounts and 5 listings. Demo account passwords are `123456`.
+
+See [development data instructions](DATABASE.md#开发数据按需导入) for commands, prerequisites, and repeat-run behavior. Imported accounts are for local learning and demos; change or remove them before exposing a deployment.
 
 ### Full Container Stack and Optional Services
 
@@ -503,6 +583,8 @@ ELASTICSEARCH_ENABLED=false docker compose up -d backend
 docker compose stop elasticsearch
 ```
 
+The MySQL container creates the database and keeps its data volume. It mounts no schema or demo SQL. Container and local deployments use the same Flyway flow. Check migration history in an existing volume using the [database guide](DATABASE.md).
+
 The `search` and `monitoring` profiles control containers. `ELASTICSEARCH_ENABLED` controls backend ES features. Compose no longer waits for ES health, so verify readiness before enabling it. Prometheus is at `http://localhost:9090` and Grafana at `http://localhost:3000`. Omitting a profile does not stop optional containers that are already running. Prometheus currently scrapes `host.docker.internal:8081`, which requires Docker Desktop host access; a local backend must be reachable from the container on that port.
 
 For a local Maven backend, stop it and restart with `ELASTICSEARCH_ENABLED=true mvn spring-boot:run -Dspring-boot.run.profiles=local` in `homestay-backend`; use `false` to disable ES. With your local default configuration already set up, you can use `ELASTICSEARCH_ENABLED=true npm run dev:backend` at the project root.
@@ -513,6 +595,8 @@ Property changes while ES is disabled are not synchronized to its index. After r
 
 | Issue | Cause | Fix |
 |---|---|---|
+| Nonempty schema without Flyway history | Tables exist without `flyway_schema_history` | Stop and follow the [legacy database flow](DATABASE.md#无历史的非空旧库): backup, restore verification, and B49 comparison |
+| Flyway validation failure | Migration checksum or history mismatch | Inspect applied migrations and history; do not repair automatically at dev startup |
 | `Communications link failure` on startup | MySQL not running or wrong password | Check MySQL status and `spring.datasource.*` |
 | `Unable to connect to Redis` | Redis not running | `redis-server --daemonize yes` |
 | ES connection error on startup | ES enabled but offline or using a wrong URI | Start ES with IK and check `spring.elasticsearch.uris`; to disable ES, remove explicit local enable values and set `ELASTICSEARCH_ENABLED=false` |
@@ -525,7 +609,7 @@ Property changes while ES is disabled are not synchronized to its index. After r
 
 For AI agents automating the installation, follow the structured flow in the [AI Agent 安装指引](#ai-agent-安装指引) section above. Key points:
 
-1. **Flyway handles schema migrations** — no manual table creation is needed.
+1. **Flyway owns the schema** — empty databases start from B49; existing histories continue through V migrations. See [DATABASE.md](DATABASE.md) for legacy databases without history. Development accounts and listings require an explicit import.
 2. **ES is optional** — the default disables ES repositories and uses JPA search. To enable it, start ES with IK first and launch the backend with `ELASTICSEARCH_ENABLED=true`.
 3. **Vite proxies are pre-configured** — no CORS setup needed.
 4. **Local configuration**: set your actual environment values and port 8081 in `application-local.properties`; launch with `-Dspring-boot.run.profiles=local`.

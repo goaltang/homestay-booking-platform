@@ -4,6 +4,5 @@ import com.homestay3.homestaybackend.entity.Admin;
 
 public interface AdminService {
     Admin getAdminByUsername(String username);
-    void createDefaultAdminIfNotExists();
     void resetAdminPassword(String username, String newPassword);
 } 

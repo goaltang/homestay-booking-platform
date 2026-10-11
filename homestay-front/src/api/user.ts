@@ -49,8 +49,8 @@ export function updateUserInfo(data: any) {
 // 修改密码
 export function changePassword(data: any) {
   return request({
-    url: "/api/user/password",
-    method: "put",
+    url: "/api/auth/change-password",
+    method: "post",
     data,
   });
 }

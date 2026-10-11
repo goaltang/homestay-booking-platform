@@ -591,7 +591,6 @@ const handleRegister = async () => {
     loading.value = true;
 
     const { confirmPassword, agreement, ...registerData } = form;
-    console.log("提交注册信息:", registerData);
 
     try {
       // 注册
@@ -631,9 +630,8 @@ const handleRegister = async () => {
       } else {
         ElMessage.error("注册处理失败，请稍后重试");
       }
-    } catch (error: any) {
+    } catch {
       // 注册失败：拦截器已统一弹出后端返回的具体错误信息（如"邮箱已存在"/"用户名已存在"）
-      console.error("注册失败详情:", error);
     }
   } catch (formError: any) {
     console.error("表单验证失败:", formError);

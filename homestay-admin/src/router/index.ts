@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { reactive } from "vue";
+import { useUserStore } from "@/stores/user";
 import type { RouteRecordRaw } from "vue-router";
 
 const routes: RouteRecordRaw[] = [
@@ -389,22 +390,17 @@ router.onError((error) => {
   console.error("路由组件加载失败:", error);
 });
 
-router.beforeEach((to, _from, next) => {
-  try {
-    const title = to.meta?.title as string | undefined;
-    if (title) {
-      document.title = title;
-    }
+router.beforeEach(async (to) => {
+  const title = to.meta?.title as string | undefined;
+  if (title) document.title = title;
 
-    const token = localStorage.getItem("homestay_admin_token") || localStorage.getItem("token");
-    if (to.meta?.requiresAuth && !token) {
-      next("/login");
-    } else {
-      next();
-    }
-  } catch (error) {
-    console.error("路由导航错误:", error);
-    next("/login"); // 出错时导航到登录页
+  const userStore = useUserStore();
+  await userStore.initialize();
+  if (to.meta?.requiresAuth && !userStore.isLoggedIn) {
+    return "/login";
+  }
+  if (to.path === "/login" && userStore.isLoggedIn) {
+    return "/dashboard";
   }
 });
 

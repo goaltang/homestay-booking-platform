@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.Authentication;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.validation.annotation.Validated;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -26,17 +28,20 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
+@Validated
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "用户认证", description = "C端用户注册、登录、密码找回等认证接口")
 public class AuthController {
 
     private final AuthService authService;
+    private final com.homestay3.homestaybackend.security.JwtTokenProvider jwtTokenProvider;
+    private final com.homestay3.homestaybackend.security.AuthCookieService authCookieService;
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/register")
     @Operation(summary = "用户注册", description = "注册新用户并返回 JWT")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request,
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
                                                  HttpServletResponse servletResponse) {
         log.info("注册请求: {}", request.getUsername());
         try {
@@ -69,12 +74,12 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String email) {
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam @NotBlank(message = "邮箱不能为空") @Email(message = "邮箱格式不正确") String email) {
         log.info("忘记密码请求: {}", email);
         try {
             authService.forgotPassword(email);
             Map<String, String> response = new HashMap<>();
-            response.put("message", "密码重置邮件已发送");
+            response.put("message", "如果邮箱已注册，密码重置邮件将发送至该邮箱");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("忘记密码处理失败: {}", e.getMessage());
@@ -83,7 +88,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody PasswordResetRequest request) {
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
         log.info("重置密码请求");
         try {
             authService.resetPassword(request);
@@ -98,7 +103,10 @@ public class AuthController {
 
     @PostMapping("/logout")
     @Operation(summary = "用户登出", description = "清除 httpOnly 认证 Cookie")
-    public ResponseEntity<Map<String, String>> logout(HttpServletResponse servletResponse) {
+    public ResponseEntity<Map<String, String>> logout(HttpServletResponse servletResponse,
+                                                     jakarta.servlet.http.HttpServletRequest request) {
+        jwtTokenProvider.revokeToken(com.homestay3.homestaybackend.security.AuthTokenResolver.cookie(request));
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
         clearAuthCookie(servletResponse);
         Map<String, String> response = new HashMap<>();
         response.put("message", "已退出登录");
@@ -197,29 +205,12 @@ public class AuthController {
 
 
 
-    /**
-     * 设置 httpOnly 认证 Cookie（与 JWT 有效期一致，24 小时）
-     * 本地 HTTP 环境不设置 Secure；生产环境通过配置开启
-     */
     private void setAuthCookie(HttpServletResponse response, String token) {
-        ResponseCookie cookie = ResponseCookie.from("homestay_token", token)
-                .httpOnly(true)
-                .path("/")
-                .maxAge(86400)
-                .sameSite("Lax")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        authCookieService.set(response, token);
     }
 
-    /** 清除认证 Cookie */
     private void clearAuthCookie(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from("homestay_token", "")
-                .httpOnly(true)
-                .path("/")
-                .maxAge(0)
-                .sameSite("Lax")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        authCookieService.clear(response);
     }
 
 } 
