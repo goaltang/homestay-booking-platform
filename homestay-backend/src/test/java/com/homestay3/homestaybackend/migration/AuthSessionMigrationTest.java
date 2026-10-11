@@ -1,11 +1,10 @@
 package com.homestay3.homestaybackend.migration;
 
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.containers.wait.strategy.Wait;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -18,19 +17,20 @@ import static org.assertj.core.api.Assertions.*;
 @Testcontainers(disabledWithoutDocker = true)
 class AuthSessionMigrationTest {
     @Container
-    static final GenericContainer<?> mysql = new GenericContainer<>(DockerImageName.parse("mysql:8.0"))
-            .withEnv("MYSQL_ROOT_PASSWORD", "isolated-auth-migration-test")
-            .withEnv("MYSQL_DATABASE", "isolated_auth_test")
-            .withExposedPorts(3306)
-            .waitingFor(Wait.forLogMessage(".*ready for connections.*\n", 2))
+    // 通过实际 JDBC 查询确认就绪，避免临时服务器及 X Plugin 的日志提前满足条件。
+    static final MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
+            .withUsername("root")
+            .withPassword("isolated-auth-migration-test")
+            .withDatabaseName("isolated_auth_test")
+            .withUrlParam("allowPublicKeyRetrieval", "true")
+            .withUrlParam("useSSL", "false")
             .withStartupTimeout(Duration.ofMinutes(2));
 
     @Test
     void freshSchemaAndExistingAccountUpgrade() throws Exception {
-        String url = "jdbc:mysql://" + mysql.getHost() + ":" + mysql.getMappedPort(3306)
-                + "/isolated_auth_test?allowPublicKeyRetrieval=true&useSSL=false";
+        String url = mysql.getJdbcUrl();
         String migration = Files.readString(Path.of("src/main/resources/db/migration/V50__create_auth_sessions_table.sql"));
-        try (Connection connection = DriverManager.getConnection(url, "root", "isolated-auth-migration-test");
+        try (Connection connection = DriverManager.getConnection(url, mysql.getUsername(), mysql.getPassword());
              Statement sql = connection.createStatement()) {
             for (String suffix : new String[]{"fresh", "upgrade"}) {
                 sql.execute("CREATE DATABASE auth_" + suffix);

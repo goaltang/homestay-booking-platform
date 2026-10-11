@@ -221,6 +221,12 @@
             <version>1.19.3</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mysql</artifactId>
+            <version>1.19.3</version>
+            <scope>test</scope>
+        </dependency>
         <!-- H2 内存数据库，仅供测试使用 -->
         <dependency>
             <groupId>com.h2database</groupId>
