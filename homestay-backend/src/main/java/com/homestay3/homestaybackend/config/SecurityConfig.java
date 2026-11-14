@@ -4,6 +4,7 @@ import com.homestay3.homestaybackend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.http.HttpMethod;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -35,6 +37,13 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+
+    /**
+     * 允许的跨域来源，逗号分隔；支持通配符（如 https://*.example.com）。
+     * 生产环境通过 APP_CORS_ALLOWED_ORIGINS 注入，前端与管理端走同源反代时无需跨域。
+     */
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174}")
+    private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -119,16 +128,12 @@ public class SecurityConfig {
         log.info("配置CORS...");
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 设置允许的来源URL，支持前端开发环境的不同端口
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5173", "http://127.0.0.1:5173",
-                "http://localhost:5174", "http://127.0.0.1:5174",
-                "http://localhost:3000", "http://127.0.0.1:3000",
-                "http://localhost:8080", "http://127.0.0.1:8080",
-                "http://localhost:80", "http://127.0.0.1:80",
-                "http://localhost", "http://127.0.0.1",
-                "https://www.homestay3.com", "https://homestay3.com",
-                "https://api.homestay3.com"));
+        // 允许的来源由配置注入，部署时无需改代码（支持 * 与子域通配）
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
+        configuration.setAllowedOriginPatterns(origins);
 
         // 设置允许的方法
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));

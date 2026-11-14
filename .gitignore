@@ -16,6 +16,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+!.env.prod.example
 vite.config.ts.timestamp-*
 *.tsbuildinfo
 
@@ -38,6 +39,9 @@ homestay-backend/src/main/resources/application-*.properties
 
 # --- 性能压测原始数据（k6 全量流，体积大，不入库） ---
 tools/perf/reports/
+
+# --- 生产备份（含用户隐私数据，禁止入库） ---
+backups/
 
 # --- 文档与绘图 ---
 **/docs/resources/diagrams/draw/HomestayListingManagementFlowchart.drawio

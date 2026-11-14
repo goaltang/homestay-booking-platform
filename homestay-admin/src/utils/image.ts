@@ -51,7 +51,7 @@ export function getHomestayAllImages(homestay: Homestay): string[] {
  */
 export function ensureImageUrl(
   imagePath: string | null | undefined,
-  baseUrl: string = "http://localhost:8081"
+  baseUrl: string = import.meta.env.VITE_API_URL || ""
 ): string {
   if (!imagePath || !imagePath.trim()) {
     return "/placeholder-image.jpg";

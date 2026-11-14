@@ -35,7 +35,8 @@ export default defineConfig(({ mode }) => {
       exclude: [],
     },
     build: {
-      sourcemap: true,
+      // 生产不产出 sourcemap：减少产物体积与源码暴露面
+      sourcemap: !isProd,
       minify: "esbuild",
       cssCodeSplit: true,
       rollupOptions: {

@@ -15,8 +15,7 @@ let listenersRegistered = false;
 
 const isConnected = shallowRef(false);
 
-const getApiBaseUrl = () =>
-  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+const getApiBaseUrl = () => import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
 
 // token 迁移后，JWT 只存内存（供 WebSocket 握手用），httpOnly cookie 用于 HTTP API
 let memoryToken: string | null = null;

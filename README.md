@@ -179,6 +179,7 @@ CI 配置见 [ci.yml](.github/workflows/ci.yml)；测试与性能结果见下方
 | 想了解什么 | 文档 |
 |---|---|
 | 安装与配置 | [安装教程（含 AI Agent 指引）](docs/INSTALL.md) |
+| 公网展示部署（国内服务器，按 IP 访问） | [部署指南](docs/DEPLOY.md) |
 | 数据库初始化与升级 | [新库、历史迁移、旧库基线与开发数据](docs/DATABASE.md) |
 | 架构与业务流程 | [完整架构图集及实现限制](docs/diagrams/README.md) |
 | 文档阅读入口 | [文档首页](obsidian-vault/00-首页.md) · [完整目录](<obsidian-vault/00-索引/Homestay 项目索引.md>) |

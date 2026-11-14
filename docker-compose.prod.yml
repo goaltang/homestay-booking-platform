@@ -1,0 +1,132 @@
+# ============================================
+# homestay3 公网展示部署（单机，按服务器 IP 访问，无域名、无 HTTPS）
+# 用法：cp .env.prod.example .env（填真实值）→ ./deploy/deploy.sh
+# 访问：用户端 http://<服务器IP>:${SITE_PORT}，管理端 http://<服务器IP>:${ADMIN_PORT}
+# 与 docker-compose.yml 的区别：
+#   1. MySQL/Redis/RabbitMQ 不发布端口，仅容器网络内可访问
+#   2. 只发布用户端与管理端两个端口；/api、/uploads、/ws 由前端镜像内 Nginx 反代到 backend
+#   3. 所有服务限制内存、带 restart 策略、日志轮转
+# 服务器建议：2 vCPU / 4 GB；ES 与监控默认不启动（profile 见 docker-compose.yml）
+# ============================================
+
+name: homestay3
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # ---------- 基础设施（仅内网） ----------
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: homestay_db
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # 4G 机器的合理占位；加大反而会和 JVM 抢内存
+      - --innodb-buffer-pool-size=256M
+      - --performance-schema=OFF
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    mem_limit: 900m
+    logging: *default-logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "no"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    mem_limit: 192m
+    logging: *default-logging
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      # 容器内存上限的 40%，避免触发内存告警后阻塞生产
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "0.4"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 6
+      start_period: 40s
+    mem_limit: 512m
+    logging: *default-logging
+
+  # ---------- 应用 ----------
+  backend:
+    build: ./homestay-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      ELASTICSEARCH_ENABLED: ${ELASTICSEARCH_ENABLED:-false}
+      # 堆固定，避免容器内 JVM 按宿主机内存瞎猜；RSS 约 700-800MB
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -XX:+ExitOnOutOfMemoryError"
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8081/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    mem_limit: 1100m
+    logging: *default-logging
+
+  front:
+    build: ./homestay-front
+    restart: unless-stopped
+    ports:
+      - "${SITE_PORT:-80}:80"
+    depends_on:
+      - backend
+    mem_limit: 64m
+    logging: *default-logging
+
+  admin:
+    build: ./homestay-admin
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_PORT:-8089}:80"
+    depends_on:
+      - backend
+    mem_limit: 64m
+    logging: *default-logging
+
+volumes:
+  mysql-data:
+  redis-data:
+  rabbitmq-data:
