@@ -47,6 +47,23 @@ class TestDataSourceSafetyInitializerTest {
     }
 
     @Test
+    void acceptsOnlyDedicatedMigrationMySql() {
+        assertDoesNotThrow(() -> initialize("test",
+                "jdbc:mysql://127.0.0.1:13316/homestay_migration_test_abc123?allowPublicKeyRetrieval=true&useSSL=false"));
+        assertDoesNotThrow(() -> initialize("test", "jdbc:mysql://localhost:13316/homestay_migration_test_x"));
+        for (String url : new String[]{
+                "jdbc:mysql://127.0.0.1:3306/homestay_migration_test_abc",   // 业务端口
+                "jdbc:mysql://127.0.0.1:13316/homestay_db",                   // 非测试库名
+                "jdbc:mysql://10.0.0.5:13316/homestay_migration_test_abc",    // 非本机
+                "jdbc:mysql://user:pwd@127.0.0.1:13316/homestay_migration_test_abc", // URL 内含凭据
+                "jdbc:mysql://127.0.0.1:13316/homestay_migration_test_abc/../homestay_db"}) {
+            assertThrows(IllegalStateException.class, () -> initialize("test", url), url);
+        }
+        assertThrows(IllegalStateException.class, () -> initialize("local",
+                "jdbc:mysql://127.0.0.1:13316/homestay_migration_test_abc"));
+    }
+
+    @Test
     void bootLoadsSafetyInitializerBeforeRefresh() {
         SpringApplication application = new SpringApplication(EmptyConfiguration.class);
         application.setWebApplicationType(WebApplicationType.NONE);

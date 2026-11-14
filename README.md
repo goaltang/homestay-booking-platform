@@ -170,7 +170,7 @@ npm ci
 npm run build
 ```
 
-Spring Boot 集成测试必须使用 `@ActiveProfiles("test")` 与独立 H2 内存数据源，禁止连接真实 MySQL。ES 集成测试使用 Testcontainers 与 IK 镜像，本地没有 Docker 时跳过；镜像构建方式见[安装教程](docs/INSTALL.md)。
+Spring Boot 集成测试必须使用 `@ActiveProfiles("test")` 与独立 H2 内存数据源，禁止连接真实 MySQL；唯一例外是迁移测试专用的一次性 MySQL（本机 13316 端口，见[数据库说明](docs/DATABASE.md#验证状态与范围)）。ES 集成测试使用 Testcontainers 与 IK 镜像，本地没有 Docker 时跳过；镜像构建方式见[安装教程](docs/INSTALL.md)。
 
 CI 配置见 [ci.yml](.github/workflows/ci.yml)；测试与性能结果见下方报告，历史数字不代表当前运行结果。
 

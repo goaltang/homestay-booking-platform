@@ -81,7 +81,7 @@
 
 - 所有 `@SpringBootTest` 必须生效 `@ActiveProfiles("test")`（可通过测试基类继承）；其他加载 Spring 数据源的测试也遵守隔离要求。
 - 当前默认数据源是 `src/test/resources/application-test.properties` 中的 H2 内存库。检查测试属性、动态属性和环境变量是否覆盖连接地址；不得引用主库连接串或凭据。
-- Spring Boot 测试自动加载测试专用启动检查，缺少 test profile 或非 H2 内存地址时拒绝创建数据源。没有数据源的 MVC 切片测试不受影响；直接 JDBC、自定义数据源和非 Boot 测试仍需人工核对，不能把启动检查当成所有测试的安全证明。
+- Spring Boot 测试自动加载测试专用启动检查，缺少 test profile 或非 H2 内存地址时拒绝创建数据源。唯一例外是 `FlywayApplicationStartupTest` 使用的迁移测试专用 MySQL：本机 13316 端口、`homestay_migration_test_` 库名前缀、URL 不含凭据。没有数据源的 MVC 切片测试不受影响；直接 JDBC、自定义数据源和非 Boot 测试仍需人工核对，不能把启动检查当成所有测试的安全证明。
 - 普通数据库测试优先用 `@Transactional` 回滚。真实 HTTP、并发线程及 `REQUIRES_NEW` 写入可能独立提交，不能假定测试方法的事务覆盖这些写入；使用隔离测试数据并明确清理或销毁方式。
 - 禁止对真实业务数据库执行 `deleteAll()`、`truncate`、`drop` 等破坏性操作。独立测试库可按场景清理；共享 H2 上下文优先只清理本测试数据，避免影响其他测试。
 - 需要真实 MySQL 或 ES 行为时使用独立测试实例，如 Testcontainers，不复用开发或生产数据；无 Docker 导致跳过时报告未覆盖范围。

@@ -266,6 +266,7 @@ python3 tools/database/import_data.py --mysql-command "docker compose exec -T -e
 | 后端统一 `mvn clean test` | 通过；522 项，0 失败、0 错误，2 项 ES 集成测试因 Docker 不可用跳过 |
 | 升级 Spring Boot 3.2.12 后 `mvn test` | 通过；524 项，0 失败、0 错误，跳过 5 项（3 项迁移测试未配置独立 MySQL，2 项 ES 测试无 Docker） |
 | 开启 Flyway 的完整应用启动 | 通过（2026-11-14，本机开发库，已有 V49 历史）：43 个迁移校验通过，无待执行迁移。此前的验证均未覆盖 Spring Boot 的 Flyway 自动配置；Boot 3.0.2 + Flyway 9.22.3 在此步骤失败 |
+| `FlywayApplicationStartupTest`（空库完整启动） | 通过（2026-11-14，独立 MySQL 8.0 / 13316）：Spring Flyway 安装 B49，`ddl-auto=validate` 校验实体映射通过，重复迁移为 0。换回 Boot 3.0.2 + Flyway 9.22.3 时该测试以 `NoSuchMethodError: oracleSqlplus` 失败，确认能拦截此类问题 |
 | PowerShell 压测入口 | 未运行 |
 | Docker 部署流程 | 未运行 |
 
@@ -278,13 +279,13 @@ read -r -s -p 'Test database password: ' HOMESTAY_MIGRATION_TEST_PASSWORD
 printf '\n'
 export HOMESTAY_MIGRATION_TEST_PASSWORD
 cd homestay-backend
-mvn -Dtest=FlywayMySqlMigrationTest test
+mvn -Dtest='FlywayMySqlMigrationTest,FlywayApplicationStartupTest' test
 unset HOMESTAY_MIGRATION_TEST_PASSWORD
 ```
 
-测试自行创建并销毁唯一命名的测试库；未配置独立实例时明确跳过。GitHub CI 的 `database-migrations` 任务提供独立 MySQL 服务，执行迁移回归和 Python 导入脚本测试。
+测试自行创建并销毁唯一命名的测试库；未配置独立实例时明确跳过。GitHub CI 的 `database-migrations` 任务提供独立 MySQL 服务，执行迁移回归、Spring Boot 完整启动和 Python 导入脚本测试。
 
-应用的 H2 测试关闭 Flyway，不能证明 MySQL 新库安装或旧库升级成功。
+应用的 H2 测试关闭 Flyway，不能证明 MySQL 新库安装或旧库升级成功。`FlywayMySqlMigrationTest` 直接调用 Flyway API，也不经过 Spring Boot 的 Flyway 自动配置；框架或 Flyway 版本变化时以 `FlywayApplicationStartupTest` 为准。
 
 数据库改动应独立验证：空库 B49 安装、已有历史沿 V 链升级、无历史非空库拒绝、核对后的显式 baseline、重复启动和开发数据导入。实际结果在交付说明中报告，不以历史测试数字替代当前验证。
 

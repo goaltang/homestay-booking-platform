@@ -57,13 +57,13 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - name: Verify empty installation and legacy upgrade
+      - name: Verify installation, upgrade and Spring Boot startup
         working-directory: homestay-backend
         env:
           HOMESTAY_MIGRATION_TEST_URL: jdbc:mysql://127.0.0.1:13316/homestay_migration_test_ci?allowPublicKeyRetrieval=true&useSSL=false
           HOMESTAY_MIGRATION_TEST_USER: root
           HOMESTAY_MIGRATION_TEST_PASSWORD: migration-test-only
-        run: mvn -B -Dtest=FlywayMySqlMigrationTest test
+        run: mvn -B -Dtest='FlywayMySqlMigrationTest,FlywayApplicationStartupTest' test
       - name: Verify data import scripts
         run: python3 -m unittest discover -s tools/database -p 'test_*.py'
 

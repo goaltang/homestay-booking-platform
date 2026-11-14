@@ -170,7 +170,7 @@ npm ci
 npm run build
 ```
 
-Spring Boot integration tests must use `@ActiveProfiles("test")` and an isolated H2 in-memory datasource, never a real MySQL database. ES integration tests use Testcontainers and an IK image; they skip locally without Docker. Image build instructions are in the [installation guide](docs/INSTALL.md#english-version).
+Spring Boot integration tests must use `@ActiveProfiles("test")` and an isolated H2 in-memory datasource, never a real MySQL database. The only exception is the disposable migration-test MySQL on local port 13316 (see [docs/DATABASE.md](docs/DATABASE.md)). ES integration tests use Testcontainers and an IK image; they skip locally without Docker. Image build instructions are in the [installation guide](docs/INSTALL.md#english-version).
 
 See [ci.yml](.github/workflows/ci.yml) for CI configuration and the reports below for test and performance results. Historical counts are not current run results.
 
