@@ -330,6 +330,14 @@ onMounted(() => {
   border-bottom: 1px solid #1f2d3d;
 }
 
+/* 去掉 h2 默认外边距与全局标题颜色，否则文字被挤出 60px 区域且在深色背景上看不清 */
+.logo h2 {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
 .header {
   background-color: #fff;
   color: #333;
