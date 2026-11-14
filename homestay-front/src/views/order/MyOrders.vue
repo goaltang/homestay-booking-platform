@@ -96,7 +96,7 @@
               loading="lazy"
               @load="onImageLoad(order.id)"
               @error="onImageError($event, order.id)"
-              v-show="isImageLoaded(order.id)"
+              :class="{ loaded: isImageLoaded(order.id) }"
             />
           </div>
 
@@ -847,7 +847,13 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  /* 用透明度而不是 v-show 隐藏：display:none 的 loading="lazy" 图片永远不会被加载 */
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+
+.order-image-col img.loaded {
+  opacity: 1;
 }
 
 .order-image-col:hover img {

@@ -1,12 +1,7 @@
 <template>
   <div class="home-page">
     <!-- ===== 首屏：Hero + 搜索框叠加 ===== -->
-    <HeroBanner
-      :banners="homeBanners"
-      :stats="homeStats"
-      @banner-click="handleBannerClick"
-      @explore="goToHomestays"
-    >
+    <HeroBanner :banners="homeBanners" @banner-click="handleBannerClick" @explore="goToHomestays">
       <template #search>
         <div class="search-float">
           <SearchBar :loading="searchStore.loading" @search="handleSearch" @reset="handleReset" />
@@ -29,9 +24,6 @@
             :class="{ active: selectedType === type.code }"
             @click="handleTypeClick(type.code)"
           >
-            <el-icon v-if="type.icon" :size="22">
-              <component :is="resolveIcon(type.icon)" />
-            </el-icon>
             <span class="type-label">{{ type.name }}</span>
           </div>
         </div>
@@ -140,12 +132,8 @@
         </div>
       </section>
 
-      <!-- 最近浏览 -->
-      <RecentViewed
-        v-if="recentList.length > 0"
-        @click="handleRecentClick"
-        @clear="handleRecentClear"
-      />
+      <!-- 最近浏览（无记录时组件自身不渲染） -->
+      <RecentViewed @click="handleRecentClick" />
 
       <!-- 地图找房 CTA -->
       <MapCTA />
@@ -160,18 +148,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import {
-  User,
-  House,
-  School,
-  OfficeBuilding,
-  CoffeeCup,
-  Sunny,
-  Moon,
-  HomeFilled,
-} from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/user";
 import { useSearchStore } from "@/stores/search";
 import SearchBar from "@/components/SearchBar.vue";
@@ -191,36 +169,18 @@ import {
   getMyPersonalizedRecommendations,
 } from "@/api/recommendation";
 import { addRecentView } from "@/utils/recentViews";
-import { getRecentViews } from "@/utils/recentViews";
 const router = useRouter();
 const userStore = useUserStore();
 const searchStore = useSearchStore();
 
 // ===== 首页数据 =====
-const homeStats = ref<HomeStats>({
-  homestayCount: 10000,
-  cityCount: 50,
-  positiveRate: 98,
-  recentOrders: 0,
-  availableToday: 0,
-});
+// 接口返回前不展示统计，避免写死的兜底数字被当成真实数据
+const homeStats = ref<HomeStats | null>(null);
 const homeBanners = ref<Banner[]>([]);
 
 // ===== 房源类型 =====
-const propertyTypes = ref<Array<{ code: string; name: string; icon?: string }>>([]);
+const propertyTypes = ref<Array<{ code: string; name: string }>>([]);
 const selectedType = ref<string | null>(null);
-
-const iconMap: Record<string, any> = {
-  User,
-  House,
-  School,
-  OfficeBuilding,
-  CoffeeCup,
-  Sunny,
-  Moon,
-  HomeFilled,
-};
-const resolveIcon = (iconName: string) => iconMap[iconName] || House;
 
 const loadPropertyTypes = async () => {
   try {
@@ -229,7 +189,6 @@ const loadPropertyTypes = async () => {
       propertyTypes.value = types.slice(0, 10).map((t: any) => ({
         code: t.code || t.value || t.id,
         name: t.name || t.label,
-        icon: t.icon || "House",
       }));
     } else {
       setDefaultTypes();
@@ -241,14 +200,14 @@ const loadPropertyTypes = async () => {
 const setDefaultTypes = () => {
   // 与数据库 homestays.type 实际值对齐
   propertyTypes.value = [
-    { code: "合住房间", name: "合住房间", icon: "User" },
-    { code: "独立房间", name: "独立房间", icon: "House" },
-    { code: "别墅", name: "别墅", icon: "School" },
-    { code: "酒店式公寓", name: "酒店公寓", icon: "OfficeBuilding" },
-    { code: "客栈房间", name: "客栈房间", icon: "CoffeeCup" },
-    { code: "Loft公寓", name: "Loft", icon: "Moon" },
-    { code: "整套房子", name: "整套房子", icon: "Sunny" },
-    { code: "整套公寓", name: "整套公寓", icon: "HomeFilled" },
+    { code: "合住房间", name: "合住房间" },
+    { code: "独立房间", name: "独立房间" },
+    { code: "别墅", name: "别墅" },
+    { code: "酒店式公寓", name: "酒店公寓" },
+    { code: "客栈房间", name: "客栈房间" },
+    { code: "Loft公寓", name: "Loft" },
+    { code: "整套房子", name: "整套房子" },
+    { code: "整套公寓", name: "整套公寓" },
   ];
 };
 
@@ -354,9 +313,6 @@ watch(
   { immediate: true }
 );
 
-// ===== 最近浏览 =====
-const recentList = computed(() => getRecentViews());
-
 // ===== 事件处理 =====
 const handleHomestayClick = (homestay: any) => {
   if (homestay?.id) {
@@ -388,10 +344,6 @@ const handleReset = () => {
 
 const handleRecentClick = (item: any) => {
   router.push(`/homestays/${item.id}`);
-};
-
-const handleRecentClear = () => {
-  // RecentViewed 内部已清空
 };
 
 const goToHomestays = () => {
@@ -483,11 +435,9 @@ onMounted(() => {
 
 .type-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  min-width: 72px;
-  padding: var(--space-3) var(--space-4);
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition:
@@ -517,7 +467,7 @@ onMounted(() => {
 }
 
 .type-label {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -641,8 +591,7 @@ onMounted(() => {
   }
 
   .type-item {
-    min-width: 64px;
-    padding: 10px 12px;
+    padding: var(--space-2) var(--space-3);
   }
 }
 </style>

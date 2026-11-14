@@ -40,15 +40,14 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Timer, Picture } from "@element-plus/icons-vue";
-import { getRecentViews, clearRecentViews, type RecentViewItem } from "@/utils/recentViews";
+import { useRecentViews, clearRecentViews, type RecentViewItem } from "@/utils/recentViews";
 import { getHomestayImageUrl } from "@/utils/image";
 
 const emit = defineEmits<{
   click: [item: RecentViewItem];
-  clear: [];
 }>();
 
-const recentList = computed(() => getRecentViews());
+const recentList = useRecentViews();
 const displayList = computed(() => recentList.value.slice(0, 6));
 
 const getImageUrl = (url: string) => getHomestayImageUrl(url);
@@ -59,7 +58,6 @@ const handleClick = (item: RecentViewItem) => {
 
 const handleClear = () => {
   clearRecentViews();
-  emit("clear");
 };
 </script>
 

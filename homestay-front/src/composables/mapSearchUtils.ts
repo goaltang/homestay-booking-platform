@@ -78,6 +78,6 @@ export const isValidImageUrl = (url: string): boolean => {
 export const getImageUrl = (imageUrl: string): string => {
   if (!imageUrl) return "https://picsum.photos/300/200";
   if (imageUrl.startsWith("http")) return imageUrl;
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
   return `${baseUrl}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
 };

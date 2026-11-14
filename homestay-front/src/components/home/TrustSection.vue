@@ -36,59 +36,55 @@
       </div>
     </div>
 
-    <!-- 平台数据展示 -->
-    <div class="trust-platform-stats">
-      <div class="plat-stat">
-        <span class="plat-num">{{ formatCount(stats.homestayCount) }}</span>
-        <span class="plat-label">精选房源</span>
-      </div>
-      <div class="plat-divider" />
-      <div class="plat-stat">
-        <span class="plat-num">{{ formatCount(stats.cityCount) }}</span>
-        <span class="plat-label">覆盖城市</span>
-      </div>
-      <div class="plat-divider" />
-      <div class="plat-stat">
-        <span class="plat-num">{{ stats.positiveRate }}%</span>
-        <span class="plat-label">好评率</span>
-      </div>
-      <div class="plat-divider" />
-      <div class="plat-stat">
-        <span class="plat-num">{{ formatCount(stats.recentOrders) }}</span>
-        <span class="plat-label">近30天成交</span>
-      </div>
-      <div class="plat-divider" />
-      <div class="plat-stat">
-        <span class="plat-num">{{ formatCount(stats.availableToday) }}</span>
-        <span class="plat-label">今日可订</span>
-      </div>
+    <!-- 平台数据展示：只展示接口返回且有说服力的指标 -->
+    <div v-if="platformStats.length > 0" class="trust-platform-stats">
+      <template v-for="(item, index) in platformStats" :key="item.label">
+        <div v-if="index > 0" class="plat-divider" />
+        <div class="plat-stat">
+          <span class="plat-num">{{ item.value }}</span>
+          <span class="plat-label">{{ item.label }}</span>
+        </div>
+      </template>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { UserFilled, Lock, ChatDotRound, RefreshLeft } from "@element-plus/icons-vue";
 import type { HomeStats } from "@/api/home";
 
-interface Props {
-  stats?: HomeStats;
-}
+// 好评率低于该值时不展示，避免统计条反过来削弱信任
+const MIN_DISPLAY_POSITIVE_RATE = 90;
 
-withDefaults(defineProps<Props>(), {
-  stats: () => ({
-    homestayCount: 10000,
-    cityCount: 50,
-    positiveRate: 98,
-    recentOrders: 0,
-    availableToday: 0,
-  }),
-});
+const props = defineProps<{
+  stats?: HomeStats | null;
+}>();
 
 const formatCount = (num: number) => {
-  if (!num && num !== 0) return "0";
   if (num >= 10000) return (num / 10000).toFixed(1) + "万+";
   return num.toLocaleString();
 };
+
+// availableToday 目前后端直接等于在线房源数，不是真实可订量，暂不展示
+const platformStats = computed(() => {
+  const stats = props.stats;
+  if (!stats) return [];
+  const items: Array<{ label: string; value: string }> = [];
+  if (stats.homestayCount > 0) {
+    items.push({ label: "在线房源", value: formatCount(stats.homestayCount) });
+  }
+  if (stats.cityCount > 0) {
+    items.push({ label: "覆盖城市", value: formatCount(stats.cityCount) });
+  }
+  if (stats.positiveRate >= MIN_DISPLAY_POSITIVE_RATE) {
+    items.push({ label: "好评率", value: `${stats.positiveRate}%` });
+  }
+  if (stats.recentOrders > 0) {
+    items.push({ label: "近30天成交", value: formatCount(stats.recentOrders) });
+  }
+  return items;
+});
 </script>
 
 <style scoped>

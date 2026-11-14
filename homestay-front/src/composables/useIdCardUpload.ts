@@ -5,7 +5,7 @@
 import { type Ref } from "vue";
 import { ElMessage } from "element-plus";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 interface IdCardForm {
   idCardFront?: string;

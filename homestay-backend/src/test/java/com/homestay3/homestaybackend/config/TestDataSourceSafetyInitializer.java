@@ -26,14 +26,25 @@ public class TestDataSourceSafetyInitializer
             throw new IllegalStateException("Spring Boot 测试必须启用 test profile");
         }
         String url = environment.getProperty("spring.datasource.url", "");
-        if (!url.startsWith("jdbc:h2:mem:")) {
+        if (!isAllowedTestDataSource(url)) {
             // 不输出连接地址，避免错误报告包含凭据。
             throw new IllegalStateException("Spring Boot 测试数据源必须是 H2 内存库");
         }
         String hikariUrl = environment.getProperty("spring.datasource.hikari.jdbc-url", url);
-        if (!hikariUrl.startsWith("jdbc:h2:mem:")
+        if (!isAllowedTestDataSource(hikariUrl)
                 || environment.containsProperty("spring.datasource.jndi-name")) {
             throw new IllegalStateException("测试不允许覆盖为外部数据源");
         }
     }
+
+    /**
+     * 默认只允许 H2 内存库。唯一例外是迁移测试专用的一次性 MySQL：本机 13316 端口、
+     * 库名以 homestay_migration_test_ 开头、URL 不含凭据，与 FlywayMySqlMigrationTest 的约束一致。
+     */
+    static boolean isAllowedTestDataSource(String url) {
+        return url.startsWith("jdbc:h2:mem:") || ISOLATED_MIGRATION_MYSQL.matcher(url).matches();
+    }
+
+    private static final java.util.regex.Pattern ISOLATED_MIGRATION_MYSQL = java.util.regex.Pattern.compile(
+            "jdbc:mysql://(127\\.0\\.0\\.1|localhost):13316/homestay_migration_test_[a-zA-Z0-9_]+(\\?[^#@]*)?");
 }

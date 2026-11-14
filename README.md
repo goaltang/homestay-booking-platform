@@ -1,7 +1,7 @@
 # 民宿预订平台 (Homestay Booking Platform)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.0.2-brightgreen.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.12-brightgreen.svg)
 ![Java](https://img.shields.io/badge/Java-17-orange.svg)
 ![Vue](https://img.shields.io/badge/Vue-3-42b883.svg)
 ![Vite](https://img.shields.io/badge/Vite-5%2F6-646CFF.svg)
@@ -16,8 +16,21 @@
 
 [安装教程](docs/INSTALL.md) · [数据库初始化与升级](docs/DATABASE.md) · [完整架构图集](docs/diagrams/README.md) · [功能模块文档](obsidian-vault/02-功能模块/) · [文档首页](obsidian-vault/00-首页.md)
 
+## 界面预览
+
+![首页](docs/screenshots/home.jpg)
+
+| 房源搜索 | 房源详情 |
+| --- | --- |
+| ![房源搜索](docs/screenshots/search.jpg) | ![房源详情](docs/screenshots/detail.jpg) |
+| **我的订单** | **管理端看板** |
+| ![我的订单](docs/screenshots/guest-orders.jpg) | ![管理端看板](docs/screenshots/admin-dashboard.jpg) |
+
+截图来自 `./deploy/demo.sh` 启动的演示环境，数据为脱敏的演示数据。
+
 ## 目录
 
+- [界面预览](#界面预览)
 - [核心亮点](#核心亮点)
 - [系统架构](#系统架构)
 - [角色与功能](#角色与功能)
@@ -74,7 +87,7 @@
 | 层级 | 主要技术 |
 |---|---|
 | 两个前端 | Vue 3、TypeScript、Vite、Vue Router、Pinia、Element Plus、Axios、ECharts |
-| 后端 | Java 17、Spring Boot 3.0.2、Spring Security / JWT、Spring Data JPA、MapStruct |
+| 后端 | Java 17、Spring Boot 3.2.12、Spring Security / JWT、Spring Data JPA、MapStruct |
 | 数据与消息 | MySQL 8、Redis / Redisson、Elasticsearch / IK、RabbitMQ、Flyway |
 | 外部集成 | 支付宝沙箱、高德地图、OpenAI 兼容 LLM 接口、SMTP、WebSocket / STOMP |
 | 工程与监控 | Maven、npm、Docker Compose、GitHub Actions、Actuator、Micrometer、Prometheus、Grafana |
@@ -95,6 +108,27 @@ homestay3/
 详细目录和职责见[项目结构总览](docs/项目结构总览.md)。
 
 ## 快速开始
+
+### 一键体验（Docker）
+
+只想看效果时，装好 Docker 和 Python 3 后运行：
+
+```bash
+git clone https://github.com/goaltang/homestay-booking-platform.git homestay3
+cd homestay3
+./deploy/demo.sh
+```
+
+脚本会生成本地 `.env`（随机密钥）、构建并启动全部服务、导入脱敏的完整演示数据（约 5000 个房源、8000 个订单），并创建随机密码的管理员。首次构建需要下载依赖，约 10–20 分钟。完成后访问：
+
+| 入口 | 地址 | 账号 |
+| --- | --- | --- |
+| 用户端 | http://localhost:8088 | 房客 `user_4424`、房东 `host_0097`，密码均为 `123456` |
+| 管理端 | http://localhost:8089 | `admin`，密码在脚本结束时打印一次 |
+
+再次运行只会启动服务，不会重复导入。房源图片使用外部图床，需要联网显示。放到云服务器上展示见[公网展示部署](docs/DEPLOY.md)。
+
+### 本地开发
 
 以下为本地开发方式。先准备 Java 17、Maven、Node.js 20、MySQL 8、Redis，以及安装 IK 插件的 Elasticsearch；演示三个 MQ 场景时同时启动 RabbitMQ。基础设施准备和完整配置见[安装教程](docs/INSTALL.md)。
 
@@ -170,7 +204,7 @@ npm ci
 npm run build
 ```
 
-Spring Boot 集成测试必须使用 `@ActiveProfiles("test")` 与独立 H2 内存数据源，禁止连接真实 MySQL。ES 集成测试使用 Testcontainers 与 IK 镜像，本地没有 Docker 时跳过；镜像构建方式见[安装教程](docs/INSTALL.md)。
+Spring Boot 集成测试必须使用 `@ActiveProfiles("test")` 与独立 H2 内存数据源，禁止连接真实 MySQL；唯一例外是迁移测试专用的一次性 MySQL（本机 13316 端口，见[数据库说明](docs/DATABASE.md#验证状态与范围)）。ES 集成测试使用 Testcontainers 与 IK 镜像，本地没有 Docker 时跳过；镜像构建方式见[安装教程](docs/INSTALL.md)。
 
 CI 配置见 [ci.yml](.github/workflows/ci.yml)；测试与性能结果见下方报告，历史数字不代表当前运行结果。
 
@@ -179,6 +213,7 @@ CI 配置见 [ci.yml](.github/workflows/ci.yml)；测试与性能结果见下方
 | 想了解什么 | 文档 |
 |---|---|
 | 安装与配置 | [安装教程（含 AI Agent 指引）](docs/INSTALL.md) |
+| 公网展示部署（国内服务器，按 IP 访问） | [部署指南](docs/DEPLOY.md) |
 | 数据库初始化与升级 | [新库、历史迁移、旧库基线与开发数据](docs/DATABASE.md) |
 | 架构与业务流程 | [完整架构图集及实现限制](docs/diagrams/README.md) |
 | 文档阅读入口 | [文档首页](obsidian-vault/00-首页.md) · [完整目录](<obsidian-vault/00-索引/Homestay 项目索引.md>) |

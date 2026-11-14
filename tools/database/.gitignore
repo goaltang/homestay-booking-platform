@@ -1,5 +1,7 @@
 !import_data.py
 !test_import_data.py
+!export_demo.py
+!test_export_demo.py
 !requirements.txt
 .venv/
 __pycache__/

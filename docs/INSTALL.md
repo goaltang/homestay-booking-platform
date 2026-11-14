@@ -14,7 +14,7 @@
 
 | 子项目 | 技术栈 | 默认端口 | 说明 |
 |---|---|---|---|
-| `homestay-backend` | Java 17 + Spring Boot 3.0.2 + Maven | 8081 | 后端 API 服务 |
+| `homestay-backend` | Java 17 + Spring Boot 3.2.12 + Maven | 8081 | 后端 API 服务 |
 | `homestay-front` | Vue 3 + TypeScript + Vite 5 | 5173 | 用户端 + 房东端 |
 | `homestay-admin` | Vue 3 + TypeScript + Vite 6 | 5174 | 管理员端 |
 
@@ -397,7 +397,7 @@ This project consists of 3 independently runnable sub-projects:
 
 | Sub-project | Stack | Default Port | Description |
 |---|---|---|---|
-| `homestay-backend` | Java 17 + Spring Boot 3.0.2 + Maven | 8081 | Backend API server |
+| `homestay-backend` | Java 17 + Spring Boot 3.2.12 + Maven | 8081 | Backend API server |
 | `homestay-front` | Vue 3 + TypeScript + Vite 5 | 5173 | Guest + Host app |
 | `homestay-admin` | Vue 3 + TypeScript + Vite 6 | 5174 | Admin app |
 

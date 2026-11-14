@@ -1,7 +1,7 @@
 # Homestay Booking Platform
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.0.2-brightgreen.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.12-brightgreen.svg)
 ![Java](https://img.shields.io/badge/Java-17-orange.svg)
 ![Vue](https://img.shields.io/badge/Vue-3-42b883.svg)
 ![Vite](https://img.shields.io/badge/Vite-5%2F6-646CFF.svg)
@@ -16,8 +16,21 @@ This solo full-stack project serves as a learning and interview portfolio, with 
 
 [Installation guide](docs/INSTALL.md#english-version) · [Database setup and upgrades](docs/DATABASE.md) · [Architecture gallery](docs/diagrams/README.md) · [Feature documentation](obsidian-vault/02-功能模块/) · [Documentation home](obsidian-vault/00-首页.md)
 
+## Screenshots
+
+![Home](docs/screenshots/home.jpg)
+
+| Search | Listing details |
+| --- | --- |
+| ![Search](docs/screenshots/search.jpg) | ![Listing details](docs/screenshots/detail.jpg) |
+| **My orders** | **Admin dashboard** |
+| ![My orders](docs/screenshots/guest-orders.jpg) | ![Admin dashboard](docs/screenshots/admin-dashboard.jpg) |
+
+Taken from the demo stack started by `./deploy/demo.sh`, using the sanitized demo dataset. The UI is in Chinese.
+
 ## Contents
 
+- [Screenshots](#screenshots)
 - [Highlights](#highlights)
 - [Architecture](#architecture)
 - [Roles and Features](#roles-and-features)
@@ -74,7 +87,7 @@ Visitors can browse public listings. See the [feature documentation](obsidian-va
 | Layer | Main technologies |
 |---|---|
 | Both frontends | Vue 3, TypeScript, Vite, Vue Router, Pinia, Element Plus, Axios, ECharts |
-| Backend | Java 17, Spring Boot 3.0.2, Spring Security / JWT, Spring Data JPA, MapStruct |
+| Backend | Java 17, Spring Boot 3.2.12, Spring Security / JWT, Spring Data JPA, MapStruct |
 | Data and messaging | MySQL 8, Redis / Redisson, Elasticsearch / IK, RabbitMQ, Flyway |
 | Integrations | Alipay sandbox, AMap, OpenAI-compatible LLM API, SMTP, WebSocket / STOMP |
 | Engineering and monitoring | Maven, npm, Docker Compose, GitHub Actions, Actuator, Micrometer, Prometheus, Grafana |
@@ -95,6 +108,27 @@ homestay3/
 See the [structure guide](docs/项目结构总览.md) for directory responsibilities.
 
 ## Quick Start
+
+### One-Command Demo (Docker)
+
+To just see it running, install Docker and Python 3, then run:
+
+```bash
+git clone https://github.com/goaltang/homestay-booking-platform.git homestay3
+cd homestay3
+./deploy/demo.sh
+```
+
+The script generates a local `.env` with random secrets, builds and starts every service, imports the sanitized full demo dataset (about 5,000 listings and 8,000 orders), and creates an admin with a random password. The first build downloads dependencies and takes about 10–20 minutes. Then open:
+
+| Entry | URL | Account |
+| --- | --- | --- |
+| Customer app | http://localhost:8088 | guest `user_4424`, host `host_0097`, password `123456` for both |
+| Admin app | http://localhost:8089 | `admin`, password printed once when the script finishes |
+
+Running it again only starts the services; data is never imported twice. Listing images come from external hosts and need internet access. To host it on a cloud server, see the [deployment guide](docs/DEPLOY.md) (Chinese).
+
+### Local Development
 
 For local development, prepare Java 17, Maven, Node.js 20, MySQL 8, Redis, and Elasticsearch with the IK plugin. Start RabbitMQ to demonstrate the three messaging scenarios. See the [installation guide](docs/INSTALL.md#english-version) for infrastructure setup and configuration.
 
@@ -170,7 +204,7 @@ npm ci
 npm run build
 ```
 
-Spring Boot integration tests must use `@ActiveProfiles("test")` and an isolated H2 in-memory datasource, never a real MySQL database. ES integration tests use Testcontainers and an IK image; they skip locally without Docker. Image build instructions are in the [installation guide](docs/INSTALL.md#english-version).
+Spring Boot integration tests must use `@ActiveProfiles("test")` and an isolated H2 in-memory datasource, never a real MySQL database. The only exception is the disposable migration-test MySQL on local port 13316 (see [docs/DATABASE.md](docs/DATABASE.md)). ES integration tests use Testcontainers and an IK image; they skip locally without Docker. Image build instructions are in the [installation guide](docs/INSTALL.md#english-version).
 
 See [ci.yml](.github/workflows/ci.yml) for CI configuration and the reports below for test and performance results. Historical counts are not current run results.
 

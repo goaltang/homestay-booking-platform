@@ -209,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import echarts from "@/utils/echarts";
 import {
@@ -603,13 +603,13 @@ const fetchDashboardData = async () => {
     });
   }, 300);
 
-  // 初始化订单分布图
+  // 图表容器在 v-else 中：先结束加载状态，等 DOM 渲染后再初始化，否则容器不存在、图表为空
+  loading.value = false;
+  await nextTick();
   initOrderChart();
 
   // 加载评价数据
   await loadSecondaryData();
-
-  loading.value = false;
 };
 
 const loadSecondaryData = async () => {

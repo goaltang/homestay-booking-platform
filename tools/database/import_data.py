@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Explicit, insert-only data imports for an initialized MySQL 8 database."""
+"""Explicit data imports for an initialized MySQL 8 database.
+
+admin and demo only insert; demo-full loads the sanitized demo snapshot into a fresh database.
+"""
 
 import argparse
 import getpass
+import gzip
 import os
 from pathlib import Path
 import re
@@ -57,6 +61,43 @@ def demo_sql():
     return DEMO_FILE.read_text(encoding="utf-8")
 
 
+DEMO_FULL_FILE = Path(__file__).with_name("demo_full.sql.gz")
+# 快照记录导出时源库的 Flyway 版本；目标库须已迁移到该版本。之后新增的迁移允许存在：
+# 快照用带列名的 INSERT，若后续迁移改坏了表结构，导入会报错并整体回滚。
+DEMO_FULL_MIN_FLYWAY_VERSION = (49,)
+DEMO_FULL_VERSION_HEADER = re.compile(r"^-- flyway_version: ([0-9]+(?:\.[0-9]+)*)$", re.MULTILINE)
+# 负数无法写入 unsigned 列：目标库不是全新空库或未迁移到快照版本时，严格模式报错，mysql 断开并回滚。
+DEMO_FULL_GUARD = """CREATE TEMPORARY TABLE demo_full_requires_fresh_database (
+    empty_only TINYINT UNSIGNED NOT NULL
+) ENGINE=InnoDB;
+START TRANSACTION;
+INSERT INTO demo_full_requires_fresh_database (empty_only)
+SELECT -1 WHERE
+    EXISTS (SELECT 1 FROM users WHERE role IS NULL OR role <> 'ROLE_ADMIN') OR
+    EXISTS (SELECT 1 FROM homestays) OR
+    EXISTS (SELECT 1 FROM orders) OR
+    EXISTS (SELECT 1 FROM reviews) OR
+    EXISTS (SELECT 1 FROM messages) OR
+    EXISTS (SELECT 1 FROM notifications) OR
+    NOT EXISTS (SELECT 1 FROM flyway_schema_history WHERE version = '{version}' AND success = 1) OR
+    EXISTS (SELECT 1 FROM flyway_schema_history WHERE success = 0);
+"""
+
+
+def demo_full_sql(path=DEMO_FULL_FILE):
+    if not path.exists():
+        raise ValueError(f"缺少 {path.name}；先用 tools/database/export_demo.py 生成，或从仓库获取")
+    with gzip.open(path, "rt", encoding="utf-8") as source:
+        body = source.read()
+    header = DEMO_FULL_VERSION_HEADER.search(body[:1000])
+    if not header or tuple(int(p) for p in header.group(1).split(".")) < DEMO_FULL_MIN_FLYWAY_VERSION:
+        raise ValueError(f"{path.name} 缺少有效的 flyway_version 标记，或版本早于 B49 基线")
+    version = header.group(1)
+    if re.search(r"^\s*(DROP|TRUNCATE|ALTER|CREATE|GRANT|USE)\b", body, re.IGNORECASE | re.MULTILINE):
+        raise ValueError(f"{path.name} 含有数据以外的语句，拒绝导入")
+    return DEMO_FULL_GUARD.format(version=version) + body + "\nCOMMIT;\n"
+
+
 def mysql_command(command, environ):
     tokens = shlex.split(command)
     if not tokens:
@@ -96,6 +137,9 @@ def run_import(command, sql, environ):
         for secret in (password, admin_hash):
             if secret:
                 message = message.replace(secret, "[REDACTED]")
+        if "empty_only" in message:
+            message = ("目标库不满足导入条件：业务表必须为空（只允许已有管理员）；"
+                       "demo-full 还要求目标库已迁移到快照记录的 Flyway 版本且没有失败的迁移。数据未做任何修改")
         raise RuntimeError("导入失败，未提交事务：" + message)
 
 
@@ -112,6 +156,7 @@ def parser():
     admin.add_argument("--username", required=True)
     admin.add_argument("--email", required=True)
     sub.add_parser("demo", help="仅在业务表为空时导入 3 个演示用户、5 个房源与图片，保留管理员")
+    sub.add_parser("demo-full", help="仅在全新空库（Flyway 49）导入完整脱敏演示数据 demo_full.sql.gz，保留管理员")
     return cli
 
 
@@ -122,6 +167,8 @@ def main(argv=None):
         command = mysql_command(args.mysql_command, os.environ)
         if args.mode == "admin":
             sql = admin_sql(args.username, args.email, administrator_password_hash(os.environ))
+        elif args.mode == "demo-full":
+            sql = demo_full_sql()
         else:
             sql = demo_sql()
         # Strict mode makes the demo's unsigned sentinel fail instead of clipping -1 to 0.

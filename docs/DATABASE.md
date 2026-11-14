@@ -14,7 +14,7 @@
 
 ## 结构唯一来源
 
-后端固定使用社区版 `flyway-core` / `flyway-mysql` **9.22.3**。该版本原生识别 `B` 基线迁移文件；不依赖启动时复制 SQL、自定义 Flyway strategy 或商业版功能。
+后端使用社区版 `flyway-core` / `flyway-mysql` **9.22.3**，版本由 Spring Boot 3.2.12 依赖管理提供，`pom.xml` 不单独固定。该版本原生识别 `B` 基线迁移文件；不依赖启动时复制 SQL、自定义 Flyway strategy 或商业版功能。Spring Boot 3.0.x 的 Flyway 自动配置调用了 9.22 已移除的 `oracleSqlplus` 方法，不能与 9.22.3 组合使用。
 
 | 文件 / 设置 | 作用 |
 |---|---|
@@ -87,6 +87,19 @@ ORDER BY installed_rank;
 历史 V 链中的 `V27__add_coordinates_and_seed_data.sql` 混入了演示房源写入，本次不改写该历史文件。已有历史尚未到 V27 的库，沿 V 链升级时仍会执行其原有行为；新库从 B49 开始，跳过 V27，不导入这些历史演示数据。
 
 不要修改已应用的 V 文件。校验失败时先确定原因；启动不会自动 repair，repair 也不能补齐缺失的表或字段。确有历史修复需求时，单独评估、备份并记录操作，不能把 repair 当作日常启动步骤。
+
+### 已知历史偏差：V34 与 V1.2
+
+在旧版开发环境中，启动时的自动 repair 会掩盖下面两处偏差。移除自动 repair 后，这类开发库会在校验阶段失败：
+
+| 校验信息 | 原因 | 处理 |
+|---|---|---|
+| `Migration checksum mismatch for migration version 34` | V34 已应用后，提交 `f0c2f82` 修改了其种子数据：修正 2026 节假日，`DISCOUNT_RATE` 改为“减免比例” | 先把数据对齐当前 V34：`EARLY_BIRD` 改为 `0.10`、`LONG_STAY` 改为 `0.15`（旧值 0.90 / 0.85 在当前计价逻辑下分别是 1 折、1.5 折）；删除 `2026-05-31`～`2026-06-02` 三条旧端午记录，并确认 V34 新增日期已存在；然后只对 V34 执行一次 repair |
+| `Detected resolved migration not applied to database: 1.2` | `V1_2__Create_orders_table.sql` 在 V1.3 已应用后才加入仓库 | 该文件只有 `CREATE TABLE IF NOT EXISTS orders`。确认 `orders` 已存在后，单次以 `--spring.flyway.out-of-order=true` 启动，补记执行历史；配置文件保持 `out-of-order=false` |
+
+处理前备份 `flyway_schema_history`、`pricing_rule` 和 `holiday_calendar`，完成后不带额外参数启动，确认日志显示 `Successfully validated` 且 `No migration necessary`。
+
+2026-11-14 已在作者本机的开发库按上述步骤处理：备份后修正 2 条规则、删除 3 条节假日记录、更新 V34 校验和、单次补执行 V1.2。之后正常启动，43 个迁移全部校验通过。
 
 ## 无历史的非空旧库
 
@@ -226,6 +239,16 @@ python3 tools/database/import_data.py demo
 
 重复运行到已有演示数据的库会被拒绝；中途失败回滚本次事务。需要重建演示环境时使用新的独立开发库，不清空业务库。演示账号只用于本地学习，对外部署前修改或移除。
 
+### 导入完整演示数据
+
+需要展示真实规模（约 5000 个房源、8000 个订单）时，在**全新部署**的库上导入脱敏快照 `tools/database/demo_full.sql.gz`：
+
+```bash
+python3 tools/database/import_data.py demo-full
+```
+
+要求 Flyway 至少已迁移到快照版本 49（之后的迁移不影响）、业务表为空（只允许已有管理员）。快照不含管理员，演示账号密码均为 `123456`。它会替换 B49 和启动时预置的字典数据，因此不能用于已有业务数据的库。导出与脱敏规则见 [tools/database/README.md](../tools/database/README.md#导入完整演示数据demo-full)。
+
 ### 使用 Compose 的 MySQL
 
 脚本也可通过 MySQL 容器中的客户端连接。保持上述环境变量；管理员仍需交互设置密码或提供哈希。在项目根目录执行：
@@ -251,6 +274,9 @@ python3 tools/database/import_data.py --mysql-command "docker compose exec -T -e
 | 已有历史升级、无历史拒绝 | 3 项 MySQL 迁移测试通过；真实执行 V48 后升级 V49，保留用户与订单 |
 | 核对后显式 baseline 49 | 独立结构副本验证通过；保留管理员，未重跑建表 SQL |
 | 后端统一 `mvn clean test` | 通过；522 项，0 失败、0 错误，2 项 ES 集成测试因 Docker 不可用跳过 |
+| 升级 Spring Boot 3.2.12 后 `mvn test` | 通过；524 项，0 失败、0 错误，跳过 5 项（3 项迁移测试未配置独立 MySQL，2 项 ES 测试无 Docker） |
+| 开启 Flyway 的完整应用启动 | 通过（2026-11-14，本机开发库，已有 V49 历史）：43 个迁移校验通过，无待执行迁移。此前的验证均未覆盖 Spring Boot 的 Flyway 自动配置；Boot 3.0.2 + Flyway 9.22.3 在此步骤失败 |
+| `FlywayApplicationStartupTest`（空库完整启动） | 通过（2026-11-14，独立 MySQL 8.0 / 13316）：Spring Flyway 安装 B49，`ddl-auto=validate` 校验实体映射通过，重复迁移为 0。换回 Boot 3.0.2 + Flyway 9.22.3 时该测试以 `NoSuchMethodError: oracleSqlplus` 失败，确认能拦截此类问题 |
 | PowerShell 压测入口 | 未运行 |
 | Docker 部署流程 | 未运行 |
 
@@ -263,13 +289,13 @@ read -r -s -p 'Test database password: ' HOMESTAY_MIGRATION_TEST_PASSWORD
 printf '\n'
 export HOMESTAY_MIGRATION_TEST_PASSWORD
 cd homestay-backend
-mvn -Dtest=FlywayMySqlMigrationTest test
+mvn -Dtest='FlywayMySqlMigrationTest,FlywayApplicationStartupTest' test
 unset HOMESTAY_MIGRATION_TEST_PASSWORD
 ```
 
-测试自行创建并销毁唯一命名的测试库；未配置独立实例时明确跳过。GitHub CI 的 `database-migrations` 任务提供独立 MySQL 服务，执行迁移回归和 Python 导入脚本测试。
+测试自行创建并销毁唯一命名的测试库；未配置独立实例时明确跳过。GitHub CI 的 `database-migrations` 任务提供独立 MySQL 服务，执行迁移回归、Spring Boot 完整启动和 Python 导入脚本测试。
 
-应用的 H2 测试关闭 Flyway，不能证明 MySQL 新库安装或旧库升级成功。
+应用的 H2 测试关闭 Flyway，不能证明 MySQL 新库安装或旧库升级成功。`FlywayMySqlMigrationTest` 直接调用 Flyway API，也不经过 Spring Boot 的 Flyway 自动配置；框架或 Flyway 版本变化时以 `FlywayApplicationStartupTest` 为准。
 
 数据库改动应独立验证：空库 B49 安装、已有历史沿 V 链升级、无历史非空库拒绝、核对后的显式 baseline、重复启动和开发数据导入。实际结果在交付说明中报告，不以历史测试数字替代当前验证。
 
