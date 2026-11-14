@@ -10,9 +10,17 @@ WORKDIR /app
 # 阿里云镜像加速（国内网络）
 COPY settings-docker.xml /root/.m2/settings.xml
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# 国内镜像源偶发断开或卡住连接：本地仓库放在 BuildKit 缓存中，重试不必从头下载；
+# 限制并发、设置超时，重试时用 -U 重新下载上次失败的依赖
+ENV MAVEN_NET_OPTS="-Dmaven.artifact.threads=2 -Daether.connector.connectTimeout=15000 -Daether.connector.requestTimeout=60000"
+RUN --mount=type=cache,target=/root/.m2/repository \
+    for i in 1 2 3 4 5; do \
+      mvn -B -ntp $MAVEN_NET_OPTS -U dependency:go-offline && exit 0; \
+      echo "依赖下载失败，第 $i 次重试"; sleep 5; \
+    done; exit 1
 COPY src ./src
-RUN mvn package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2/repository \
+    mvn -B -ntp $MAVEN_NET_OPTS package -DskipTests
 
 # ---- 运行阶段：JRE ----
 FROM eclipse-temurin:17-jre

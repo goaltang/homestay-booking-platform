@@ -9,7 +9,8 @@
 # 服务器建议：2 vCPU / 4 GB；ES 与监控默认不启动（profile 见 docker-compose.yml）
 # ============================================
 
-name: homestay3
+# 项目名与本地 docker-compose.yml（目录名 homestay3）区分，避免共用数据卷
+name: homestay-demo
 
 x-logging: &default-logging
   driver: json-file
@@ -48,6 +49,9 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "no"]
+    environment:
+      # 供下方健康检查使用
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - redis-data:/data
     healthcheck:
@@ -64,10 +68,10 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-      # 容器内存上限的 40%，避免触发内存告警后阻塞生产
-      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "0.4"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+      # 内存告警阈值（新版不再接受环境变量写法）
+      - ./deploy/rabbitmq.conf:/etc/rabbitmq/conf.d/90-homestay.conf:ro
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 15s
@@ -96,7 +100,7 @@ services:
       redis:
         condition: service_started
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8081/actuator/health || exit 1"]
       interval: 15s

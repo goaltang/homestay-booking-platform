@@ -1,3 +1,7 @@
 target/
 *.iml
 .idea/
+# 本地配置含密码与密钥，不能打进镜像；容器内配置由 application-prod.properties 与环境变量提供
+src/main/resources/application.properties
+src/main/resources/application-local.properties
+src/main/resources/application-local.yml
