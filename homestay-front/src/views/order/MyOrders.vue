@@ -849,7 +849,9 @@ onMounted(() => {
   object-fit: cover;
   /* 用透明度而不是 v-show 隐藏：display:none 的 loading="lazy" 图片永远不会被加载 */
   opacity: 0;
-  transition: transform 0.4s ease, opacity 0.3s ease;
+  transition:
+    transform 0.4s ease,
+    opacity 0.3s ease;
 }
 
 .order-image-col img.loaded {
