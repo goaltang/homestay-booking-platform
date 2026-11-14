@@ -10,7 +10,7 @@
 | `../../homestay-backend/src/main/resources/application-perf.properties` | 后端 perf profile，连 perf 库 |
 | `data/init-perf-data.sql` | 灌入 1k 用户 + 5k 房型 + 30w 可用性 + 1w 订单 |
 | `load-test.js` | k6 压测脚本，3 个场景（列表/详情/下单） |
-| `run-perf-test.ps1` | 一键脚本：启环境 → 灌数据 → 起后端 → 压测 |
+| `run-perf-test.ps1` | 一键脚本：启环境 → 起后端/Flyway 建表 → 灌数据 → 压测 |
 
 ## 快速开始
 
@@ -25,7 +25,9 @@ k6 version              # winget install k6
 ```powershell
 .\tools\perf\run-perf-test.ps1
 ```
-自动完成：启 MySQL+Redis → 灌数据 → 编后端 → 启后端 → 跑 k6 → 输出报告。
+自动完成：启 MySQL+Redis → 编后端 → 启后端并完成 Flyway 迁移 → 灌数据 → 跑 k6 → 输出报告。
+
+`-OnlyUp` 只启动基础设施，不建表或灌数据。已有无迁移历史的压测库需按[数据库说明](../../docs/DATABASE.md)核对接入；也可使用新的独立压测库。
 
 ### 2. 分步执行
 ```powershell

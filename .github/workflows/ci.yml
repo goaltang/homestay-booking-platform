@@ -37,6 +37,36 @@ jobs:
           path: homestay-backend/target/surefire-reports/
           retention-days: 7
 
+  database-migrations:
+    name: MySQL installation and upgrade
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0.32
+        env:
+          MYSQL_ROOT_PASSWORD: migration-test-only
+        ports:
+          - 13316:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pmigration-test-only"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Verify empty installation and legacy upgrade
+        working-directory: homestay-backend
+        env:
+          HOMESTAY_MIGRATION_TEST_URL: jdbc:mysql://127.0.0.1:13316/homestay_migration_test_ci?allowPublicKeyRetrieval=true&useSSL=false
+          HOMESTAY_MIGRATION_TEST_USER: root
+          HOMESTAY_MIGRATION_TEST_PASSWORD: migration-test-only
+        run: mvn -B -Dtest=FlywayMySqlMigrationTest test
+      - name: Verify data import scripts
+        run: python3 -m unittest discover -s tools/database -p 'test_*.py'
+
   frontend-build:
     name: Frontend Build (${{ matrix.app }})
     runs-on: ubuntu-latest

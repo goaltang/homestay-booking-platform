@@ -20,8 +20,6 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      # 空库首次初始化：导入全量表结构（幂等 IF NOT EXISTS），Flyway 启动时 baseline 到 V49 跳过迁移链
-      - ./homestay-backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
