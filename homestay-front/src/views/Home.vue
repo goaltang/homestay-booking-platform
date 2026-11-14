@@ -1,11 +1,14 @@
 <template>
   <div class="home-page">
-    <!-- ===== 首屏：Hero + 搜索框叠加 ===== -->
-    <HeroBanner :banners="homeBanners" @banner-click="handleBannerClick" @explore="goToHomestays">
+    <!-- ===== 首屏：真实房源大图 + 搜索 ===== -->
+    <HeroBanner
+      :banners="homeBanners"
+      :homestay="featuredHomestays[0] || null"
+      @banner-click="handleBannerClick"
+      @homestay-click="handleHomestayClick"
+    >
       <template #search>
-        <div class="search-float">
-          <SearchBar :loading="searchStore.loading" @search="handleSearch" @reset="handleReset" />
-        </div>
+        <SearchBar :loading="searchStore.loading" @search="handleSearch" @reset="handleReset" />
       </template>
     </HeroBanner>
 
@@ -15,31 +18,33 @@
     <!-- ===== 内容区 ===== -->
     <div class="home-content">
       <!-- 房源类型快捷筛选 -->
-      <div class="section-spaced">
-        <div class="type-scroll">
-          <div
-            v-for="type in propertyTypes"
-            :key="type.code"
-            class="type-item"
-            :class="{ active: selectedType === type.code }"
-            @click="handleTypeClick(type.code)"
-          >
-            <span class="type-label">{{ type.name }}</span>
-          </div>
-        </div>
-      </div>
+      <nav class="section-spaced type-scroll" aria-label="按房源类型浏览">
+        <button
+          v-for="type in propertyTypes"
+          :key="type.code"
+          type="button"
+          class="type-item"
+          :class="{ active: selectedType === type.code }"
+          @click="handleTypeClick(type.code)"
+        >
+          {{ type.name }}
+        </button>
+      </nav>
+
+      <!-- 最近浏览（无记录时组件自身不渲染） -->
+      <RecentViewed class="section-spaced" @click="handleRecentClick" />
 
       <!-- 精选房源 -->
       <section class="section-spaced">
         <HomestaySection
           title="精选房源"
-          subtitle="为您挑选的最受欢迎的独特住宿"
+          subtitle="平台挑出的口碑房源"
           :homestays="featuredHomestays"
           :loading="featuredLoading"
           :error="featuredError"
           empty-text="暂无精选房源"
-          error-text="加载失败，点击重试"
-          :max-display="12"
+          error-text="精选房源加载失败"
+          :max-display="SECTION_SIZE"
           view-all-route="/homestays"
           :view-all-query="{ featured: 'true' }"
           @homestay-click="handleHomestayClick"
@@ -48,16 +53,19 @@
         />
       </section>
 
-      <!-- Tab 切换：推荐 / 热门 -->
+      <!-- 推荐 / 热门 -->
       <section class="section-spaced">
         <div class="section-header-tabs">
-          <h2 class="section-title">发现更多</h2>
-          <div class="tab-bar">
+          <h2 class="section-title">{{ activeTab === "recommended" ? "为你推荐" : "最近热门" }}</h2>
+          <div class="tab-bar" role="tablist">
             <button
               v-for="tab in tabs"
               :key="tab.key"
+              type="button"
+              role="tab"
               class="tab-btn"
               :class="{ active: activeTab === tab.key }"
+              :aria-selected="activeTab === tab.key"
               @click="activeTab = tab.key"
             >
               {{ tab.label }}
@@ -65,90 +73,38 @@
           </div>
         </div>
 
-        <!-- 猜你喜欢 -->
-        <div v-if="activeTab === 'personalized'" class="tab-panel">
-          <div v-if="!userStore.isAuthenticated" class="login-prompt-compact">
-            <p>登录后获取更精准的专属推荐</p>
-            <el-button type="primary" size="small" @click="router.push('/login')"
-              >立即登录</el-button
-            >
-          </div>
-          <HomestaySection
-            :homestays="userStore.isAuthenticated ? personalizedHomestays : popularHomestays"
-            :loading="userStore.isAuthenticated ? personalizedLoading : popularLoading"
-            :error="userStore.isAuthenticated ? personalizedError : popularError"
-            :empty-text="
-              userStore.isAuthenticated
-                ? '暂无个性化推荐，多浏览和收藏房源来获得更精准的推荐'
-                : '暂无热门房源'
-            "
-            error-text="加载失败，点击重试"
-            :max-display="12"
-            :show-view-all="false"
-            view-all-route="/homestays"
-            :view-all-query="
-              userStore.isAuthenticated ? { personalized: 'true' } : { type: 'popular' }
-            "
-            @homestay-click="handleHomestayClick"
-            @view-all="handleViewAll"
-            @retry="userStore.isAuthenticated ? loadPersonalized : loadPopular"
-          />
-        </div>
-
-        <!-- 推荐 -->
-        <div v-else-if="activeTab === 'recommended'" class="tab-panel">
-          <HomestaySection
-            :homestays="recommendedHomestays"
-            :loading="recommendedLoading"
-            :error="recommendedError"
-            empty-text="暂无推荐民宿"
-            error-text="加载推荐失败，点击重试"
-            :max-display="12"
-            :show-view-all="false"
-            view-all-route="/homestays"
-            :view-all-query="{ featured: 'true' }"
-            @homestay-click="handleHomestayClick"
-            @view-all="handleViewAll"
-            @retry="loadRecommended"
-          />
-        </div>
-
-        <!-- 热门 -->
-        <div v-else-if="activeTab === 'popular'" class="tab-panel">
-          <HomestaySection
-            :homestays="popularHomestays"
-            :loading="popularLoading"
-            :error="popularError"
-            empty-text="暂无热门民宿"
-            error-text="加载热门失败，点击重试"
-            :max-display="12"
-            :show-view-all="false"
-            view-all-route="/homestays"
-            :view-all-query="{ type: 'popular' }"
-            @homestay-click="handleHomestayClick"
-            @view-all="handleViewAll"
-            @retry="loadPopular"
-          />
-        </div>
+        <HomestaySection
+          :key="activeTab"
+          class="tab-panel"
+          :homestays="currentTab.homestays"
+          :loading="currentTab.loading"
+          :error="currentTab.error"
+          :empty-text="currentTab.emptyText"
+          error-text="房源加载失败"
+          :max-display="SECTION_SIZE"
+          :show-view-all="false"
+          @homestay-click="handleHomestayClick"
+          @retry="currentTab.reload"
+        />
+        <p v-if="activeTab === 'recommended' && !userStore.isAuthenticated" class="login-hint">
+          <router-link to="/login">登录</router-link>后，会根据你浏览和收藏过的房源来推荐
+        </p>
       </section>
 
-      <!-- 最近浏览（无记录时组件自身不渲染） -->
-      <RecentViewed @click="handleRecentClick" />
+      <!-- 地图找房 -->
+      <MapCTA class="section-spaced" />
 
-      <!-- 地图找房 CTA -->
-      <MapCTA />
+      <!-- 平台保障 -->
+      <TrustSection class="section-spaced" :stats="homeStats" />
 
-      <!-- 信任背书 -->
-      <TrustSection :stats="homeStats" />
-
-      <!-- 成为房东 CTA -->
+      <!-- 成为房东 -->
       <HostCTA />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { useSearchStore } from "@/stores/search";
@@ -216,21 +172,16 @@ const handleTypeClick = (typeCode: string) => {
   router.push({ path: "/homestays", query: { type: typeCode, search: "true" } });
 };
 
+// 首页每个房源区块展示的数量（桌面端两排）
+const SECTION_SIZE = 8;
+
 // ===== Tab 切换 =====
 const tabs = [
-  { key: "personalized", label: "猜你喜欢" },
-  { key: "recommended", label: "推荐" },
+  { key: "recommended", label: "为你推荐" },
   { key: "popular", label: "热门" },
-];
-const activeTab = ref("recommended");
-
-// 登录后自动切换到个性化
-watch(
-  () => userStore.isAuthenticated,
-  (isAuth) => {
-    if (isAuth) activeTab.value = "personalized";
-  }
-);
+] as const;
+type TabKey = (typeof tabs)[number]["key"];
+const activeTab = ref<TabKey>("recommended");
 
 // ===== 精选房源 =====
 const featuredHomestays = ref<any[]>([]);
@@ -240,7 +191,7 @@ const loadFeatured = async () => {
   featuredLoading.value = true;
   featuredError.value = false;
   try {
-    const res = await getActiveHomestays({ page: 0, size: 12, featured: true });
+    const res = await getActiveHomestays({ page: 0, size: SECTION_SIZE, featured: true });
     featuredHomestays.value = res.data?.data || [];
   } catch {
     featuredError.value = true;
@@ -258,7 +209,7 @@ const loadPersonalized = async () => {
   personalizedLoading.value = true;
   personalizedError.value = false;
   try {
-    const res = await getMyPersonalizedRecommendations(12);
+    const res = await getMyPersonalizedRecommendations(SECTION_SIZE);
     personalizedHomestays.value = res.data?.content || res.data || [];
   } catch {
     personalizedError.value = true;
@@ -274,7 +225,7 @@ const loadRecommended = async () => {
   recommendedLoading.value = true;
   recommendedError.value = false;
   try {
-    const res = await getRecommendedHomestays(12);
+    const res = await getRecommendedHomestays(SECTION_SIZE);
     recommendedHomestays.value = res.data || [];
   } catch {
     recommendedError.value = true;
@@ -290,7 +241,7 @@ const loadPopular = async () => {
   popularLoading.value = true;
   popularError.value = false;
   try {
-    const res = await getPopularHomestays();
+    const res = await getPopularHomestays(SECTION_SIZE);
     popularHomestays.value = res.data || [];
   } catch {
     popularError.value = true;
@@ -299,16 +250,46 @@ const loadPopular = async () => {
   }
 };
 
-// Tab 切换时懒加载
+// “为你推荐”：登录用户用个性化结果，未登录用通用推荐
+const currentTab = computed(() => {
+  if (activeTab.value === "popular") {
+    return {
+      homestays: popularHomestays.value,
+      loading: popularLoading.value,
+      error: popularError.value,
+      emptyText: "暂无热门房源",
+      reload: loadPopular,
+    };
+  }
+  if (userStore.isAuthenticated) {
+    return {
+      homestays: personalizedHomestays.value,
+      loading: personalizedLoading.value,
+      error: personalizedError.value,
+      emptyText: "还没有推荐，多浏览或收藏几套房源后再来看看",
+      reload: loadPersonalized,
+    };
+  }
+  return {
+    homestays: recommendedHomestays.value,
+    loading: recommendedLoading.value,
+    error: recommendedError.value,
+    emptyText: "暂无推荐房源",
+    reload: loadRecommended,
+  };
+});
+
+// 切换标签或登录状态变化时，按需加载对应数据
 watch(
-  activeTab,
-  (tab) => {
-    if (tab === "personalized") {
-      if (userStore.isAuthenticated && personalizedHomestays.value.length === 0) loadPersonalized();
-      if (!userStore.isAuthenticated && popularHomestays.value.length === 0) loadPopular();
+  [activeTab, () => userStore.isAuthenticated],
+  ([tab, isAuth]) => {
+    if (tab === "popular") {
+      if (popularHomestays.value.length === 0) loadPopular();
+    } else if (isAuth) {
+      if (personalizedHomestays.value.length === 0) loadPersonalized();
+    } else if (recommendedHomestays.value.length === 0) {
+      loadRecommended();
     }
-    if (tab === "recommended" && recommendedHomestays.value.length === 0) loadRecommended();
-    if (tab === "popular" && popularHomestays.value.length === 0) loadPopular();
   },
   { immediate: true }
 );
@@ -346,10 +327,6 @@ const handleRecentClick = (item: any) => {
   router.push(`/homestays/${item.id}`);
 };
 
-const goToHomestays = () => {
-  router.push("/homestays");
-};
-
 const handleBannerClick = (banner: Banner) => {
   if (banner.linkUrl) {
     if (banner.linkUrl.startsWith("http")) window.open(banner.linkUrl, "_blank");
@@ -375,7 +352,6 @@ onMounted(() => {
   loadPropertyTypes();
   loadHomeData();
   loadFeatured();
-  loadRecommended();
 });
 </script>
 
@@ -388,20 +364,6 @@ onMounted(() => {
       var(--color-background, #faf9f7) 420px
     ),
     var(--color-background, #faf9f7);
-}
-
-/* 搜索框悬浮在 Hero 底部 */
-.search-float {
-  max-width: 920px;
-  margin: 0 auto;
-}
-
-.search-float :deep(.search-container) {
-  margin-bottom: 0;
-}
-
-.search-float :deep(.search-bar) {
-  box-shadow: 0 16px 48px rgba(31, 28, 25, 0.14);
 }
 
 /* 内容区 */
@@ -437,6 +399,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -449,27 +415,23 @@ onMounted(() => {
   color: var(--color-neutral-600);
   border: 1px solid var(--color-neutral-200);
   background: var(--color-surface-elevated);
-  box-shadow: var(--shadow-sm);
+}
+
+.type-item:focus-visible,
+.tab-btn:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
 }
 
 .type-item:hover {
   color: var(--color-neutral-900);
   border-color: var(--color-primary-200);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
 }
 
 .type-item.active {
   color: var(--color-primary-700);
   border-color: var(--color-primary-300);
   background: var(--color-primary-50);
-  box-shadow: 0 6px 18px rgba(212, 95, 46, 0.12);
-}
-
-.type-label {
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
 }
 
 /* Tab 切换区 */
@@ -526,39 +488,16 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* 登录提示 */
-.login-prompt-compact {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: var(--space-3) var(--space-5);
-  margin-bottom: var(--space-4);
-  background: var(--color-primary-50);
-  border: 1px solid var(--color-primary-200);
-  border-radius: var(--radius-md);
-  font-size: 14px;
+/* 未登录时的推荐说明 */
+.login-hint {
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-body-sm);
+  color: var(--color-neutral-600);
+}
+
+.login-hint a {
   color: var(--color-primary-700);
-}
-
-.login-prompt-compact p {
-  margin: 0;
-}
-
-/* Tab 面板 */
-.tab-panel {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  font-weight: 600;
 }
 
 /* 响应式 */
