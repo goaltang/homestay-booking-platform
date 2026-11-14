@@ -29,7 +29,7 @@
 
 - homestay-front/ — C 端用户（Vue3 + TS + Element Plus + Vite + Pinia），5173
 - homestay-admin/ — 管理后台（同栈），5174
-- homestay-backend/ — 后端 API（Spring Boot 3.0.2 + Java 17 + JPA + Flyway + Security/JWT + Redis + ES + RabbitMQ），8081
+- homestay-backend/ — 后端 API（Spring Boot 3.2.12 + Java 17 + JPA + Flyway + Security/JWT + Redis + ES + RabbitMQ），8081
 - obsidian-vault/ — 项目文档（Obsidian 管理，git 同步 md 文档）
 - 依赖：MySQL(3306, Flyway 管表结构) ｜ ES(9200, 需 IK 插件, 默认关闭并走 JPA 搜索；开启时需在线) ｜ Redis(缓存) ｜ RabbitMQ(homestay-rabbitmq, homestay/homestay123, 管理台 15672)
 - 端口：8080 常被本机 Dify 占用，后端固定 8081

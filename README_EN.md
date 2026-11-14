@@ -1,7 +1,7 @@
 # Homestay Booking Platform
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.0.2-brightgreen.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.12-brightgreen.svg)
 ![Java](https://img.shields.io/badge/Java-17-orange.svg)
 ![Vue](https://img.shields.io/badge/Vue-3-42b883.svg)
 ![Vite](https://img.shields.io/badge/Vite-5%2F6-646CFF.svg)
@@ -74,7 +74,7 @@ Visitors can browse public listings. See the [feature documentation](obsidian-va
 | Layer | Main technologies |
 |---|---|
 | Both frontends | Vue 3, TypeScript, Vite, Vue Router, Pinia, Element Plus, Axios, ECharts |
-| Backend | Java 17, Spring Boot 3.0.2, Spring Security / JWT, Spring Data JPA, MapStruct |
+| Backend | Java 17, Spring Boot 3.2.12, Spring Security / JWT, Spring Data JPA, MapStruct |
 | Data and messaging | MySQL 8, Redis / Redisson, Elasticsearch / IK, RabbitMQ, Flyway |
 | Integrations | Alipay sandbox, AMap, OpenAI-compatible LLM API, SMTP, WebSocket / STOMP |
 | Engineering and monitoring | Maven, npm, Docker Compose, GitHub Actions, Actuator, Micrometer, Prometheus, Grafana |

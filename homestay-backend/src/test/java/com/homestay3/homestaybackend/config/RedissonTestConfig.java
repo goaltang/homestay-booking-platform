@@ -48,8 +48,8 @@ public class RedissonTestConfig {
 
         RedissonClient mockClient = mock(RedissonClient.class);
         when(mockClient.getLock(anyString())).thenReturn(mockLock);
-        // varargs 方法用 any() 匹配整个数组参数
-        when(mockClient.getMultiLock(any())).thenReturn(mockMultiLock);
+        // Mockito 5 起 any() 只匹配单个可变参数元素；匹配任意数量的锁需指定数组类型
+        when(mockClient.getMultiLock(any(RLock[].class))).thenReturn(mockMultiLock);
         return mockClient;
     }
 }

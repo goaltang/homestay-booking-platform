@@ -1,7 +1,7 @@
 # 民宿预订平台 (Homestay Booking Platform)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.0.2-brightgreen.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.12-brightgreen.svg)
 ![Java](https://img.shields.io/badge/Java-17-orange.svg)
 ![Vue](https://img.shields.io/badge/Vue-3-42b883.svg)
 ![Vite](https://img.shields.io/badge/Vite-5%2F6-646CFF.svg)
@@ -74,7 +74,7 @@
 | 层级 | 主要技术 |
 |---|---|
 | 两个前端 | Vue 3、TypeScript、Vite、Vue Router、Pinia、Element Plus、Axios、ECharts |
-| 后端 | Java 17、Spring Boot 3.0.2、Spring Security / JWT、Spring Data JPA、MapStruct |
+| 后端 | Java 17、Spring Boot 3.2.12、Spring Security / JWT、Spring Data JPA、MapStruct |
 | 数据与消息 | MySQL 8、Redis / Redisson、Elasticsearch / IK、RabbitMQ、Flyway |
 | 外部集成 | 支付宝沙箱、高德地图、OpenAI 兼容 LLM 接口、SMTP、WebSocket / STOMP |
 | 工程与监控 | Maven、npm、Docker Compose、GitHub Actions、Actuator、Micrometer、Prometheus、Grafana |
