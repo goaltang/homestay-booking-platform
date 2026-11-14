@@ -62,10 +62,6 @@ const handleClear = () => {
 </script>
 
 <style scoped>
-.recent-section {
-  margin-bottom: 40px;
-}
-
 .section-header {
   display: flex;
   justify-content: space-between;

@@ -1,51 +1,25 @@
 <template>
-  <section class="trust-section">
-    <div class="trust-header">
-      <h2 class="trust-title">为什么选择我们</h2>
-      <p class="trust-subtitle">让每一次旅行都安心、舒适、值得回忆</p>
-    </div>
+  <section class="trust">
+    <h2 class="trust-title">订房有保障</h2>
+    <ul class="trust-list">
+      <li v-for="item in guarantees" :key="item.title" class="trust-item">
+        <span class="trust-icon" aria-hidden="true">
+          <el-icon :size="20"><component :is="item.icon" /></el-icon>
+        </span>
+        <div>
+          <h3 class="trust-item-title">{{ item.title }}</h3>
+          <p class="trust-item-desc">{{ item.desc }}</p>
+        </div>
+      </li>
+    </ul>
 
-    <div class="trust-grid">
-      <div class="trust-card">
-        <div class="trust-icon-wrap">
-          <el-icon :size="28"><UserFilled /></el-icon>
-        </div>
-        <h3 class="trust-card-title">实名认证房东</h3>
-        <p class="trust-card-desc">所有房东均经过实名认证，确保房源信息真实可靠</p>
+    <!-- 平台数据：只展示接口返回且有说服力的指标 -->
+    <dl v-if="platformStats.length > 0" class="trust-stats">
+      <div v-for="item in platformStats" :key="item.label" class="trust-stat">
+        <dt>{{ item.label }}</dt>
+        <dd>{{ item.value }}</dd>
       </div>
-      <div class="trust-card">
-        <div class="trust-icon-wrap trust-icon--purple">
-          <el-icon :size="28"><Lock /></el-icon>
-        </div>
-        <h3 class="trust-card-title">安全支付保障</h3>
-        <p class="trust-card-desc">资金由平台托管，入住确认后才结算给房东</p>
-      </div>
-      <div class="trust-card">
-        <div class="trust-icon-wrap trust-icon--orange">
-          <el-icon :size="28"><ChatDotRound /></el-icon>
-        </div>
-        <h3 class="trust-card-title">24h 在线客服</h3>
-        <p class="trust-card-desc">遇到问题随时联系，专业团队全程为您保驾护航</p>
-      </div>
-      <div class="trust-card">
-        <div class="trust-icon-wrap trust-icon--green">
-          <el-icon :size="28"><RefreshLeft /></el-icon>
-        </div>
-        <h3 class="trust-card-title">灵活退改政策</h3>
-        <p class="trust-card-desc">多种退改方案可选，行程变动也能从容应对</p>
-      </div>
-    </div>
-
-    <!-- 平台数据展示：只展示接口返回且有说服力的指标 -->
-    <div v-if="platformStats.length > 0" class="trust-platform-stats">
-      <template v-for="(item, index) in platformStats" :key="item.label">
-        <div v-if="index > 0" class="plat-divider" />
-        <div class="plat-stat">
-          <span class="plat-num">{{ item.value }}</span>
-          <span class="plat-label">{{ item.label }}</span>
-        </div>
-      </template>
-    </div>
+    </dl>
   </section>
 </template>
 
@@ -56,6 +30,13 @@ import type { HomeStats } from "@/api/home";
 
 // 好评率低于该值时不展示，避免统计条反过来削弱信任
 const MIN_DISPLAY_POSITIVE_RATE = 90;
+
+const guarantees = [
+  { icon: UserFilled, title: "房东实名认证", desc: "房东需要完成实名认证，房源信息可追溯" },
+  { icon: Lock, title: "平台代收房费", desc: "房费先由平台保管，入住后再结算给房东" },
+  { icon: RefreshLeft, title: "按规则退改", desc: "每套房源都写明退改政策，下单前就能看到" },
+  { icon: ChatDotRound, title: "在线客服", desc: "订单、退款和纠纷问题都可以在线咨询" },
+];
 
 const props = defineProps<{
   stats?: HomeStats | null;
@@ -88,176 +69,94 @@ const platformStats = computed(() => {
 </script>
 
 <style scoped>
-.trust-section {
-  margin-bottom: 48px;
-  padding: var(--space-12) var(--space-8);
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-}
-
-.trust-header {
-  text-align: center;
-  margin-bottom: 36px;
+.trust {
+  padding: var(--space-8) 0;
+  border-top: 1px solid var(--color-neutral-200);
+  border-bottom: 1px solid var(--color-neutral-200);
 }
 
 .trust-title {
-  margin: 0 0 8px;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--color-neutral-900);
-  letter-spacing: 0;
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-h3);
 }
 
-.trust-subtitle {
-  margin: 0;
-  font-size: 15px;
-  color: var(--color-neutral-600);
-}
-
-/* 信任卡片网格 */
-.trust-grid {
+.trust-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
-.trust-card {
-  text-align: center;
-  padding: 28px 20px;
-  border-radius: var(--radius-md);
-  background: var(--color-neutral-50);
-  border: 1px solid var(--color-neutral-100);
-  transition:
-    transform var(--duration-normal) var(--ease-out),
-    box-shadow var(--duration-normal) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
-}
-
-.trust-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--color-primary-200);
-  box-shadow: var(--shadow-lg);
-}
-
-.trust-icon-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary-500);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  margin: 0 auto 16px;
-}
-
-.trust-icon--purple {
-  background: var(--color-secondary-500);
-}
-
-.trust-icon--orange {
-  background: var(--color-warning);
-}
-
-.trust-icon--green {
-  background: var(--color-success);
-}
-
-.trust-card-title {
-  margin: 0 0 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-neutral-900);
-}
-
-.trust-card-desc {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
   margin: 0;
-  font-size: 13px;
-  color: var(--color-neutral-600);
-  line-height: 1.5;
+  padding: 0;
+  list-style: none;
 }
 
-/* 平台数据条 */
-.trust-platform-stats {
+.trust-item {
   display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.trust-icon {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 40px;
-  padding: 24px;
-  background: var(--color-background-warm);
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-50);
+  color: var(--color-secondary-700);
 }
 
-.plat-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+.trust-item-title {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 600;
 }
 
-.plat-num {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--color-primary-700);
-  letter-spacing: 0;
-}
-
-.plat-label {
-  font-size: 13px;
+.trust-item-desc {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
   color: var(--color-neutral-600);
 }
 
-.plat-divider {
-  width: 1px;
-  height: 40px;
-  background: var(--color-neutral-200);
+.trust-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin: var(--space-6) 0 0;
 }
 
-/* 响应式 */
+.trust-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-1);
+}
+
+.trust-stat dt {
+  font-size: var(--text-body-sm);
+  color: var(--color-neutral-600);
+}
+
+.trust-stat dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-weight: 700;
+  color: var(--color-primary-700);
+}
+
 @media (max-width: 992px) {
-  .trust-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .trust-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 768px) {
-  .trust-section {
-    padding: 32px 20px;
-  }
-
-  .trust-grid {
+@media (max-width: 560px) {
+  .trust-list {
     grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .trust-card {
-    display: flex;
-    align-items: center;
-    text-align: left;
-    gap: 16px;
-    padding: 20px;
-  }
-
-  .trust-icon-wrap {
-    margin: 0;
-    flex-shrink: 0;
-  }
-
-  .trust-platform-stats {
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-
-  .plat-divider {
-    display: none;
-  }
-
-  .plat-num {
-    font-size: 20px;
+    gap: var(--space-4);
   }
 }
 </style>
