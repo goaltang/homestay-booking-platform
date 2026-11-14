@@ -16,8 +16,21 @@
 
 [安装教程](docs/INSTALL.md) · [数据库初始化与升级](docs/DATABASE.md) · [完整架构图集](docs/diagrams/README.md) · [功能模块文档](obsidian-vault/02-功能模块/) · [文档首页](obsidian-vault/00-首页.md)
 
+## 界面预览
+
+![首页](docs/screenshots/home.jpg)
+
+| 房源搜索 | 房源详情 |
+| --- | --- |
+| ![房源搜索](docs/screenshots/search.jpg) | ![房源详情](docs/screenshots/detail.jpg) |
+| **我的订单** | **管理端看板** |
+| ![我的订单](docs/screenshots/guest-orders.jpg) | ![管理端看板](docs/screenshots/admin-dashboard.jpg) |
+
+截图来自 `./deploy/demo.sh` 启动的演示环境，数据为脱敏的演示数据。
+
 ## 目录
 
+- [界面预览](#界面预览)
 - [核心亮点](#核心亮点)
 - [系统架构](#系统架构)
 - [角色与功能](#角色与功能)

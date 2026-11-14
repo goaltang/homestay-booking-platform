@@ -16,8 +16,21 @@ This solo full-stack project serves as a learning and interview portfolio, with 
 
 [Installation guide](docs/INSTALL.md#english-version) · [Database setup and upgrades](docs/DATABASE.md) · [Architecture gallery](docs/diagrams/README.md) · [Feature documentation](obsidian-vault/02-功能模块/) · [Documentation home](obsidian-vault/00-首页.md)
 
+## Screenshots
+
+![Home](docs/screenshots/home.jpg)
+
+| Search | Listing details |
+| --- | --- |
+| ![Search](docs/screenshots/search.jpg) | ![Listing details](docs/screenshots/detail.jpg) |
+| **My orders** | **Admin dashboard** |
+| ![My orders](docs/screenshots/guest-orders.jpg) | ![Admin dashboard](docs/screenshots/admin-dashboard.jpg) |
+
+Taken from the demo stack started by `./deploy/demo.sh`, using the sanitized demo dataset. The UI is in Chinese.
+
 ## Contents
 
+- [Screenshots](#screenshots)
 - [Highlights](#highlights)
 - [Architecture](#architecture)
 - [Roles and Features](#roles-and-features)
