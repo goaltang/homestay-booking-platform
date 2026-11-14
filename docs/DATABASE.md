@@ -239,6 +239,16 @@ python3 tools/database/import_data.py demo
 
 重复运行到已有演示数据的库会被拒绝；中途失败回滚本次事务。需要重建演示环境时使用新的独立开发库，不清空业务库。演示账号只用于本地学习，对外部署前修改或移除。
 
+### 导入完整演示数据
+
+需要展示真实规模（约 5000 个房源、8000 个订单）时，在**全新部署**的库上导入脱敏快照 `tools/database/demo_full.sql.gz`：
+
+```bash
+python3 tools/database/import_data.py demo-full
+```
+
+要求 Flyway 已迁移到 49、业务表为空（只允许已有管理员）。快照不含管理员，演示账号密码均为 `123456`。它会替换 B49 和启动时预置的字典数据，因此不能用于已有业务数据的库。导出与脱敏规则见 [tools/database/README.md](../tools/database/README.md#导入完整演示数据demo-full)。
+
 ### 使用 Compose 的 MySQL
 
 脚本也可通过 MySQL 容器中的客户端连接。保持上述环境变量；管理员仍需交互设置密码或提供哈希。在项目根目录执行：

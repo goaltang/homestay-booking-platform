@@ -126,7 +126,15 @@ tools/database/.venv/bin/python tools/database/import_data.py \
   demo
 ```
 
-导入前先停后端，避免并发写入。展示时建议在页面上注明“演示环境，密码 123456”，并且**不要给演示账号管理员权限**。
+想展示更接近真实规模的数据（约 5000 个房源、8000 个订单），改用完整演示数据。它同样只能导入干净的库，二选一：
+
+```bash
+tools/database/.venv/bin/python tools/database/import_data.py \
+  --mysql-command "docker compose -f docker-compose.prod.yml exec -T -e MYSQL_PWD mysql mysql" \
+  demo-full
+```
+
+导入前先停后端，避免并发写入：`docker compose -f docker-compose.prod.yml stop backend`，导入后再 `start backend`。展示时建议在页面上注明“演示环境，密码 123456”，并且**不要给演示账号管理员权限**。
 
 ## 5. 验收清单
 

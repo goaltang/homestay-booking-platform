@@ -55,6 +55,51 @@ python3 tools/database/import_data.py demo
 
 空表检查和所有插入在同一事务内。业务表非空时，检查向临时表的无符号列插入负值，触发 MySQL 严格模式错误；客户端停止并断开连接，事务回滚。发生唯一键冲突或后续 SQL 错误时同样回滚，重复运行会失败。
 
+## 导入完整演示数据（demo-full）
+
+`demo_full.sql.gz` 是从作者开发库导出并脱敏的完整演示数据（约 3 MB），用于展示真实规模下的列表、搜索、推荐和统计：
+
+| 内容 | 数量（约） |
+| --- | --- |
+| 用户（房东 / 房客） | 800 / 4000 |
+| 房源 / 图片 | 5000 / 25000 |
+| 订单 / 评价 / 聊天消息 / 通知 | 8000 / 2900 / 8600 / 33000 |
+
+```bash
+python3 tools/database/import_data.py demo-full
+```
+
+成功输出 `导入已提交：demo-full`。所有演示账号密码均为 `123456`，例如房东 `host_0097`。快照中**不含管理员**，需要另用 `admin` 子命令创建；先建管理员或后建均可，导入会保留已有管理员。
+
+只接受全新部署的库：Flyway 已迁移到 49 且没有更高版本，`users` 中只有 `ROLE_ADMIN`，`homestays`、`orders`、`reviews`、`messages`、`notifications` 为空。条件不满足时整体回滚，提示“目标库不满足导入条件”。
+
+快照对每张表先 `DELETE` 再写入（`users` 除外），以替换 B49 与应用启动时预置的房型、设施、系统配置等字典数据，使其与演示数据的 ID 一致；因此只能用于新库。检查、清理和写入都在同一事务内。
+
+房源图片与头像使用外部 URL（Unsplash、DiceBear），需要网络才能显示。
+
+### 重新生成快照（维护者）
+
+`export_demo.py` 从开发库导出：只读源库，在同一 MySQL 服务器上创建临时库 `homestay_demo_export_*`，执行 [demo_sanitize.sql](demo_sanitize.sql) 脱敏并逐项核对，检查所有房源图片地址可访问，最后导出数据并删除临时库。
+
+```bash
+export MYSQL_DATABASE=homestay_db   # 源库
+export MYSQL_USER=root              # 需要建库、删库权限
+python3 tools/database/export_demo.py
+```
+
+脱敏规则：删除管理员和旧 `admin` 表；所有密码改为 `123456`；手机号改为不存在的 `100` 号段；邮箱改为 `用户名@example.com`；清除身份证号、身份证照片和重置令牌；替换门锁密码；不导出登录日志、操作日志与 Flyway 历史，审核日志去掉 IP 和 UA。任何一项核对不通过，或有图片地址不可用，都会中止导出。
+
+源库的 Flyway 版本必须与快照版本（49）一致。新增迁移后，需要在已迁移的开发库上重新导出，并同步更新 `import_data.py` 中的 `DEMO_FULL_FLYWAY_VERSION`。
+
+在 WSL 中连接 Windows 上的 MySQL 时，可传入 Windows 客户端，并用 `WSLENV` 把密码环境变量传给它：
+
+```bash
+export WSLENV=MYSQL_PWD
+python3 tools/database/export_demo.py \
+  --mysql-command /mnt/d/mysql-8.0.32-winx64/bin/mysql.exe \
+  --mysqldump-command /mnt/d/mysql-8.0.32-winx64/bin/mysqldump.exe
+```
+
 ## 使用 Docker 中的 mysql 客户端
 
 保持上面的 `MYSQL_*` 环境变量。在仓库根目录运行，容器内主机一般仍为 `127.0.0.1`、端口为 `3306`；宿主机映射端口不适用于容器内连接。
