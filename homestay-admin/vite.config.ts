@@ -25,11 +25,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          "element-plus": ["element-plus", "@element-plus/icons-vue"],
-          echarts: ["echarts", "zrender"],
-          "china-area-data": ["element-china-area-data"],
-          "vue-core": ["vue", "vue-router", "pinia"],
+        // 按包路径分组：@vue/* 子包必须与 vue 同组，否则会被并入 element-plus，
+        // 形成 vue-core ⇄ element-plus 循环依赖，生产包白屏（"Cannot access … before initialization"）
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (/node_modules[\\/](@vue[\\/]|vue[\\/]|vue-router[\\/]|pinia[\\/]|vue-demi[\\/])/.test(id)) return "vue-core";
+          if (/node_modules[\\/](element-plus|@element-plus)[\\/]/.test(id)) return "element-plus";
+          if (/node_modules[\\/](echarts|zrender)[\\/]/.test(id)) return "echarts";
+          if (id.includes("element-china-area-data")) return "china-area-data";
         },
       },
     },
