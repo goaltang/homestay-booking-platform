@@ -17,25 +17,7 @@
           <br />
           <span class="host-highlight">获得额外收益</span>
         </h2>
-        <p class="host-desc">
-          无论是一间空房还是整栋别墅，都可以成为独特的民宿体验。已有数千位房东通过平台获得稳定收入。
-        </p>
-        <div class="host-stats">
-          <div class="host-stat">
-            <span class="host-stat-num">¥8,000+</span>
-            <span class="host-stat-label">月均收入</span>
-          </div>
-          <div class="host-stat-divider" />
-          <div class="host-stat">
-            <span class="host-stat-num">48h</span>
-            <span class="host-stat-label">快速上架</span>
-          </div>
-          <div class="host-stat-divider" />
-          <div class="host-stat">
-            <span class="host-stat-num">零门槛</span>
-            <span class="host-stat-label">免费入驻</span>
-          </div>
-        </div>
+        <p class="host-desc">无论是一间空房还是整栋别墅，都可以成为独特的民宿体验。</p>
         <el-button type="primary" class="host-btn" round size="large">
           立即成为房东
           <el-icon class="btn-icon"><ArrowRight /></el-icon>
@@ -153,6 +135,8 @@ const goToHost = () => {
 }
 
 .host-title {
+  /* 全局 h1-h6 设了深色，深色底上要继承容器的白字 */
+  color: inherit;
   font-size: 32px;
   font-weight: 800;
   line-height: 1.2;
@@ -170,36 +154,6 @@ const goToHost = () => {
   opacity: 0.8;
   margin: 0 0 24px;
   max-width: 440px;
-}
-
-/* 数据 */
-.host-stats {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 28px;
-}
-
-.host-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.host-stat-num {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.host-stat-label {
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-.host-stat-divider {
-  width: 1px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.2);
 }
 
 /* 按钮 */
@@ -264,10 +218,6 @@ const goToHost = () => {
   .host-desc {
     margin-left: auto;
     margin-right: auto;
-  }
-
-  .host-stats {
-    justify-content: center;
   }
 
   .host-image {

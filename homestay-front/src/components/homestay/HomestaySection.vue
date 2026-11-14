@@ -52,7 +52,7 @@ import HomestayCard from "./HomestayCard.vue";
 import HomestaySkeleton from "./HomestaySkeleton.vue";
 
 interface Props {
-  title: string; // 区域标题
+  title?: string; // 区域标题
   subtitle?: string; // 区域副标题
   homestays: any[]; // 房源数据
   homestayTypes?: any[]; // 房源类型数据

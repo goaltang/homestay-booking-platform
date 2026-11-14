@@ -61,22 +61,14 @@
 
 <script setup lang="ts">
 import { ArrowRight } from "@element-plus/icons-vue";
-import type { Banner, HomeStats } from "@/api/home";
+import type { Banner } from "@/api/home";
 
 interface Props {
   banners?: Banner[];
-  stats?: HomeStats;
 }
 
 withDefaults(defineProps<Props>(), {
   banners: () => [],
-  stats: () => ({
-    homestayCount: 10000,
-    cityCount: 50,
-    positiveRate: 98,
-    recentOrders: 0,
-    availableToday: 0,
-  }),
 });
 
 const emit = defineEmits<{
@@ -175,6 +167,8 @@ const handleBannerChange = (_index: number) => {
 }
 
 .hero-title {
+  /* 全局 h1-h6 设了深色，深色底上要继承容器的白字 */
+  color: inherit;
   font-family: var(--font-display);
   font-size: var(--text-hero);
   font-weight: 800;

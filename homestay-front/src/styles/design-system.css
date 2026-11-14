@@ -81,14 +81,24 @@
   font-size: var(--text-body) !important;
 }
 
-/* DatePicker: same treatment */
-.el-date-picker .el-input__wrapper {
+/* DatePicker: same treatment，仅限搜索栏字段内
+   （.el-date-picker 是弹出面板的类名，输入框是 .el-date-editor；
+   限定 .search-field 避免影响表单里需要边框的日期框） */
+.search-field .el-date-editor {
+  --el-date-editor-width: 100%;
+}
+
+.search-field .el-date-editor .el-input__wrapper {
   box-shadow: none !important;
   background: transparent !important;
   padding: 0 !important;
 }
 
-.el-date-picker .el-input__inner {
+.search-field .el-date-editor .el-input__prefix {
+  display: none;
+}
+
+.search-field .el-date-editor .el-input__inner {
   color: var(--color-neutral-700) !important;
   font-family: var(--font-body) !important;
   font-size: var(--text-body) !important;

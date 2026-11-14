@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { ElMessageBox } from "element-plus";
 import { Notification, Close } from "@element-plus/icons-vue";
 import { getAnnouncements, type Announcement } from "@/api/announcement";
 
@@ -40,9 +41,13 @@ const loadAnnouncements = async () => {
   }
 };
 
+// 没有公告详情页，直接弹窗展示全文（按纯文本渲染）
 const handleClick = (item: Announcement) => {
-  // 可跳转到公告详情页，或弹出对话框
-  console.log("公告点击:", item);
+  ElMessageBox.alert(item.content || item.title, item.title, {
+    confirmButtonText: "知道了",
+  }).catch(() => {
+    // 关闭弹窗不需要处理
+  });
 };
 
 onMounted(() => {
