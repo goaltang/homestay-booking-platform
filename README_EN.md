@@ -96,6 +96,27 @@ See the [structure guide](docs/项目结构总览.md) for directory responsibili
 
 ## Quick Start
 
+### One-Command Demo (Docker)
+
+To just see it running, install Docker and Python 3, then run:
+
+```bash
+git clone https://github.com/goaltang/homestay-booking-platform.git homestay3
+cd homestay3
+./deploy/demo.sh
+```
+
+The script generates a local `.env` with random secrets, builds and starts every service, imports the sanitized full demo dataset (about 5,000 listings and 8,000 orders), and creates an admin with a random password. The first build downloads dependencies and takes about 10–20 minutes. Then open:
+
+| Entry | URL | Account |
+| --- | --- | --- |
+| Customer app | http://localhost:8088 | guest `user_4424`, host `host_0097`, password `123456` for both |
+| Admin app | http://localhost:8089 | `admin`, password printed once when the script finishes |
+
+Running it again only starts the services; data is never imported twice. Listing images come from external hosts and need internet access. To host it on a cloud server, see the [deployment guide](docs/DEPLOY.md) (Chinese).
+
+### Local Development
+
 For local development, prepare Java 17, Maven, Node.js 20, MySQL 8, Redis, and Elasticsearch with the IK plugin. Start RabbitMQ to demonstrate the three messaging scenarios. See the [installation guide](docs/INSTALL.md#english-version) for infrastructure setup and configuration.
 
 > Elasticsearch is disabled by default; the backend starts with JPA search. To enable ES, start ES with IK, set `ELASTICSEARCH_ENABLED=true`, and restart the backend, then rebuild the index via the admin-only `POST /api/admin/search/index/rebuild` endpoint. Compose profiles `search` and `monitoring` control optional ES and monitoring services. Docker entry ports are shown in the [deployment diagram](docs/diagrams/deployment-apps.png).

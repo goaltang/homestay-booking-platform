@@ -69,6 +69,8 @@ python3 tools/database/import_data.py demo
 python3 tools/database/import_data.py demo-full
 ```
 
+使用 Docker 时，`./deploy/demo.sh` 会自动完成启动、导入和创建管理员，不必手动运行上面的命令。
+
 成功输出 `导入已提交：demo-full`。所有演示账号密码均为 `123456`，例如房东 `host_0097`。快照中**不含管理员**，需要另用 `admin` 子命令创建；先建管理员或后建均可，导入会保留已有管理员。
 
 只接受全新部署的库：Flyway 已迁移到 49 且没有更高版本，`users` 中只有 `ROLE_ADMIN`，`homestays`、`orders`、`reviews`、`messages`、`notifications` 为空。条件不满足时整体回滚，提示“目标库不满足导入条件”。

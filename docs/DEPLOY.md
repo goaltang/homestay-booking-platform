@@ -100,6 +100,10 @@ vim .env                  # 把 1.2.3.4 换成服务器公网 IP，并填写各�
 
 ## 4. 初始化数据
 
+**省事做法**：填好 `.env` 后直接运行 `./deploy/demo.sh`（可以代替上面的 `deploy.sh`）。它会启动服务、导入下文的完整演示数据、创建随机密码的管理员，并打印访问地址。脚本需要 `python3-venv` 来安装 `bcrypt`，先执行 `apt install -y python3-venv`。演示数据只导入空库，重复运行不会覆盖。
+
+需要逐步控制时，按以下手动步骤：
+
 ```bash
 # 为导入脚本准备 Python 环境
 apt install -y python3-venv
@@ -108,13 +112,15 @@ tools/database/.venv/bin/python -m pip install -r tools/database/requirements.tx
   -i https://mirrors.aliyun.com/pypi/simple/
 
 # 连接信息（数据库只在容器网络内，通过 docker compose exec 进入）
+# 用环境变量指定 compose 文件：导入脚本会拒绝含 -f 的 mysql 命令
+export COMPOSE_FILE=docker-compose.prod.yml
 export MYSQL_DATABASE=homestay_db
 export MYSQL_USER=homestay
 read -r -s -p 'DB_PASSWORD: ' MYSQL_PASSWORD; echo; export MYSQL_PASSWORD
 
 # 创建管理员（交互输入密码，没有默认密码）
 tools/database/.venv/bin/python tools/database/import_data.py \
-  --mysql-command "docker compose -f docker-compose.prod.yml exec -T -e MYSQL_PWD mysql mysql" \
+  --mysql-command "docker compose exec -T -e MYSQL_PWD mysql mysql" \
   admin --username admin --email admin@homestay.local
 ```
 
@@ -122,7 +128,7 @@ tools/database/.venv/bin/python tools/database/import_data.py \
 
 ```bash
 tools/database/.venv/bin/python tools/database/import_data.py \
-  --mysql-command "docker compose -f docker-compose.prod.yml exec -T -e MYSQL_PWD mysql mysql" \
+  --mysql-command "docker compose exec -T -e MYSQL_PWD mysql mysql" \
   demo
 ```
 
@@ -130,7 +136,7 @@ tools/database/.venv/bin/python tools/database/import_data.py \
 
 ```bash
 tools/database/.venv/bin/python tools/database/import_data.py \
-  --mysql-command "docker compose -f docker-compose.prod.yml exec -T -e MYSQL_PWD mysql mysql" \
+  --mysql-command "docker compose exec -T -e MYSQL_PWD mysql mysql" \
   demo-full
 ```
 
