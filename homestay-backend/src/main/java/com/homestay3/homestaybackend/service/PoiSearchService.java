@@ -39,7 +39,8 @@ public class PoiSearchService {
             return Collections.emptyList();
         }
 
-        String cacheKey = POI_CACHE_PREFIX + (city != null ? city : "all") + ":" + keyword;
+        // 条数也要进缓存键：回车兜底只取 1 条，不能让它占住下拉联想的 10 条结果
+        String cacheKey = POI_CACHE_PREFIX + (city != null ? city : "all") + ":" + limit + ":" + keyword;
 
         Object cached = redisTemplate.opsForValue().get(cacheKey);
         if (cached != null) {
@@ -51,6 +52,10 @@ public class PoiSearchService {
         }
 
         List<PoiSuggestionDTO> results = fetchFromAmap(keyword, city, limit);
+        if (results.isEmpty()) {
+            // 空结果可能来自 Key 未配置、网络失败或限流，不缓存，避免故障修复后仍持续 7 天返回空
+            return results;
+        }
 
         try {
             String json = objectMapper.writeValueAsString(results);
