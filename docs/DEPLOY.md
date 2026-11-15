@@ -142,6 +142,33 @@ tools/database/.venv/bin/python tools/database/import_data.py \
 
 导入前先停后端，避免并发写入：`docker compose -f docker-compose.prod.yml stop backend`，导入后再 `start backend`。展示时建议在页面上注明“演示环境，密码 123456”，并且**不要给演示账号管理员权限**。
 
+### 公开演示：一键体验与每晚重置
+
+在 `.env` 中填两个演示快照里的账号（`demo.sh` 生成的本地配置已自动填好）：
+
+```bash
+DEMO_GUEST_USERNAME=user_4424
+DEMO_HOST_USERNAME=host_0097
+```
+
+然后重新构建前端和后端：`docker compose -f docker-compose.prod.yml up -d --build front backend`。效果：
+
+- 登录页和未登录时的页面顶部出现「以房客体验」「以房东体验」，点击直接登录；
+- 后端拒绝这两个账号修改密码和个人资料（返回 403），避免被访客改掉后其他人无法登录。
+
+访客仍能下单、评价、发消息，数据会越积越乱，用 `deploy/demo-reset.sh` 每晚恢复为演示快照。它会**删除并重建 `homestay_db`**，只保留管理员账号（含当前密码），并清空 Redis 和消息队列；未配置 `DEMO_*` 的部署会拒绝执行：
+
+```bash
+# 手动执行一次
+./deploy/demo-reset.sh --yes
+
+# 每天 03:30 自动重置（备份在 04:00，二者错开）
+crontab -e
+30 3 * * * cd /opt/homestay3 && ./deploy/demo-reset.sh --yes >> /var/log/homestay-demo-reset.log 2>&1
+```
+
+重置期间后端停止约 2–4 分钟。`uploads/` 中访客上传的文件不会删除。
+
 ## 5. 验收清单
 
 ```bash

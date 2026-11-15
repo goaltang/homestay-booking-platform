@@ -14,6 +14,8 @@ This solo full-stack project serves as a learning and interview portfolio, with 
 
 **Project statement**: Flyway owns the database schema. At first startup, Flyway creates the schema and required reference data; the application retains amenity dictionary initialization. It creates no default administrator, demo accounts, or listings. Development data requires an explicit import. These learning and demo settings do not provide production security or data guarantees.
 
+**Live demo**: <http://119.29.183.64:8088> — click "以房客体验" (try as guest) or "以房东体验" (try as host) at the top of the page or on the login page to sign in without registering; the host console shows listings, orders, calendar, and earnings. Demo data resets every night, and demo accounts cannot change their password or profile. The site has no HTTPS, so do not enter real personal information.
+
 [Installation guide](docs/INSTALL.md#english-version) · [Database setup and upgrades](docs/DATABASE.md) · [Architecture gallery](docs/diagrams/README.md) · [Feature documentation](obsidian-vault/02-功能模块/) · [Documentation home](obsidian-vault/00-首页.md)
 
 ## Screenshots
@@ -126,7 +128,7 @@ The script generates a local `.env` with random secrets, builds and starts every
 | Customer app | http://localhost:8088 | guest `user_4424`, host `host_0097`, password `123456` for both |
 | Admin app | http://localhost:8089 | `admin`, password printed once when the script finishes |
 
-Running it again only starts the services; data is never imported twice. Listing images come from external hosts and need internet access. To host it on a cloud server, see the [deployment guide](docs/DEPLOY.md) (Chinese).
+The login page and the top of the home page show one-click "try as guest / host" buttons. Running it again only starts the services; data is never imported twice. Listing images come from external hosts and need internet access. To host it on a cloud server, see the [deployment guide](docs/DEPLOY.md) (Chinese).
 
 ### Local Development
 
