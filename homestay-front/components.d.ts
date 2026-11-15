@@ -22,6 +22,7 @@ declare module 'vue' {
     ChatDialog: typeof import('./src/components/chat/ChatDialog.vue')['default']
     CheckInCredentialDialog: typeof import('./src/components/order/CheckInCredentialDialog.vue')['default']
     CheckOutDialog: typeof import('./src/components/host/order/CheckOutDialog.vue')['default']
+    DemoBanner: typeof import('./src/components/common/DemoBanner.vue')['default']
     DepositDialog: typeof import('./src/components/host/order/DepositDialog.vue')['default']
     DisputeDialog: typeof import('./src/components/host/order/DisputeDialog.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
