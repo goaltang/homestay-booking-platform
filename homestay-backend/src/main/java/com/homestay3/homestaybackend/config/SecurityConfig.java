@@ -66,6 +66,8 @@ public class SecurityConfig {
                                 "/api/v1/homestays/search", "/api/v1/homestays/map-search",
                                 "/api/v1/homestays/map-clusters", "/api/v1/homestays/nearby",
                                 "/api/v1/homestays/landmark-search").permitAll()
+                        // 地图找房的地点联想：未登录访客也要能用（地址解析 /api/map/geocode 仍需登录）
+                        .requestMatchers(HttpMethod.GET, "/api/map/poi-suggestions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         .requestMatchers("/api/files/upload", "/api/files/uploadMultiple").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/files/**").authenticated()

@@ -23,6 +23,10 @@ import com.homestay3.homestaybackend.service.search.SearchPersonalizationService
 import com.homestay3.homestaybackend.service.search.UserBehaviorTrackingService;
 import com.homestay3.homestaybackend.util.SortUtils;
 import com.homestay3.homestaybackend.util.UserUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -77,6 +81,9 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class HomestaySearchServiceImpl implements HomestaySearchService {
 
+    /** 地图视野搜索单次最多返回的房源数，超过时前端提示放大地图 */
+    static final int MAP_SEARCH_MAX_RESULTS = 200;
+
     private final HomestayRepository homestayRepository;
     private final HomestayTypeRepository homestayTypeRepository;
     private final AmenityRepository amenityRepository;
@@ -89,10 +96,19 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
     private final OrderRepository orderRepository;
     private final ReviewRepository reviewRepository;
     private final SearchPersonalizationService searchPersonalizationService;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional(readOnly = true)
     public List<HomestayDTO> searchHomestays(HomestaySearchRequest request) {
+        return searchHomestays(request, null, true);
+    }
+
+    /**
+     * @param maxResults 为 null 时返回全部匹配结果；否则在数据库层限制条数（地图视野搜索用，避免缩小地图时全表加载）
+     * @param enrichFeatures 是否生成推荐特色标签（逐条做价格与评价分析，较慢；地图不展示它）
+     */
+    private List<HomestayDTO> searchHomestays(HomestaySearchRequest request, Integer maxResults, boolean enrichFeatures) {
         boolean hasKeyword = StringUtils.hasText(request.getKeyword());
         boolean hasViewport = Stream.of(request.getNorthEastLat(), request.getNorthEastLng(),
                 request.getSouthWestLat(), request.getSouthWestLng()).allMatch(Objects::nonNull);
@@ -113,7 +129,10 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
                                         request.getCityCode(), request.getPropertyType());
                             } catch (Exception ignored) {}
                         }
-                        return applyPersonalization(applySearchSorting(esResults, request), request);
+                        List<HomestayDTO> sorted = applyPersonalization(applySearchSorting(esResults, request), request);
+                        return maxResults == null || sorted.size() <= maxResults
+                                ? sorted
+                                : new ArrayList<>(sorted.subList(0, maxResults));
                     }
                 }
             } catch (Exception e) {
@@ -122,132 +141,19 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
         }
 
         final String typeCodeToSearch = resolveTypeCode(request.getPropertyType());
+        Specification<Homestay> specification = buildSearchSpecification(request, typeCodeToSearch);
+        List<Homestay> homestays = maxResults == null
+                ? homestayRepository.findAll(homestaySpecificationSupport.withDetailFetch(specification))
+                : findPageWithDetails(specification, PageRequest.of(0, maxResults, buildJpaSort(request))).getContent();
 
-        Specification<Homestay> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.equal(root.get("status"), HomestayStatus.ACTIVE));
-
-            if (StringUtils.hasText(request.getKeyword())) {
-                String keyword = "%" + request.getKeyword() + "%";
-                predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(root.get("title"), keyword),
-                        criteriaBuilder.like(root.get("description"), keyword),
-                        criteriaBuilder.like(root.get("addressDetail"), keyword)));
-            }
-
-            if (StringUtils.hasText(request.getLocation())) {
-                String locationLike = "%" + request.getLocation() + "%";
-                String locationExact = request.getLocation();
-                predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(root.get("provinceText"), locationLike),
-                        criteriaBuilder.like(root.get("cityText"), locationLike),
-                        criteriaBuilder.like(root.get("districtText"), locationLike),
-                        criteriaBuilder.like(root.get("addressDetail"), locationLike),
-                        criteriaBuilder.equal(root.get("provinceCode"), locationExact),
-                        criteriaBuilder.equal(root.get("cityCode"), locationExact),
-                        criteriaBuilder.equal(root.get("districtCode"), locationExact)));
-            }
-
-            if (StringUtils.hasText(request.getProvinceCode())) {
-                predicates.add(root.get("provinceCode")
-                        .in(homestaySpecificationSupport.getProvinceCodeCandidates(request.getProvinceCode())));
-            }
-            if (StringUtils.hasText(request.getCityCode())) {
-                predicates.add(root.get("cityCode")
-                        .in(homestaySpecificationSupport.getCityCodeCandidates(request.getCityCode())));
-            }
-            if (StringUtils.hasText(request.getDistrictCode())) {
-                predicates.add(criteriaBuilder.equal(root.get("districtCode"), request.getDistrictCode().trim()));
-            }
-
-            if (request.getMinPrice() != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("price"), request.getMinPrice()));
-            }
-            if (request.getMaxPrice() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("price"), request.getMaxPrice()));
-            }
-
-            if (Stream.of(
-                    request.getNorthEastLat(),
-                    request.getNorthEastLng(),
-                    request.getSouthWestLat(),
-                    request.getSouthWestLng()).allMatch(Objects::nonNull)) {
-                BigDecimal minLatitude = request.getNorthEastLat().min(request.getSouthWestLat());
-                BigDecimal maxLatitude = request.getNorthEastLat().max(request.getSouthWestLat());
-                BigDecimal minLongitude = request.getNorthEastLng().min(request.getSouthWestLng());
-                BigDecimal maxLongitude = request.getNorthEastLng().max(request.getSouthWestLng());
-
-                predicates.add(criteriaBuilder.isNotNull(root.get("latitude")));
-                predicates.add(criteriaBuilder.isNotNull(root.get("longitude")));
-                predicates.add(criteriaBuilder.between(root.get("latitude"), minLatitude, maxLatitude));
-                predicates.add(criteriaBuilder.between(root.get("longitude"), minLongitude, maxLongitude));
-            }
-
-            if (request.getMinGuests() != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("maxGuests"), request.getMinGuests()));
-            }
-
-            if (typeCodeToSearch != null) {
-                predicates.add(criteriaBuilder.equal(root.get("type"), typeCodeToSearch));
-            }
-
-            List<String> requiredAmenityValues = request.getRequiredAmenities();
-            if (requiredAmenityValues != null && !requiredAmenityValues.isEmpty()) {
-                List<Amenity> requiredAmenities = amenityRepository.findByValueInIgnoreCase(requiredAmenityValues);
-                if (!requiredAmenities.isEmpty()) {
-                    for (Amenity amenity : requiredAmenities) {
-                        predicates.add(criteriaBuilder.isMember(amenity, root.get("amenities")));
-                    }
-                } else {
-                    predicates.add(criteriaBuilder.disjunction());
-                }
-            }
-
-            LocalDate checkInDate = request.getCheckInDate();
-            LocalDate checkOutDate = request.getCheckOutDate();
-            if (checkInDate != null && checkOutDate != null) {
-                Subquery<Long> subquery = query.subquery(Long.class);
-                Root<Order> orderRoot = subquery.from(Order.class);
-                subquery.select(orderRoot.get("id"));
-
-                Predicate homestayMatch = criteriaBuilder.equal(orderRoot.get("homestay"), root);
-                Predicate statusMatch = orderRoot.get("status").in(
-                        OrderStatus.CONFIRMED.name(),
-                        OrderStatus.PAID.name());
-                Predicate dateOverlap = criteriaBuilder.and(
-                        criteriaBuilder.greaterThan(orderRoot.get("checkOutDate"), checkInDate),
-                        criteriaBuilder.lessThan(orderRoot.get("checkInDate"), checkOutDate));
-
-                subquery.where(criteriaBuilder.and(homestayMatch, statusMatch, dateOverlap));
-                predicates.add(criteriaBuilder.not(criteriaBuilder.exists(subquery)));
-            }
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
-
-        List<Homestay> homestays = homestayRepository.findAll(
-                homestaySpecificationSupport.withDetailFetch(specification));
-
-        List<String> criteriaFromSearch = new ArrayList<>();
-        if (request.getRequiredAmenities() != null && !request.getRequiredAmenities().isEmpty()) {
-            request.getRequiredAmenities().forEach(amenityCode ->
-                    criteriaFromSearch.add("AMENITY_" + amenityCode.toUpperCase().replace(" ", "_")));
-        }
-        if (typeCodeToSearch != null) {
-            criteriaFromSearch.add("PROPERTY_TYPE_" + typeCodeToSearch.toUpperCase());
-        }
-
-        List<String> finalCriteria = criteriaFromSearch.isEmpty()
-                ? null
-                : Collections.unmodifiableList(criteriaFromSearch);
-
-        List<HomestayDTO> results = homestayDtoAssembler.toDTOs(homestays, finalCriteria);
+        List<HomestayDTO> results = homestayDtoAssembler.toDTOs(
+                homestays, buildFinalCriteria(request, typeCodeToSearch), enrichFeatures);
         return applyPersonalization(applySearchSorting(results, request), request);
     }
 
     @Override
     public List<HomestaySearchResultDTO> searchHomestayResults(HomestaySearchRequest request) {
-        return searchHomestays(request).stream()
+        return searchHomestays(request, resolveMapSearchLimit(request), false).stream()
                 .map(homestayDtoAssembler::toSearchResultDTO)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -296,8 +202,7 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
         Specification<Homestay> specification = buildSearchSpecification(request, typeCodeToSearch);
         Sort sort = buildJpaSort(request);
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Homestay> homestayPage = homestayRepository.findAll(
-                homestaySpecificationSupport.withDetailFetch(specification), pageable);
+        Page<Homestay> homestayPage = findPageWithDetails(specification, pageable);
 
         List<String> finalCriteria = buildFinalCriteria(request, typeCodeToSearch);
         List<HomestayDTO> dtos = homestayDtoAssembler.toDTOs(homestayPage.getContent(), finalCriteria);
@@ -308,6 +213,38 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
                 .collect(Collectors.toList());
 
         return new PageImpl<>(content, pageable, homestayPage.getTotalElements());
+    }
+
+    /**
+     * 先在数据库层分页查出本页房源，再按 id 批量抓取图片/设施等集合。
+     * 集合 fetch join 与分页同时使用时 Hibernate 会把全部匹配行读入内存再截取（HHH90003004），
+     * 房源数千条时单次搜索需要十几秒，所以拆成两步。
+     */
+    private Page<Homestay> findPageWithDetails(Specification<Homestay> specification, Pageable pageable) {
+        Page<Homestay> page = homestayRepository.findAll(specification, pageable);
+        if (page.isEmpty()) {
+            return page;
+        }
+
+        List<Long> ids = page.getContent().stream().map(Homestay::getId).collect(Collectors.toList());
+        Specification<Homestay> byIds = (root, query, criteriaBuilder) -> root.get("id").in(ids);
+        Map<Long, Homestay> detailed = homestayRepository
+                .findAll(homestaySpecificationSupport.withDetailFetch(byIds)).stream()
+                .collect(Collectors.toMap(Homestay::getId, homestay -> homestay, (left, right) -> left));
+
+        List<Homestay> ordered = ids.stream()
+                .map(detailed::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return new PageImpl<>(ordered, pageable, page.getTotalElements());
+    }
+
+    private int resolveMapSearchLimit(HomestaySearchRequest request) {
+        Integer size = request.getSize();
+        if (size == null || size <= 0) {
+            return MAP_SEARCH_MAX_RESULTS;
+        }
+        return Math.min(size, MAP_SEARCH_MAX_RESULTS);
     }
 
     private String resolveTypeCode(String propertyType) {
@@ -489,23 +426,43 @@ public class HomestaySearchServiceImpl implements HomestaySearchService {
         double gridSize = resolveClusterGridSize(zoom);
 
         Map<String, MapClusterAccumulator> clusters = new LinkedHashMap<>();
-        searchHomestays(request).stream()
-                .filter(Objects::nonNull)
-                .filter(homestay -> homestay.getLatitude() != null && homestay.getLongitude() != null)
-                .forEach(homestay -> {
-                    double latitude = homestay.getLatitude();
-                    double longitude = homestay.getLongitude();
-                    long latitudeBucket = (long) Math.floor(latitude / gridSize);
-                    long longitudeBucket = (long) Math.floor(longitude / gridSize);
-                    String key = latitudeBucket + ":" + longitudeBucket;
+        findCoordinates(request).forEach(coordinate -> {
+            double latitude = coordinate[0];
+            double longitude = coordinate[1];
+            long latitudeBucket = (long) Math.floor(latitude / gridSize);
+            long longitudeBucket = (long) Math.floor(longitude / gridSize);
+            String key = latitudeBucket + ":" + longitudeBucket;
 
-                    clusters.computeIfAbsent(key, ignored -> new MapClusterAccumulator())
-                            .add(latitude, longitude);
-                });
+            clusters.computeIfAbsent(key, ignored -> new MapClusterAccumulator())
+                    .add(latitude, longitude);
+        });
 
         return clusters.values().stream()
                 .map(MapClusterAccumulator::toDTO)
                 .sorted(Comparator.comparing(MapClusterDTO::getCount).reversed())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 聚合只需要坐标：只查经纬度两列，不加载房源实体、图片与设施。
+     */
+    private List<double[]> findCoordinates(HomestaySearchRequest request) {
+        Specification<Homestay> specification =
+                buildSearchSpecification(request, resolveTypeCode(request.getPropertyType()));
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Tuple> query = criteriaBuilder.createTupleQuery();
+        Root<Homestay> root = query.from(Homestay.class);
+        query.multiselect(root.get("latitude").alias("lat"), root.get("longitude").alias("lng"));
+        Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        query.where(criteriaBuilder.and(
+                predicate,
+                criteriaBuilder.isNotNull(root.get("latitude")),
+                criteriaBuilder.isNotNull(root.get("longitude"))));
+
+        return entityManager.createQuery(query).getResultList().stream()
+                .map(tuple -> new double[] {
+                        ((Number) tuple.get("lat")).doubleValue(),
+                        ((Number) tuple.get("lng")).doubleValue()})
                 .collect(Collectors.toList());
     }
 

@@ -54,6 +54,11 @@ interface MapSearchMock {
   resetSearchMode: ReturnType<typeof vi.fn>;
   setOnViewDetail: ReturnType<typeof vi.fn>;
   rememberNormalSearchSnapshot: ReturnType<typeof vi.fn>;
+  lastSelection: Ref<{ id: number; source: "card" | "marker" } | null>;
+  isResultTruncated: Ref<boolean>;
+  clusterTotal: ReturnType<typeof vi.fn>;
+  setClusterMode: ReturnType<typeof vi.fn>;
+  zoomMapBy: ReturnType<typeof vi.fn>;
 }
 
 type CurrentSearchContext = MapSearchMock["currentSearchContext"]["value"];
@@ -140,7 +145,9 @@ const createMapSearchMock = (): MapSearchMock => {
       };
     }
   );
-  const selectHomestay = vi.fn((id: number) => {
+  const lastSelection = ref<{ id: number; source: "card" | "marker" } | null>(null);
+  const selectHomestay = vi.fn((id: number, options?: { source?: "card" | "marker" }) => {
+    lastSelection.value = { id, source: options?.source ?? "card" };
     selectedHomestayId.value = id;
     currentSearchContext.value = {
       ...currentSearchContext.value,
@@ -238,6 +245,13 @@ const createMapSearchMock = (): MapSearchMock => {
   const rememberNormalSearchSnapshot = vi.fn();
 
   return {
+    lastSelection,
+    isResultTruncated: ref(false),
+    clusterTotal: vi.fn(() => 0),
+    setClusterMode: vi.fn(async (enabled: boolean) => {
+      useClusterMode.value = enabled;
+    }),
+    zoomMapBy: vi.fn(),
     homestays,
     selectedHomestayId,
     hoveredHomestayId,
@@ -595,5 +609,51 @@ describe("MapSearch", () => {
       mapLng: "121.473700",
       mapZoom: "14",
     });
+  });
+
+  it("移动端点击卡片后列表保持收起以露出地图，点击地图标记才展开列表", async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 375 });
+    try {
+      currentMapSearchMock.homestays.value = [
+        { id: 1, title: "房源1", price: 100, coverImage: "" },
+        { id: 2, title: "房源2", price: 200, coverImage: "" },
+      ];
+      const { wrapper } = await mountMapSearch();
+      const list = () => wrapper.find(".left-list");
+
+      await wrapper.find('.list-scroll [data-id="1"]').trigger("click");
+      await settle();
+      expect(currentMapSearchMock.selectHomestay).toHaveBeenLastCalledWith(1, { source: "card" });
+      expect(list().classes()).not.toContain("is-mobile-expanded");
+
+      (currentMapSearchMock.selectHomestay as (id: number, options?: object) => void)(2, {
+        source: "marker",
+      });
+      await settle();
+      expect(list().classes()).toContain("is-mobile-expanded");
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+    }
+  });
+
+  it("选中联想地标后回车不会重复搜索", async () => {
+    const { wrapper } = await mountMapSearch({
+      mode: "landmark",
+      landmark: "科技园",
+      landmarkLat: "22.543100",
+      landmarkLng: "114.057900",
+      radiusKm: "5",
+      q: "科技园",
+    });
+    currentMapSearchMock.searchByLandmark.mockClear();
+    poiSuggestionsMock.mockClear();
+
+    const input = findInputByPlaceholder(wrapper, "搜索目的地");
+    await input.trigger("keyup", { key: "Enter" });
+    await settle();
+
+    expect(currentMapSearchMock.searchByLandmark).not.toHaveBeenCalled();
+    expect(poiSuggestionsMock).not.toHaveBeenCalled();
   });
 });

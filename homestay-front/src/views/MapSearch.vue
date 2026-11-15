@@ -87,7 +87,13 @@
       </div>
 
       <div class="filter-item">
-        <el-popover placement="bottom" :width="320" trigger="click" @hide="triggerAutoSearch">
+        <el-popover
+          v-model:visible="isPricePopoverOpen"
+          placement="bottom"
+          :width="320"
+          trigger="click"
+          @hide="handlePricePopoverHide"
+        >
           <template #reference>
             <el-button class="filter-btn" :class="{ 'is-active': minPrice || maxPrice }">
               {{ priceLabel }}
@@ -121,7 +127,9 @@
                 "
                 >重置</el-button
               >
-              <el-button size="small" type="primary" @click="triggerAutoSearch">确定</el-button>
+              <el-button size="small" type="primary" @click="isPricePopoverOpen = false"
+                >确定</el-button
+              >
             </div>
           </div>
         </el-popover>
@@ -187,6 +195,14 @@
           </div>
         </div>
 
+        <div v-else-if="useClusterMode" class="state-container cluster-state">
+          <el-icon :size="44" color="#ff385c"><Grid /></el-icon>
+          <p v-if="isLoading">正在统计房源分布…</p>
+          <p v-else>当前视野共 {{ clusterTotal() }} 个房源</p>
+          <p class="hint-text">点击地图上的聚合点放大查看房源</p>
+          <el-button size="small" @click="handleToggleCluster">退出聚合</el-button>
+        </div>
+
         <div v-else-if="searchError && homestays.length === 0" class="state-container error-state">
           <el-icon :size="44" color="#f56c6c"><LocationInformation /></el-icon>
           <p>{{ searchError }}</p>
@@ -201,13 +217,21 @@
             <el-button type="primary" plain size="small" @click="handleReset"
               >清除所有筛选</el-button
             >
-            <el-button size="small" @click="handleExitSpecialSearch">查看全城房源</el-button>
+            <el-button v-if="searchMode !== 'normal'" size="small" @click="handleExitSpecialSearch"
+              >退出{{ searchMode === "landmark" ? "地标" : "附近" }}搜索</el-button
+            >
+            <el-button v-else-if="viewportSearchEnabled" size="small" @click="handleZoomOut"
+              >缩小地图看看</el-button
+            >
           </div>
         </div>
 
         <div v-else class="list-wrapper" ref="listRef">
           <div class="list-header">
             <span class="count-text">找到 {{ homestays.length }} 个房源</span>
+            <span v-if="isResultTruncated" class="truncated-hint"
+              >房源较多，仅显示部分，放大地图查看更多</span
+            >
           </div>
           <div class="list-scroll">
             <MapHomestayCard
@@ -404,6 +428,9 @@ const {
   searchError,
   mapView,
   currentSearchContext,
+  lastSelection,
+  isResultTruncated,
+  clusterTotal,
   initMap,
   applySearchState,
   retrySearch,
@@ -411,14 +438,14 @@ const {
   selectHomestay,
   hoverHomestay,
   destroyMap,
-  loadClusters,
-  loadHomestays,
+  setClusterMode,
   locateUser,
   searchNearby,
   searchByLandmark,
   resetSearchMode,
   setOnViewDetail,
   rememberNormalSearchSnapshot,
+  zoomMapBy,
 } = useMapSearch();
 
 const selectedRegion = ref<string[]>([]);
@@ -434,6 +461,10 @@ const isSearchingSuggestions = ref(false);
 const isMobileListExpanded = ref(false);
 const isMobileFilterOpen = ref(false);
 const isMobileListDragging = ref(false);
+const isPricePopoverOpen = ref(false);
+// 上次已应用的价格区间，关闭价格弹层时据此判断是否需要重新搜索
+let appliedPriceKey = "-";
+const getPriceKey = () => `${minPrice.value ?? ""}-${maxPrice.value ?? ""}`;
 const dateRange = ref<[string, string] | null>(null);
 const landmarkLat = ref<number | undefined>(undefined);
 const landmarkLng = ref<number | undefined>(undefined);
@@ -595,6 +626,7 @@ const applyHydratedState = (state: HydratedQueryState) => {
     resolvedLandmark.value = null;
   }
   globalSearchKeyword.value = state.globalSearchKeyword;
+  appliedPriceKey = getPriceKey();
 };
 
 const applyRouteStateFromQuery = async () => {
@@ -692,6 +724,7 @@ const onHandleTouchEnd = (e: TouchEvent) => {
 };
 
 const triggerAutoSearch = debounce(async () => {
+  appliedPriceKey = getPriceKey();
   if (dateRange.value && dateRange.value.length === 2) {
     checkInDate.value = dateRange.value[0];
     checkOutDate.value = dateRange.value[1];
@@ -801,21 +834,12 @@ const handleSearchEnter = async () => {
     return;
   }
 
-  // 如果当前输入匹配已解析的地标，仅刷新筛选条件
+  // 当前输入就是已生效的地标：通常是用回车选中了联想项（select 已经发起搜索），不再重复搜索
   if (
     searchMode.value === "landmark" &&
     resolvedLandmarkName.value === keyword &&
     hasResolvedLandmark.value
   ) {
-    trackSearch({
-      keyword,
-      cityCode: getLandmarkSuggestionCity(),
-    });
-    await searchByLandmark(
-      { latitude: landmarkLat.value!, longitude: landmarkLng.value!, name: keyword },
-      { radius: nearbyRadius.value, filters: buildFiltersFromForm(), fitView: true }
-    );
-    await syncQueryFromForm(buildQueryState(), "push", { skipRouteReplay: true });
     return;
   }
 
@@ -888,7 +912,7 @@ const handleRetrySearch = async () => {
 
 const handleCardClick = (homestay: MapHomestay) => {
   trackClick(homestay.id);
-  selectHomestay(homestay.id);
+  selectHomestay(homestay.id, { source: "card" });
   // 移动端自动收起列表，露出地图标记
   if (window.innerWidth <= 768) {
     isMobileListExpanded.value = false;
@@ -938,15 +962,28 @@ const handleUseCurrentLocation = async () => {
 };
 
 const handleToggleCluster = async () => {
-  useClusterMode.value = !useClusterMode.value;
-
-  if (useClusterMode.value) {
+  const enabling = !useClusterMode.value;
+  if (enabling && searchMode.value !== "normal") {
+    // 聚合只在普通视野模式下有意义，先退出地标/附近搜索
+    globalSearchKeyword.value = "";
+    clearResolvedLandmark();
     await resetSearchMode({ filters: buildFiltersFromForm() });
-    await loadClusters();
+    await setClusterMode(enabling);
+    await syncQueryFromForm(buildQueryState(), "push", { skipRouteReplay: true });
     return;
   }
+  await setClusterMode(enabling);
+};
 
-  await loadHomestays({ fitView: true });
+const handleZoomOut = () => {
+  zoomMapBy(-2);
+};
+
+const handlePricePopoverHide = () => {
+  if (getPriceKey() === appliedPriceKey) {
+    return;
+  }
+  triggerAutoSearch();
 };
 
 const handleExitSpecialSearch = async () => {
@@ -968,13 +1005,14 @@ const scrollToSelectedCard = () => {
   }
 };
 
-watch(selectedHomestayId, (newId) => {
-  if (newId) {
-    scrollToSelectedCard();
-    // 移动端：当点击地图锚点时，自动弹出一半抽屉展示详情
-    if (window.innerWidth <= 768) {
-      isMobileListExpanded.value = true;
-    }
+watch(lastSelection, (selection) => {
+  if (!selection) {
+    return;
+  }
+  scrollToSelectedCard();
+  // 移动端：点击地图标记时展开列表展示卡片；点击卡片时列表已经收起去露出地图，不再展开
+  if (window.innerWidth <= 768 && selection.source === "marker") {
+    isMobileListExpanded.value = true;
   }
 });
 
@@ -1061,7 +1099,13 @@ onUnmounted(() => {
 }
 
 .search-wrapper {
-  width: 320px;
+  width: 260px;
+}
+/* 收窄日期与地区，1366 宽度下筛选栏保持一行。
+   Element Plus 的日期/级联组件根节点拿不到 scoped 属性，所以从本组件的包裹层用 :deep 选中 */
+.filter-item :deep(.filter-date) {
+  --el-date-editor-width: 260px;
+  width: 260px;
 }
 .smart-search-input {
   width: 100%;
@@ -1170,6 +1214,14 @@ onUnmounted(() => {
   border-bottom: 1px solid #f1f5f9;
   font-weight: 500;
   color: #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.truncated-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: #b45309;
 }
 
 .list-scroll {
@@ -1250,8 +1302,17 @@ onUnmounted(() => {
   background: #f1f5f9;
 }
 
-.region-cascader {
-  width: 200px;
+.region-filter :deep(.region-cascader) {
+  width: 170px;
+}
+/* 全局样式去掉了级联选择器边框（用于首页内嵌搜索栏），这里恢复成与其他筛选项一致的输入框 */
+.region-filter :deep(.el-input__wrapper) {
+  box-shadow: 0 0 0 1px var(--el-border-color) inset !important;
+  background: var(--el-fill-color-blank) !important;
+  padding: 1px 11px !important;
+}
+.region-filter :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--el-border-color-hover) inset !important;
 }
 
 .mobile-filter-btn {
@@ -1306,6 +1367,14 @@ onUnmounted(() => {
   height: 100%;
   color: #64748b;
   gap: 16px;
+}
+.state-container .hint-text {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+}
+.cluster-state p {
+  margin: 0;
 }
 .empty-actions {
   display: flex;

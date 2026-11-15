@@ -48,32 +48,6 @@ export const toOptionalNumber = (value: unknown): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-/** 校验图片 URL 是否可信（仅允许 http/https 且域名可信） */
-export const isValidImageUrl = (url: string): boolean => {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    if (!["http:", "https:"].includes(parsed.protocol)) return false;
-    const trustedHosts = new Set(["localhost", "127.0.0.1", window.location.hostname]);
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-    if (apiBaseUrl) {
-      try {
-        trustedHosts.add(new URL(apiBaseUrl, window.location.origin).hostname);
-      } catch {
-        // ignore invalid configured base url
-      }
-    }
-
-    if (!trustedHosts.has(parsed.hostname) && !url.startsWith("https://picsum.photos")) {
-      return false;
-    }
-    return true;
-  } catch {
-    // 相对路径认为是安全的（会被加上 base URL）
-    return true;
-  }
-};
-
 /** 将图片路径补全为可访问的完整 URL */
 export const getImageUrl = (imageUrl: string): string => {
   if (!imageUrl) return "https://picsum.photos/300/200";
