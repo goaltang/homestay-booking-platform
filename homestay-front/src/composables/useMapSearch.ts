@@ -11,7 +11,7 @@
 import { ref } from "vue";
 import { useMapSearchState } from "./useMapSearchState";
 import { ensureAMapLoaded } from "@/utils/amapLoader";
-import { getCityCenter, toOptionalNumber, isValidImageUrl, getImageUrl } from "./mapSearchUtils";
+import { getCityCenter, toOptionalNumber, getImageUrl } from "./mapSearchUtils";
 
 import {
   mapSearchHomestays,
@@ -92,6 +92,12 @@ export interface LandmarkCandidate {
 
 type SearchMode = "normal" | "nearby" | "landmark";
 
+/** 地图单次请求的房源上限（后端另有 200 的硬上限） */
+export const MAP_RESULT_LIMIT = 100;
+
+/** 价格标记的默认锚点偏移 */
+const MARKER_BASE_OFFSET: [number, number] = [-40, -40];
+
 type ViewportBounds = Required<
   Pick<SearchFilters, "northEastLat" | "northEastLng" | "southWestLat" | "southWestLng">
 >;
@@ -156,12 +162,20 @@ export function useMapSearch() {
   const searchRadiusCircle = ref<any>(null);
   const currentCityCode = ref<string>("");
   const isLocating = ref(false);
+  // 最近一次选中事件：每次选中都换一个新对象，重复选中同一房源也能被监听到；
+  // source 区分来自卡片还是地图标记（移动端据此决定是否展开列表）
+  const lastSelection = ref<{ id: number; source: "card" | "marker" } | null>(null);
+  // 视野内房源超过单次上限，仅展示了部分
+  const isResultTruncated = ref(false);
 
   // 防抖定时器
   let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  let suppressedViewportEvents = 0;
   let latestSearchRequestId = 0;
   let pendingViewportSearch = false;
+  // 程序主动移动地图（定位、居中、适配视野）期间产生的 moveend/zoomend 不触发视野搜索。
+  // 用时间窗口而不是事件计数：同一次移动触发的事件数量不固定，计数会残留并吞掉用户下一次拖动。
+  let isProgrammaticMove = false;
+  let programmaticMoveTimer: ReturnType<typeof setTimeout> | null = null;
 
   const hasUsableCoordinates = (
     homestay: Pick<MapHomestay, "latitude" | "longitude" | "lat" | "lng">
@@ -171,8 +185,20 @@ export function useMapSearch() {
     return Number.isFinite(lat) && Number.isFinite(lng);
   };
 
-  const suppressViewportSearch = (count = 1) => {
-    suppressedViewportEvents += count;
+  const releaseProgrammaticMoveAfter = (delayMs: number) => {
+    if (programmaticMoveTimer) {
+      clearTimeout(programmaticMoveTimer);
+    }
+    programmaticMoveTimer = setTimeout(() => {
+      isProgrammaticMove = false;
+      programmaticMoveTimer = null;
+    }, delayMs);
+  };
+
+  /** 标记接下来的地图移动由程序触发；没有事件到来时 600ms 后自动解除（覆盖动画时长） */
+  const suppressViewportSearch = () => {
+    isProgrammaticMove = true;
+    releaseProgrammaticMoveAfter(600);
   };
 
   const cloneFilters = (value: SearchFilters = {}) => ({ ...removeViewportBounds(value) });
@@ -362,7 +388,7 @@ export function useMapSearch() {
       ].filter(Boolean);
 
       if (fitOverlays.length > 0) {
-        suppressViewportSearch(2);
+        suppressViewportSearch();
         mapInstance.value.setFitView(fitOverlays, false, [60, 60, 60, 60], undefined, true);
       }
     }
@@ -416,39 +442,9 @@ export function useMapSearch() {
     };
   };
 
-  const hasSearchCriteriaBeyondViewport = (searchRequest: SearchFilters) => {
-    return Boolean(
-      searchRequest.keyword ||
-      searchRequest.provinceCode ||
-      searchRequest.cityCode ||
-      searchRequest.districtCode ||
-      searchRequest.minPrice !== undefined ||
-      searchRequest.maxPrice !== undefined ||
-      searchRequest.minGuests !== undefined ||
-      searchRequest.maxGuests !== undefined ||
-      searchRequest.checkInDate ||
-      searchRequest.checkOutDate
-    );
-  };
-
   const removeViewportBounds = <T extends SearchFilters>(searchRequest: T) => {
     const { northEastLat, northEastLng, southWestLat, southWestLng, ...rest } = searchRequest;
     return rest;
-  };
-
-  const isWithinViewportBounds = (homestay: MapHomestay, bounds: ViewportBounds) => {
-    if (!hasUsableCoordinates(homestay)) {
-      return false;
-    }
-
-    const lat = homestay.lat ?? homestay.latitude!;
-    const lng = homestay.lng ?? homestay.longitude!;
-    const minLat = Math.min(bounds.northEastLat, bounds.southWestLat);
-    const maxLat = Math.max(bounds.northEastLat, bounds.southWestLat);
-    const minLng = Math.min(bounds.northEastLng, bounds.southWestLng);
-    const maxLng = Math.max(bounds.northEastLng, bounds.southWestLng);
-
-    return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
   };
 
   const setMapView = (nextMapView: MapViewState) => {
@@ -457,7 +453,7 @@ export function useMapSearch() {
     const hasCenter = nextMapView.centerLat !== undefined && nextMapView.centerLng !== undefined;
     const hasZoom = nextMapView.zoom !== undefined;
 
-    suppressViewportSearch(2);
+    suppressViewportSearch();
     if (hasCenter && hasZoom && mapInstance.value.setZoomAndCenter) {
       mapInstance.value.setZoomAndCenter(
         nextMapView.zoom,
@@ -539,7 +535,7 @@ export function useMapSearch() {
       return;
     }
 
-    suppressViewportSearch(2);
+    suppressViewportSearch();
     // 统一使用 setCenter + immediately=true，避免 panTo 的缓慢动画导致卡顿
     mapInstance.value.setCenter([lng, lat], true);
     syncMapViewState();
@@ -591,6 +587,8 @@ export function useMapSearch() {
       map.on("moveend", handleMapMoveEnd);
       // 监听缩放结束事件
       map.on("zoomend", handleMapMoveEnd);
+      // 缩放后像素距离变化，重新计算价格标记的防重叠偏移
+      map.on("zoomend", () => applyMarkerAntiOverlap(markers.value));
 
       isMapReady.value = true;
       syncMapViewState();
@@ -608,8 +606,9 @@ export function useMapSearch() {
   const handleMapMoveEnd = () => {
     syncMapViewState();
 
-    if (suppressedViewportEvents > 0) {
-      suppressedViewportEvents--;
+    if (isProgrammaticMove) {
+      // 同一次程序移动可能连续触发 zoomend + moveend，事件停止后很快解除
+      releaseProgrammaticMoveAfter(150);
       return;
     }
 
@@ -659,6 +658,11 @@ export function useMapSearch() {
    * 加载房源数据
    */
   const loadHomestays = async (options: { fitView?: boolean } = {}) => {
+    // 聚合模式下筛选条件变化只刷新聚合点
+    if (useClusterMode.value) {
+      await loadClusters();
+      return;
+    }
     const { fitView = true } = options;
     const requestId = ++latestSearchRequestId;
     isLoading.value = true;
@@ -685,39 +689,24 @@ export function useMapSearch() {
       if (filters.value.southWestLng !== undefined)
         searchRequest.southWestLng = filters.value.southWestLng;
 
-      // 分页加载所有可见区域的房源
+      // 单次最多取 MAP_RESULT_LIMIT 条，超过时提示用户放大地图
       searchRequest.page = 0;
-      searchRequest.size = 100;
+      searchRequest.size = MAP_RESULT_LIMIT;
 
       const viewportBounds = getSearchRequestViewportBounds(searchRequest);
-      let response = viewportBounds
+      const response = viewportBounds
         ? await mapSearchHomestays(searchRequest)
         : await searchHomestays(searchRequest);
-      let data = extractHomestayList(response);
-      let usedFallbackWithoutViewport = false;
-
-      if (data.length === 0 && viewportBounds && hasSearchCriteriaBeyondViewport(searchRequest)) {
-        response = await searchHomestays(removeViewportBounds(searchRequest));
-        data = extractHomestayList(response);
-        usedFallbackWithoutViewport = true;
-      }
+      const data = extractHomestayList(response);
 
       if (requestId !== latestSearchRequestId) {
         return;
       }
-      // 转换为 MapHomestay 格式
-      let list: MapHomestay[] = data.map(normalizeHomestay);
 
       // 仅保留已在后端持久化坐标的房源；不再运行时调用高德地理编码 API
-      if (usedFallbackWithoutViewport && viewportBounds) {
-        list = list.filter(
-          (homestay) =>
-            hasUsableCoordinates(homestay) && isWithinViewportBounds(homestay, viewportBounds)
-        );
-      } else {
-        list = list.filter((homestay) => hasUsableCoordinates(homestay));
-      }
+      const list = data.map(normalizeHomestay).filter((homestay) => hasUsableCoordinates(homestay));
 
+      isResultTruncated.value = data.length >= MAP_RESULT_LIMIT;
       homestays.value = list;
       syncActiveHomestayState(list);
       rememberNormalSearchSnapshot();
@@ -756,6 +745,11 @@ export function useMapSearch() {
     const AMap = (window as any).AMap;
     if (!AMap) return;
 
+    // 先复位，缩放后重新排布时不会沿用上一次的偏移
+    for (const marker of markerList) {
+      marker.setOffset(new AMap.Pixel(...MARKER_BASE_OFFSET));
+    }
+
     const minDistance = 52; // 像素阈值（价格标记宽度约 50-60px）
     const stepOffset = 28; // 每个重叠层向上偏移的像素
     const positions: { marker: any; x: number; y: number; offsetIndex: number }[] = [];
@@ -790,8 +784,8 @@ export function useMapSearch() {
 
     for (const p of positions) {
       if (p.offsetIndex > 0) {
-        const offsetY = -40 - p.offsetIndex * stepOffset;
-        p.marker.setOffset(new AMap.Pixel(-40, offsetY));
+        const offsetY = MARKER_BASE_OFFSET[1] - p.offsetIndex * stepOffset;
+        p.marker.setOffset(new AMap.Pixel(MARKER_BASE_OFFSET[0], offsetY));
       }
     }
   };
@@ -822,7 +816,7 @@ export function useMapSearch() {
     updateSearchContextOverlays({ fitView });
 
     if (fitView && markers.value.length > 0 && !getSearchAreaContext()) {
-      suppressViewportSearch(2);
+      suppressViewportSearch();
       mapInstance.value.setFitView(markers.value, false, [60, 60, 60, 60], undefined, true);
     }
   };
@@ -856,13 +850,13 @@ export function useMapSearch() {
     const marker = new AMap.Marker({
       position: [markerLng, markerLat],
       content: markerEl,
-      offset: new AMap.Pixel(-40, -40),
+      offset: new AMap.Pixel(...MARKER_BASE_OFFSET),
       extData: homestay,
     });
 
     // 点击事件
     marker.on("click", () => {
-      selectHomestay(homestay.id);
+      selectHomestay(homestay.id, { source: "marker" });
     });
 
     // 悬停事件
@@ -964,11 +958,10 @@ export function useMapSearch() {
       if (!mapInstance.value) return;
       const currentZoom = mapInstance.value.getZoom() || 12;
       const nextZoom = Math.min(currentZoom + 2, 18);
-      suppressViewportSearch(2);
+      suppressViewportSearch();
       mapInstance.value.setZoomAndCenter(nextZoom, [cluster.longitude, cluster.latitude], true);
       syncMapViewState();
-      useClusterMode.value = false;
-      void loadHomestays({ fitView: false });
+      void setClusterMode(false);
     });
 
     return marker;
@@ -991,7 +984,8 @@ export function useMapSearch() {
   /**
    * 选择房源
    */
-  const selectHomestay = (id: number) => {
+  const selectHomestay = (id: number, options: { source?: "card" | "marker" } = {}) => {
+    lastSelection.value = { id, source: options.source ?? "card" };
     selectedHomestayId.value = id;
     hoveredHomestayId.value = id;
     syncSearchContext();
@@ -1008,12 +1002,16 @@ export function useMapSearch() {
     const container = document.createElement("div");
     container.className = "map-info-window";
 
+    // 与列表卡片用同一套地址解析，保证弹窗和卡片是同一张图；
+    // 用 <img src> 而不是 CSS background，地址里的特殊字符不会影响样式解析
     const imageDiv = document.createElement("div");
     imageDiv.className = "info-image";
-    const safeImageUrl = isValidImageUrl(homestay.coverImage)
-      ? getImageUrl(homestay.coverImage)
-      : "https://picsum.photos/300/200";
-    imageDiv.style.backgroundImage = `url('${safeImageUrl}')`;
+    const imageEl = document.createElement("img");
+    imageEl.src = getImageUrl(homestay.coverImage);
+    imageEl.alt = homestay.title || "";
+    imageEl.loading = "lazy";
+    imageEl.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+    imageDiv.appendChild(imageEl);
 
     const contentDiv = document.createElement("div");
     contentDiv.className = "info-content";
@@ -1082,7 +1080,7 @@ export function useMapSearch() {
     if (newFilters.cityCode && mapInstance.value) {
       const center = getCityCenter(newFilters.cityCode);
       if (center) {
-        suppressViewportSearch(2);
+        suppressViewportSearch();
         mapInstance.value.setCenter([center.lng, center.lat], true);
       }
     }
@@ -1115,7 +1113,7 @@ export function useMapSearch() {
     } else if (!skipCityCenter && newFilters.cityCode && mapInstance.value) {
       const center = getCityCenter(newFilters.cityCode);
       if (center) {
-        suppressViewportSearch(2);
+        suppressViewportSearch();
         mapInstance.value.setCenter([center.lng, center.lat], true);
         syncMapViewState();
       }
@@ -1167,30 +1165,72 @@ export function useMapSearch() {
     const viewportBounds = getViewportBounds();
     if (!viewportBounds) return;
 
+    const requestId = ++latestSearchRequestId;
     isLoading.value = true;
     searchError.value = null;
 
     try {
       const zoom = mapInstance.value.getZoom() || 12;
       const request = {
-        ...filters.value,
+        ...cloneFilters(filters.value),
         ...viewportBounds,
-        zoom,
+        zoom: Math.round(zoom),
       };
 
       const response = await getMapClusters(request);
+      if (requestId !== latestSearchRequestId || !useClusterMode.value) {
+        return;
+      }
       const payload = response?.data ?? response;
       clusters.value = Array.isArray(payload) ? payload : [];
       clearMarkers();
       updateClusterMarkers();
     } catch (e) {
+      if (requestId !== latestSearchRequestId) {
+        return;
+      }
       console.error("[MapSearch] 加载聚合点失败:", e);
       searchError.value = "加载聚合点失败";
       clusters.value = [];
       clearClusterMarkers();
     } finally {
-      isLoading.value = false;
+      if (requestId === latestSearchRequestId) {
+        isLoading.value = false;
+      }
     }
+  };
+
+  /** 聚合点的房源总数（聚合模式下列表区展示用） */
+  const clusterTotal = () => clusters.value.reduce((sum, cluster) => sum + (cluster.count || 0), 0);
+
+  /**
+   * 切换聚合模式。
+   * 开启：列表清空（聚合模式只展示分布），地图换成聚合点；
+   * 关闭：立刻移除聚合点，按当前视野重新搜索，不跳转地图。
+   */
+  const setClusterMode = async (enabled: boolean) => {
+    useClusterMode.value = enabled;
+    infoWindow.value?.close();
+
+    if (enabled) {
+      homestays.value = [];
+      isResultTruncated.value = false;
+      syncActiveHomestayState([]);
+      clearMarkers();
+      await loadClusters();
+      return;
+    }
+
+    clusters.value = [];
+    clearClusterMarkers();
+    await runCurrentSearch({ fitView: false });
+  };
+
+  /** 按级数缩放地图（用户意图，触发正常的视野搜索） */
+  const zoomMapBy = (delta: number) => {
+    if (!mapInstance.value) return;
+    const currentZoom = Number(mapInstance.value.getZoom?.() ?? 12);
+    mapInstance.value.setZoom(Math.max(3, Math.min(18, currentZoom + delta)));
   };
 
   const setLandmarkCandidate = (landmark: LandmarkCandidate | null) =>
@@ -1380,7 +1420,7 @@ export function useMapSearch() {
       syncSearchContext();
 
       if (options?.recenter !== false && mapInstance.value) {
-        suppressViewportSearch(2);
+        suppressViewportSearch();
         mapInstance.value.setCenter([nextLocation.longitude, nextLocation.latitude]);
         syncMapViewState();
       }
@@ -1428,6 +1468,11 @@ export function useMapSearch() {
     if (searchDebounceTimer) {
       clearTimeout(searchDebounceTimer);
     }
+    if (programmaticMoveTimer) {
+      clearTimeout(programmaticMoveTimer);
+      programmaticMoveTimer = null;
+    }
+    isProgrammaticMove = false;
     pendingViewportSearch = false;
     if (infoWindow.value) {
       infoWindow.value.close();
@@ -1467,11 +1512,15 @@ export function useMapSearch() {
     filters,
     mapView,
     currentSearchContext,
+    lastSelection,
+    isResultTruncated,
+    clusterTotal,
 
     // 方法
     initMap,
     loadHomestays,
     loadClusters,
+    setClusterMode,
     locateUser,
     searchNearby,
     searchByLandmark,
@@ -1483,6 +1532,7 @@ export function useMapSearch() {
     applySearchState,
     setViewportSearch,
     setMapView,
+    zoomMapBy,
     retrySearch,
     selectHomestay,
     hoverHomestay,
