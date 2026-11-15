@@ -7,12 +7,16 @@
 
 FROM node:20-alpine AS build
 ARG VITE_API_BASE_URL=""
+# 公开演示站的一键体验账号（留空则不显示体验入口）
+ARG VITE_DEMO_GUEST_USERNAME=""
+ARG VITE_DEMO_HOST_USERNAME=""
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 COPY . .
 # .env.production 优先级高于仓库里的 .env，避免把 localhost:8081 打进产物
-RUN printf 'VITE_API_BASE_URL=%s\n' "$VITE_API_BASE_URL" > .env.production
+RUN printf 'VITE_API_BASE_URL=%s\nVITE_DEMO_GUEST_USERNAME=%s\nVITE_DEMO_HOST_USERNAME=%s\n' \
+      "$VITE_API_BASE_URL" "$VITE_DEMO_GUEST_USERNAME" "$VITE_DEMO_HOST_USERNAME" > .env.production
 RUN npm run build
 
 FROM nginx:alpine

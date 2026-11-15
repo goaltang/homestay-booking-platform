@@ -2,6 +2,7 @@
   <el-config-provider :locale="zhCn">
     <div class="app-container">
       <!-- 修改 v-if 条件，排除登录和注册页 -->
+      <DemoBanner v-if="showHeader" />
       <AppHeader v-if="showHeader" />
 
       <!-- 主内容区 -->
@@ -28,6 +29,7 @@ import { useFavoritesStore } from "./stores/favorites";
 // import { getAvatarUrl, handleImageError } from './utils/image' // 这些现在由 AppHeader 处理
 import AppHeader from "@/components/common/AppHeader.vue";
 import AppFooter from "@/components/common/AppFooter.vue";
+import DemoBanner from "@/components/common/DemoBanner.vue";
 import SupportAgentDialog from "@/components/chat/SupportAgentDialog.vue";
 
 // const router = useRouter() // router 现在由 AppHeader 使用

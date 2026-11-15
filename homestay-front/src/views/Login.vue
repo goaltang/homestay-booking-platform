@@ -141,7 +141,9 @@
                 </div>
 
                 <div v-if="showQuickLogin" class="fast-login-section">
-                  <el-divider content-position="center">测试账号一键登录</el-divider>
+                  <el-divider content-position="center">{{
+                    isDemoMode ? "演示账号一键体验" : "测试账号一键登录"
+                  }}</el-divider>
                   <div class="fast-login-options">
                     <el-button
                       v-for="account in quickLoginAccounts"
@@ -155,6 +157,9 @@
                       {{ account.icon }} {{ account.label }}
                     </el-button>
                   </div>
+                  <p v-if="isDemoMode" class="demo-hint">
+                    公开演示站，数据每晚自动重置；演示账号不能修改密码和个人资料。
+                  </p>
                 </div>
 
                 <div class="register-link">
@@ -179,6 +184,7 @@ import { useUserStore } from "@/stores/user";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
 import Logo from "@/components/common/Logo.vue";
+import { demoAccounts, findDemoAccount, isDemoMode } from "@/utils/demoAccounts";
 
 type LoginError = {
   displayMessage?: string;
@@ -206,10 +212,12 @@ const capsLockOn = shallowRef(false);
 const lastLoginAttempt = shallowRef(0);
 const USERNAME_PATTERN = /^[a-zA-Z0-9_\u4e00-\u9fa5]+$/;
 const AUTH_PAGE_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
-const quickLoginAccounts = [
+const devTestAccounts = [
   { username: "user", password: "111111", label: "普通用户", icon: "👤", type: "success" },
   { username: "host", password: "111111", label: "房东账号", icon: "🏠", type: "warning" },
 ] as const;
+// 公开演示站用演示快照里的账号，本地开发仍用测试账号
+const quickLoginAccounts = isDemoMode ? demoAccounts : devTestAccounts;
 
 const loginForm = reactive({
   username: "",
@@ -219,7 +227,7 @@ const loginForm = reactive({
 
 const normalizedUsername = computed(() => loginForm.username.trim());
 const showQuickLogin = computed(
-  () => import.meta.env.DEV || import.meta.env.VITE_SHOW_TEST_ACCOUNTS === "true"
+  () => isDemoMode || import.meta.env.DEV || import.meta.env.VITE_SHOW_TEST_ACCOUNTS === "true"
 );
 
 const getAdminLoginUrl = () => {
@@ -476,9 +484,10 @@ const fastLogin = async (username: string, password: string = "111111") => {
   if (loading.value || !showQuickLogin.value) return;
   loginForm.username = username;
   loginForm.password = password;
-  loginForm.remember = true;
+  // 共享演示账号不记住用户名，避免下次打开时预填
+  loginForm.remember = !isDemoMode;
   await nextTick();
-  handleLogin();
+  await handleLogin();
 };
 
 // 页面加载完成后的初始化
@@ -494,6 +503,14 @@ onMounted(async () => {
   if (rememberedUsername) {
     loginForm.username = rememberedUsername;
     loginForm.remember = true;
+  }
+
+  // 首页演示横幅跳转过来时（/login?demo=guest|host）直接登录对应演示账号
+  const demoAccount = findDemoAccount(route.query.demo);
+  if (demoAccount) {
+    await nextTick();
+    await fastLogin(demoAccount.username, demoAccount.password);
+    return;
   }
 
   // 恢复用户名时聚焦密码，否则聚焦用户名，减少一次手动切换。
@@ -1027,6 +1044,14 @@ onMounted(async () => {
 :deep(.el-divider--horizontal) {
   margin: 18px 0;
   border-top-color: var(--login-line);
+}
+
+.demo-hint {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--login-muted);
+  text-align: center;
 }
 
 .fast-login-options {

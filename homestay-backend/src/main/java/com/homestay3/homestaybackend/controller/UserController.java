@@ -7,6 +7,7 @@ import com.homestay3.homestaybackend.repository.NotificationRepository;
 import com.homestay3.homestaybackend.repository.OrderRepository;
 import com.homestay3.homestaybackend.repository.UserCouponRepository;
 import com.homestay3.homestaybackend.repository.UserFavoriteRepository;
+import com.homestay3.homestaybackend.security.DemoAccountGuard;
 import com.homestay3.homestaybackend.service.FileService;
 import com.homestay3.homestaybackend.service.UserService;
 import jakarta.validation.Valid;
@@ -30,12 +31,14 @@ public class UserController {
     private final UserFavoriteRepository userFavoriteRepository;
     private final UserCouponRepository userCouponRepository;
     private final NotificationRepository notificationRepository;
+    private final DemoAccountGuard demoAccountGuard;
 
     @PutMapping("/profile")
     public ResponseEntity<AuthResponse> updateProfile(
             @Valid @RequestBody ProfileUpdateRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
+        demoAccountGuard.assertModifiable(userDetails.getUsername());
         return ResponseEntity.ok(userService.updateProfile(request, userDetails.getUsername()));
     }
 
@@ -44,6 +47,7 @@ public class UserController {
             @Valid @RequestBody PasswordChangeRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
+        demoAccountGuard.assertModifiable(userDetails.getUsername());
         userService.changePassword(request, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }

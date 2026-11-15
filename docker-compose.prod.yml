@@ -111,7 +111,12 @@ services:
     logging: *default-logging
 
   front:
-    build: ./homestay-front
+    build:
+      context: ./homestay-front
+      args:
+        # 与后端共用 .env 里的同名变量：前端显示一键体验，后端锁定这两个账号的资料
+        VITE_DEMO_GUEST_USERNAME: ${DEMO_GUEST_USERNAME:-}
+        VITE_DEMO_HOST_USERNAME: ${DEMO_HOST_USERNAME:-}
     restart: unless-stopped
     ports:
       - "${SITE_PORT:-80}:80"

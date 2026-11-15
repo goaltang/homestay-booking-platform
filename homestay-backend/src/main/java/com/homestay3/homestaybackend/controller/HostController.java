@@ -27,6 +27,7 @@ public class HostController {
     private static final Logger logger = LoggerFactory.getLogger(HostController.class);
     private final HostService hostService;
     private final com.homestay3.homestaybackend.security.AuthCookieService authCookieService;
+    private final com.homestay3.homestaybackend.security.DemoAccountGuard demoAccountGuard;
 
     /**
      * 获取房东信息
@@ -48,6 +49,7 @@ public class HostController {
             @RequestBody HostDTO hostDTO,
             Authentication authentication) {
         String username = authentication.getName();
+        demoAccountGuard.assertModifiable(username);
         logger.info("更新房东信息，用户名: {}", username);
         return ResponseEntity.ok(hostService.updateHostInfo(hostDTO, username));
     }
@@ -176,6 +178,11 @@ public class HostController {
     @PutMapping("/profile")
     public ResponseEntity<?> updateHostProfile(@RequestBody Map<String, Object> profileData) {
         logger.info("更新房东个人资料请求: {}", profileData);
+        // 需在 try 之前校验：下面的 catch 会把所有异常吞成 500
+        Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
+        if (currentAuth != null) {
+            demoAccountGuard.assertModifiable(currentAuth.getName());
+        }
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth == null || !auth.isAuthenticated()) {

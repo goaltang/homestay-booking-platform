@@ -43,6 +43,8 @@ values = {
     "RABBITMQ_PASSWORD": secrets.token_hex(16),
     "ALIPAY_NOTIFY_URL": "http://localhost:8088/api/payment/alipay/notify",
     "ALIPAY_RETURN_URL": "http://localhost:8088/orders/pay/success",
+    "DEMO_GUEST_USERNAME": "user_4424",
+    "DEMO_HOST_USERNAME": "host_0097",
 }
 for key, value in values.items():
     text, count = re.subn(rf"^{key}=.*$", f"{key}={value}", text, flags=re.MULTILINE)
