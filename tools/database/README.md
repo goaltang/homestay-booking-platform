@@ -102,6 +102,21 @@ python3 tools/database/export_demo.py \
   --mysqldump-command /mnt/d/mysql-8.0.32-winx64/bin/mysqldump.exe
 ```
 
+### 修复房源区县（已导入旧快照的库）
+
+2026-11-16 之前的快照里，房源区县是生成的假值（如“宁波市区”、编码 `33020001`），与级联选择器的真实编码不一致，按区筛选和按区名搜索都查不到。当前快照已修正。已经导入过旧快照的库，用 `fix_districts.py` 生成按 id 更新的 SQL：
+
+```bash
+mysql -N -B homestay_db -e "SELECT id, province_code, city_code, district_code FROM homestays ORDER BY id" > rows.tsv
+python3 tools/database/fix_districts.py --input rows.tsv --output fix_districts.sql --cache-dir /tmp/datav-cache
+mysql homestay_db < fix_districts.sql
+```
+
+- 区县取自后端同一份 `china-pca-code.json`，按房源 id 确定性分配（市辖区权重更高，开发区类统计编码不参与）；没有区县的地级市（东莞、中山、儋州、嘉峪关）用乡镇街道。
+- 坐标移到所分配区县的边界内，边界来自阿里云 DataV 公开 GeoJSON（首次运行下载约 660 个文件，较慢，之后读缓存）；拿不到区县边界时用城市边界。
+- 把县级市编码存成城市编码的行（大理市 `532901`）归到上级城市“大理白族自治州”。
+- 每条 UPDATE 带旧的 8 位假编码作条件，已修复的行不会再改；整份 SQL 在一个事务里。
+
 ## 使用 Docker 中的 mysql 客户端
 
 保持上面的 `MYSQL_*` 环境变量。在仓库根目录运行，容器内主机一般仍为 `127.0.0.1`、端口为 `3306`；宿主机映射端口不适用于容器内连接。
